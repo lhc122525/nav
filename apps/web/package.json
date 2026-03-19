@@ -1,0 +1,29 @@
+{
+  "name": "@navigation/web",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "lint": "eslint .",
+    "check-types": "nuxi typecheck",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@element-plus/nuxt": "^1.1.2",
+    "element-plus": "^2.11.4",
+    "mysql2": "^3.15.1",
+    "nuxt": "^4.4.2",
+    "swagger-ui-dist": "^5.28.1",
+    "vue": "^3.5.30",
+    "vue-router": "^5.0.3"
+  },
+  "devDependencies": {
+    "@nuxt/eslint": "^0.7.6",
+    "@vue/language-core": "^3.0.6",
+    "eslint": "^9.35.0",
+    "vue-tsc": "^3.2.6"
+  }
+}
