@@ -65,8 +65,8 @@ export default defineEventHandler(async (event) => {
      FROM links
      WHERE ${whereParts.join(' AND ')}
      ORDER BY sort ASC, id DESC
-     LIMIT ?`,
-    [...params, limit]
+     LIMIT ${limit}`,
+    params
   )
 
   return (rows as Array<Record<string, unknown>>).map((r) => ({

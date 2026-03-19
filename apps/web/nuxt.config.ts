@@ -28,6 +28,9 @@ export default defineNuxtConfig({
   },
   routeRules: {
     '/admin': { headers: { 'x-robots-tag': 'noindex, nofollow' } },
+    '/admin/login': { headers: { 'x-robots-tag': 'noindex, nofollow' } },
+    '/admin/nav': { headers: { 'x-robots-tag': 'noindex, nofollow' } },
+    '/admin/include': { headers: { 'x-robots-tag': 'noindex, nofollow' } },
     '/login': { headers: { 'x-robots-tag': 'noindex, nofollow' } },
     '/openapi': { headers: { 'x-robots-tag': 'noindex, nofollow' } }
   },

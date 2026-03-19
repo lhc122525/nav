@@ -9,13 +9,13 @@ export default defineEventHandler(async (event) => {
 
   const query = getQuery(event) as Record<string, unknown>
   const q = getQueryString(query, 'q')
-  const status = getQueryString(query, 'status') || 'pending'
+  const status = getQueryString(query, 'status')
   const limit = Math.min(Math.max(getQueryInt(query, 'limit', 200), 1), 500)
 
   const whereParts: string[] = ['1=1']
   const params: Array<string | number> = []
 
-  if (status) {
+  if (status && status !== 'all') {
     whereParts.push('status = ?')
     params.push(status)
   }
@@ -29,8 +29,8 @@ export default defineEventHandler(async (event) => {
      FROM submissions
      WHERE ${whereParts.join(' AND ')}
      ORDER BY created_at DESC
-     LIMIT ?`,
-    [...params, limit]
+     LIMIT ${limit}`,
+    params
   )
 
   return (rows as Array<Record<string, unknown>>).map((r) => ({
@@ -45,4 +45,3 @@ export default defineEventHandler(async (event) => {
     createdAt: new Date(String(r.created_at)).toISOString()
   }))
 })
-

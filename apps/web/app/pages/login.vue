@@ -3,7 +3,7 @@
     <el-card shadow="never" class="card">
       <template #header>
         <div class="header">
-          管理员登录
+          登录
         </div>
       </template>
 
@@ -38,12 +38,11 @@ async function submit() {
   error.value = ''
   submitting.value = true
   try {
-    await $fetch('/api/admin/auth/login', {
+    await $fetch('/api/auth/login', {
       method: 'POST',
-      credentials: 'include',
       body: { username: username.value, password: password.value }
     })
-    await navigateTo('/admin')
+    await navigateTo('/')
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : '登录失败'
   } finally {

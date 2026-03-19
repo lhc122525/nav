@@ -25,8 +25,8 @@ export default defineEventHandler(async (event) => {
      FROM guestbook_messages
      WHERE ${whereParts.join(' AND ')}
      ORDER BY created_at DESC
-     LIMIT ?`,
-    [...params, limit]
+     LIMIT ${limit}`,
+    params
   )
 
   return (rows as Array<Record<string, unknown>>).map((r) => ({
@@ -39,4 +39,3 @@ export default defineEventHandler(async (event) => {
     createdAt: new Date(String(r.created_at)).toISOString()
   }))
 })
-

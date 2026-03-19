@@ -13,8 +13,7 @@ export default defineEventHandler(async (event) => {
      FROM guestbook_messages
      WHERE is_visible = 1
      ORDER BY created_at DESC
-     LIMIT ?`,
-    [limit]
+     LIMIT ${limit}`
   )
 
   return (rows as Array<Record<string, unknown>>).map((r) => ({
@@ -24,4 +23,3 @@ export default defineEventHandler(async (event) => {
     createdAt: new Date(String(r.created_at)).toISOString()
   }))
 })
-
