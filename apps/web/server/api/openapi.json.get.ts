@@ -11,7 +11,7 @@ export default defineEventHandler((event) => {
       title: publicConfig.siteName || '导航站 API',
       version: '0.1.0'
     },
-    servers: publicConfig.siteUrl ? [{ url: publicConfig.siteUrl }] : [{ url: 'http://localhost:3000' }],
+    servers: publicConfig.siteUrl ? [{ url: publicConfig.siteUrl }] : [{ url: 'http://localhost:8998' }],
     paths: {
       '/api/health': {
         get: {

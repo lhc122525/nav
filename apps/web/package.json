@@ -4,11 +4,11 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev": "nuxt dev --port 8998",
     "generate": "nuxt generate",
     "lint": "eslint .",
     "check-types": "nuxi typecheck",
-    "preview": "nuxt preview",
+    "preview": "nuxt preview --port 8998",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {

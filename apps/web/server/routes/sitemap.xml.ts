@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'content-type', 'application/xml; charset=utf-8')
 
   const { public: publicConfig } = useRuntimeConfig()
-  const siteUrl = (publicConfig.siteUrl || 'http://localhost:3000').replace(/\/+$/, '')
+  const siteUrl = (publicConfig.siteUrl || 'http://localhost:8998').replace(/\/+$/, '')
 
   const urls: Array<{ loc: string; lastmod?: string }> = [
     { loc: `${siteUrl}/` },
