@@ -13,12 +13,12 @@ type UpdateLinkBody = {
 export default defineEventHandler(async (event) => {
   const pool = getMySqlPool()
   if (!pool) {
-    throw createError({ statusCode: 400, statusMessage: 'MySQL is disabled' })
+    throw createError({ statusCode: 500, statusMessage: '数据库未启用' })
   }
 
   const id = Number(getRouterParam(event, 'id'))
   if (!Number.isFinite(id) || id <= 0) {
-    throw createError({ statusCode: 400, statusMessage: 'invalid id' })
+    throw createError({ statusCode: 400, statusMessage: '无效的 ID' })
   }
 
   const body = (await readBody(event)) as UpdateLinkBody
@@ -41,10 +41,10 @@ export default defineEventHandler(async (event) => {
           : null
 
   if (title !== undefined && title.length === 0) {
-    throw createError({ statusCode: 400, statusMessage: 'title cannot be empty' })
+    throw createError({ statusCode: 400, statusMessage: '标题不能为空' })
   }
   if (url !== undefined && url.length === 0) {
-    throw createError({ statusCode: 400, statusMessage: 'url cannot be empty' })
+    throw createError({ statusCode: 400, statusMessage: '链接不能为空' })
   }
 
   const fields: string[] = []

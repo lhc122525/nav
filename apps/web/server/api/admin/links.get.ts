@@ -17,7 +17,7 @@ type AdminLink = {
 export default defineEventHandler(async (event) => {
   const pool = getMySqlPool()
   if (!pool) {
-    throw createError({ statusCode: 400, statusMessage: 'MySQL is disabled' })
+    throw createError({ statusCode: 500, statusMessage: '数据库未启用' })
   }
 
   const query = getQuery(event) as Record<string, unknown>

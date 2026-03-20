@@ -9,7 +9,7 @@ type LoginBody = {
 export default defineEventHandler(async (event) => {
   const pool = getMySqlPool()
   if (!pool) {
-    throw createError({ statusCode: 500, statusMessage: 'MySQL is disabled' })
+    throw createError({ statusCode: 500, statusMessage: '数据库未启用' })
   }
 
   const body = (await readBody(event)) as LoginBody
@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
   const password = String(body?.password || '')
 
   if (!username || !password) {
-    throw createError({ statusCode: 400, statusMessage: 'username and password are required' })
+    throw createError({ statusCode: 400, statusMessage: '用户名和密码不能为空' })
   }
 
   const [rows] = await pool.execute(
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
   )
   const row = (rows as Array<Record<string, unknown>>)[0]
   if (!row || Number(row.is_active) !== 1) {
-    throw createError({ statusCode: 401, statusMessage: 'invalid credentials' })
+    throw createError({ statusCode: 401, statusMessage: '用户名或密码错误' })
   }
 
   const ok = verifyPassword(
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
     String(row.password_hash || '')
   )
   if (!ok) {
-    throw createError({ statusCode: 401, statusMessage: 'invalid credentials' })
+    throw createError({ statusCode: 401, statusMessage: '用户名或密码错误' })
   }
 
   const token = createSessionToken()
@@ -56,4 +56,3 @@ export default defineEventHandler(async (event) => {
     }
   }
 })
-

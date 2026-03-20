@@ -9,7 +9,7 @@ type RegisterBody = {
 export default defineEventHandler(async (event) => {
   const pool = getMySqlPool()
   if (!pool) {
-    throw createError({ statusCode: 500, statusMessage: 'MySQL is disabled' })
+    throw createError({ statusCode: 500, statusMessage: '数据库未启用', data: { msg: '数据库未启用' } })
   }
 
   const body = (await readBody(event)) as RegisterBody
@@ -17,13 +17,25 @@ export default defineEventHandler(async (event) => {
   const password = String(body?.password || '').trim()
 
   if (!username || !password) {
-    throw createError({ statusCode: 400, statusMessage: 'username and password are required' })
+    throw createError({
+      statusCode: 400,
+      statusMessage: '用户名和密码不能为空',
+      data: { msg: '用户名和密码不能为空' },
+    })
   }
   if (username.length < 3 || username.length > 20) {
-    throw createError({ statusCode: 400, statusMessage: 'username length must be 3-20' })
+    throw createError({
+      statusCode: 400,
+      statusMessage: '用户名长度需为 3-20 位',
+      data: { msg: '用户名长度需为 3-20 位' },
+    })
   }
   if (password.length < 6 || password.length > 64) {
-    throw createError({ statusCode: 400, statusMessage: 'password length must be 6-64' })
+    throw createError({
+      statusCode: 400,
+      statusMessage: '密码长度需为 6-64 位',
+      data: { msg: '密码长度需为 6-64 位' },
+    })
   }
 
   const { saltHex, hashHex } = hashUserPassword(password)
@@ -40,8 +52,12 @@ export default defineEventHandler(async (event) => {
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : ''
     if (msg.includes('Duplicate')) {
-      throw createError({ statusCode: 409, statusMessage: 'username already exists' })
+      throw createError({
+        statusCode: 409,
+        statusMessage: '用户名已存在',
+        data: { msg: '用户名已存在' },
+      })
     }
-    throw createError({ statusCode: 500, statusMessage: 'register failed' })
+    throw createError({ statusCode: 500, statusMessage: '注册失败', data: { msg: '注册失败' } })
   }
 })

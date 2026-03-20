@@ -4,7 +4,7 @@ import { getQueryInt, getQueryString } from '../../utils/http'
 export default defineEventHandler(async (event) => {
   const pool = getMySqlPool()
   if (!pool) {
-    throw createError({ statusCode: 500, statusMessage: 'MySQL is disabled' })
+    throw createError({ statusCode: 500, statusMessage: '数据库未启用' })
   }
 
   const query = getQuery(event) as Record<string, unknown>

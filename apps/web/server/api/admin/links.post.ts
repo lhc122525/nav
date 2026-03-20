@@ -13,7 +13,7 @@ type CreateLinkBody = {
 export default defineEventHandler(async (event) => {
   const pool = getMySqlPool()
   if (!pool) {
-    throw createError({ statusCode: 400, statusMessage: 'MySQL is disabled' })
+    throw createError({ statusCode: 500, statusMessage: '数据库未启用' })
   }
 
   const body = (await readBody(event)) as CreateLinkBody
@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     categoryIdRaw == null ? null : Number.isFinite(Number(categoryIdRaw)) ? Number(categoryIdRaw) : null
 
   if (!title || !url) {
-    throw createError({ statusCode: 400, statusMessage: 'title and url are required' })
+    throw createError({ statusCode: 400, statusMessage: '标题和链接不能为空' })
   }
 
   const [result] = await pool.execute(
@@ -47,4 +47,3 @@ export default defineEventHandler(async (event) => {
 
   return { id: Number((result as { insertId?: number }).insertId) }
 })
-

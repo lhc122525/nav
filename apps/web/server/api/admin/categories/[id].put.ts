@@ -9,12 +9,12 @@ type UpdateCategoryBody = {
 export default defineEventHandler(async (event) => {
   const pool = getMySqlPool()
   if (!pool) {
-    throw createError({ statusCode: 500, statusMessage: 'MySQL is disabled' })
+    throw createError({ statusCode: 500, statusMessage: '数据库未启用' })
   }
 
   const id = Number(getRouterParam(event, 'id'))
   if (!Number.isFinite(id) || id <= 0) {
-    throw createError({ statusCode: 400, statusMessage: 'invalid id' })
+    throw createError({ statusCode: 400, statusMessage: '无效的 ID' })
   }
 
   const body = (await readBody(event)) as UpdateCategoryBody
@@ -23,10 +23,10 @@ export default defineEventHandler(async (event) => {
   const sort = body?.sort != null ? Number(body.sort) : undefined
 
   if (name !== undefined && name.length === 0) {
-    throw createError({ statusCode: 400, statusMessage: 'name cannot be empty' })
+    throw createError({ statusCode: 400, statusMessage: '名称不能为空' })
   }
   if (slug !== undefined && slug.length === 0) {
-    throw createError({ statusCode: 400, statusMessage: 'slug cannot be empty' })
+    throw createError({ statusCode: 400, statusMessage: '标识不能为空' })
   }
 
   const fields: string[] = []
@@ -51,15 +51,14 @@ export default defineEventHandler(async (event) => {
   try {
     const [result] = await pool.execute(`UPDATE categories SET ${fields.join(', ')} WHERE id = ?`, values)
     if (Number((result as { affectedRows?: number }).affectedRows) === 0) {
-      throw createError({ statusCode: 404, statusMessage: 'not found' })
+      throw createError({ statusCode: 404, statusMessage: '未找到' })
     }
     return { ok: true }
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : ''
     if (msg.includes('Duplicate')) {
-      throw createError({ statusCode: 409, statusMessage: 'slug already exists' })
+      throw createError({ statusCode: 409, statusMessage: '标识已存在' })
     }
     throw e
   }
 })
-

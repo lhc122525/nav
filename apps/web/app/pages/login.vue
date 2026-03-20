@@ -35,16 +35,18 @@ const submitting = ref(false)
 const error = ref('')
 
 async function submit() {
+  const { $api } = useNuxtApp()
   error.value = ''
   submitting.value = true
   try {
-    await $fetch('/api/auth/login', {
+    await $api('/api/auth/login', {
       method: 'POST',
       body: { username: username.value, password: password.value }
     })
     await navigateTo('/')
   } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : '登录失败'
+    const msg = typeof (e as { msg?: unknown } | null)?.msg === 'string' ? String((e as { msg?: unknown }).msg) : undefined
+    error.value = msg || (e instanceof Error ? e.message : '登录失败')
   } finally {
     submitting.value = false
   }

@@ -46,11 +46,12 @@ const submitting = ref(false)
 const status = reactive<{ type: '' | 'success' | 'error'; message: string }>({ type: '', message: '' })
 
 async function submit() {
+  const { $api } = useNuxtApp()
   status.type = ''
   status.message = ''
   submitting.value = true
   try {
-    await $fetch('/api/submissions', { method: 'POST', body: form })
+    await $api('/api/submissions', { method: 'POST', body: form })
     status.type = 'success'
     status.message = '提交成功，感谢支持！'
     form.title = ''
@@ -59,7 +60,8 @@ async function submit() {
     form.contact = ''
   } catch (e: unknown) {
     status.type = 'error'
-    status.message = e instanceof Error ? e.message : '提交失败'
+    const msg = typeof (e as { msg?: unknown } | null)?.msg === 'string' ? String((e as { msg?: unknown }).msg) : undefined
+    status.message = msg || (e instanceof Error ? e.message : '提交失败')
   } finally {
     submitting.value = false
   }
@@ -71,4 +73,3 @@ async function submit() {
   font-weight: 600;
 }
 </style>
-

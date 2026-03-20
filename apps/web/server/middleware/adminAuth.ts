@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
 
   const pool = getMySqlPool()
   if (!pool) {
-    throw createError({ statusCode: 500, statusMessage: 'MySQL is disabled' })
+    throw createError({ statusCode: 500, statusMessage: '数据库未启用' })
   }
 
   const token = getCookie(event, ADMIN_SESSION_COOKIE)
@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
     if (isAdminPage) {
       return sendRedirect(event, '/admin/login', 302)
     }
-    throw createError({ statusCode: 401, statusMessage: 'unauthorized' })
+    throw createError({ statusCode: 401, statusMessage: '未登录' })
   }
 
   const [rows] = await pool.execute(
@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
     if (isAdminPage) {
       return sendRedirect(event, '/admin/login', 302)
     }
-    throw createError({ statusCode: 401, statusMessage: 'unauthorized' })
+    throw createError({ statusCode: 401, statusMessage: '未登录' })
   }
 
   const isActive = Number(row.is_active) === 1
@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
     if (isAdminPage) {
       return sendRedirect(event, '/admin/login', 302)
     }
-    throw createError({ statusCode: 401, statusMessage: 'unauthorized' })
+    throw createError({ statusCode: 401, statusMessage: '未登录' })
   }
 
   event.context.adminUser = {

@@ -64,11 +64,12 @@ function formatTime(iso: string) {
 }
 
 async function submit() {
+  const { $api } = useNuxtApp()
   status.type = ''
   status.message = ''
   submitting.value = true
   try {
-    await $fetch('/api/guestbook', { method: 'POST', body: form })
+    await $api('/api/guestbook', { method: 'POST', body: form })
     status.type = 'success'
     status.message = '提交成功！'
     form.nickname = ''
@@ -76,7 +77,8 @@ async function submit() {
     await refresh()
   } catch (e: unknown) {
     status.type = 'error'
-    status.message = e instanceof Error ? e.message : '提交失败'
+    const msg = typeof (e as { msg?: unknown } | null)?.msg === 'string' ? String((e as { msg?: unknown }).msg) : undefined
+    status.message = msg || (e instanceof Error ? e.message : '提交失败')
   } finally {
     submitting.value = false
   }
@@ -103,4 +105,3 @@ async function submit() {
   word-break: break-word;
 }
 </style>
-

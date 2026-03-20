@@ -172,6 +172,8 @@ definePageMeta({ middleware: ['admin-auth'], layout: 'admin' })
 
 useHead(() => ({ title: '导航管理 - 后台' }))
 
+const { $api } = useNuxtApp()
+
 const query = ref('')
 const categoryId = ref<number | undefined>(undefined)
 
@@ -215,7 +217,7 @@ function getErrorStatus(e: unknown): number | undefined {
 }
 
 async function reloadCategories() {
-  const data = await $fetch<Category[]>('/api/admin/categories', { params: { limit: 500 }, headers: requestHeaders })
+  const data = await $api<Category[]>('/api/admin/categories', { params: { limit: 500 }, headers: requestHeaders })
   categories.value = data
 }
 
@@ -224,7 +226,7 @@ async function reloadLinks() {
   if (query.value.trim()) params.q = query.value.trim()
   if (categoryId.value != null) params.categoryId = categoryId.value
 
-  const data = await $fetch<AdminLink[]>('/api/admin/links', { params, headers: requestHeaders })
+  const data = await $api<AdminLink[]>('/api/admin/links', { params, headers: requestHeaders })
   rows.value = data
 }
 
@@ -264,9 +266,9 @@ async function save() {
   }
 
   if (editing.value?.id) {
-    await $fetch(`/api/admin/links/${editing.value.id}`, { method: 'PUT', body: payload })
+    await $api(`/api/admin/links/${editing.value.id}`, { method: 'PUT', body: payload })
   } else {
-    await $fetch('/api/admin/links', { method: 'POST', body: payload })
+    await $api('/api/admin/links', { method: 'POST', body: payload })
   }
 
   dialogOpen.value = false
@@ -274,7 +276,7 @@ async function save() {
 }
 
 async function remove(row: AdminLink) {
-  await $fetch(`/api/admin/links/${row.id}`, { method: 'DELETE' })
+  await $api(`/api/admin/links/${row.id}`, { method: 'DELETE' })
   await reloadLinks()
 }
 
@@ -297,16 +299,16 @@ function openCategoryEdit(row: Category) {
 async function saveCategory() {
   const payload = { name: categoryForm.name, slug: categoryForm.slug, sort: categoryForm.sort }
   if (editingCategory.value?.id) {
-    await $fetch(`/api/admin/categories/${editingCategory.value.id}`, { method: 'PUT', body: payload })
+    await $api(`/api/admin/categories/${editingCategory.value.id}`, { method: 'PUT', body: payload })
   } else {
-    await $fetch('/api/admin/categories', { method: 'POST', body: payload })
+    await $api('/api/admin/categories', { method: 'POST', body: payload })
   }
   categoryDialogOpen.value = false
   await reloadCategories()
 }
 
 async function removeCategory(row: Category) {
-  await $fetch(`/api/admin/categories/${row.id}`, { method: 'DELETE' })
+  await $api(`/api/admin/categories/${row.id}`, { method: 'DELETE' })
   await reloadCategories()
 }
 
@@ -329,4 +331,3 @@ try {
   justify-content: space-between;
 }
 </style>
-

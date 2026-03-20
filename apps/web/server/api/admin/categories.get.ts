@@ -3,7 +3,7 @@ import { getMySqlPool } from '../../utils/mysql'
 export default defineEventHandler(async () => {
   const pool = getMySqlPool()
   if (!pool) {
-    throw createError({ statusCode: 500, statusMessage: 'MySQL is disabled' })
+    throw createError({ statusCode: 500, statusMessage: '数据库未启用' })
   }
 
   const [rows] = await pool.execute('SELECT id, name, slug, sort FROM categories ORDER BY sort ASC, id DESC')
@@ -14,4 +14,3 @@ export default defineEventHandler(async () => {
     sort: Number(r.sort || 0)
   }))
 })
-

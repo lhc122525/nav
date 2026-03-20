@@ -100,7 +100,7 @@
       </el-menu>
     </el-drawer>
 
-    <el-dialog v-model="loginOpen" title="登录" width="420px">
+    <el-dialog v-model="loginOpen" title="登录" append-to-body style="max-width: 550px;width: 90vw;">
       <el-form label-width="72px" @submit.prevent>
         <el-form-item label="用户名">
           <el-input v-model="loginForm.username" autocomplete="username" />
@@ -109,7 +109,6 @@
           <el-input v-model="loginForm.password" type="password" autocomplete="current-password" show-password />
         </el-form-item>
       </el-form>
-      <el-alert v-if="loginError" type="error" :title="loginError" show-icon />
       <template #footer>
         <el-button @click="loginOpen = false">取消</el-button>
         <el-button type="primary" :loading="loginSubmitting" @click="submitLogin">
@@ -118,16 +117,18 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="registerOpen" title="注册" width="420px">
-      <el-form label-width="72px" @submit.prevent>
-        <el-form-item label="用户名">
-          <el-input v-model="registerForm.username" autocomplete="username" />
+    <el-dialog v-model="registerOpen" title="注册" append-to-body style="max-width: 550px;width: 90vw;">
+      <el-form ref="registerFormRef" :model="registerForm" :rules="registerRules" label-width="100px" @submit.prevent>
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model.trim="registerForm.username" autocomplete="username" />
         </el-form-item>
-        <el-form-item label="密码">
-          <el-input v-model="registerForm.password" type="password" autocomplete="new-password" show-password />
+        <el-form-item label="密码" prop="password">
+          <el-input v-model.trim="registerForm.password" type="password" autocomplete="new-password" show-password />
+        </el-form-item>
+        <el-form-item label="确认密码" prop="passwordConfirm">
+          <el-input v-model.trim="registerForm.passwordConfirm" type="password" autocomplete="new-password" show-password />
         </el-form-item>
       </el-form>
-      <el-alert v-if="registerError" type="error" :title="registerError" show-icon />
       <template #footer>
         <el-button @click="registerOpen = false">取消</el-button>
         <el-button type="primary" :loading="registerSubmitting" @click="submitRegister">
@@ -139,6 +140,9 @@
 </template>
 
 <script setup lang="ts">
+import type { FormInstance, FormRules } from 'element-plus'
+import { ElMessage } from 'element-plus'
+
 const { public: publicConfig } = useRuntimeConfig()
 const siteName = computed(() => publicConfig.siteName || '导航站')
 
@@ -155,29 +159,47 @@ const loginOpen = ref(false)
 const registerOpen = ref(false)
 
 const loginForm = reactive({ username: '', password: '' })
-const registerForm = reactive({ username: '', password: '' })
+const registerFormRef = ref<FormInstance>()
+const registerForm = reactive({ username: '', password: '', passwordConfirm: '' })
+const registerRules: FormRules = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, max: 20, message: '用户名长度需为 3-20', trigger: 'blur' },
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, max: 64, message: '密码长度需为 6-64', trigger: 'blur' },
+  ],
+  passwordConfirm: [
+    { required: true, message: '请再次输入密码', trigger: 'blur' },
+    {
+      validator: (_rule, value: unknown, callback: (error?: Error) => void) => {
+        if (String(value || '') !== registerForm.password) callback(new Error('两次输入的密码不一致'))
+        else callback()
+      },
+      trigger: 'blur',
+    },
+  ],
+}
 
 const loginSubmitting = ref(false)
 const registerSubmitting = ref(false)
 
-const loginError = ref('')
-const registerError = ref('')
 
 function onGuestCommand(command: string) {
   if (command === 'login') {
-    loginError.value = ''
     loginOpen.value = true
     return
   }
   if (command === 'register') {
-    registerError.value = ''
     registerOpen.value = true
   }
 }
 
 async function onUserCommand(command: string) {
   if (command !== 'logout') return
-  await $fetch('/api/auth/logout', { method: 'POST' })
+  const { $api } = useNuxtApp()
+  await $api('/api/auth/logout', { method: 'POST' })
   await refreshMe()
 }
 
@@ -190,13 +212,11 @@ async function onMobileSelect(index: string) {
 
   if (index === 'action:login') {
     mobileMenuOpen.value = false
-    loginError.value = ''
     loginOpen.value = true
     return
   }
   if (index === 'action:register') {
     mobileMenuOpen.value = false
-    registerError.value = ''
     registerOpen.value = true
     return
   }
@@ -207,33 +227,52 @@ async function onMobileSelect(index: string) {
 }
 
 async function submitLogin() {
-  loginError.value = ''
+  const { $api } = useNuxtApp()
   loginSubmitting.value = true
   try {
-    await $fetch('/api/auth/login', { method: 'POST', body: loginForm })
+    await $api('/api/auth/login', { method: 'POST', body: loginForm })
     loginOpen.value = false
     loginForm.password = ''
+
     await refreshMe()
-  } catch (e: unknown) {
-    loginError.value = e instanceof Error ? e.message : '登录失败'
+  } catch {
+    // const msg = typeof (e as { msg?: unknown } | null)?.msg === 'string' ? String((e as { msg?: unknown }).msg) : undefined
+    // ElMessage.error("登录失败，请重试")
   } finally {
     loginSubmitting.value = false
   }
 }
 
 async function submitRegister() {
-  registerError.value = ''
+  const { $api } = useNuxtApp()
+  const valid = await registerFormRef.value?.validate().catch(() => false)
+  if (!valid) return
+
   registerSubmitting.value = true
   try {
-    await $fetch('/api/auth/register', { method: 'POST', body: registerForm })
+    await $api('/api/auth/register', {
+      method: 'POST',
+      body: { username: registerForm.username, password: registerForm.password },
+    })
     registerOpen.value = false
     registerForm.password = ''
-    loginError.value = ''
+    registerForm.passwordConfirm = ''
     loginForm.username = registerForm.username
     loginForm.password = ''
     loginOpen.value = true
-  } catch (e: unknown) {
-    registerError.value = e instanceof Error ? e.message : '注册失败'
+    ElMessage({
+      message: '注册成功，请登录',
+      type: 'success',
+      plain: true,
+    })
+  } catch {
+    // const msg = typeof (e as { msg?: unknown } | null)?.msg === 'string' ? String((e as { msg?: unknown }).msg) : undefined
+    // ElMessage({
+    //   message: msg || (e instanceof Error ? e.message : '注册失败，请重试'),
+    //   type: 'error',
+    //   plain: true,
+    //   duration: 3000000,
+    // })
   } finally {
     registerSubmitting.value = false
   }

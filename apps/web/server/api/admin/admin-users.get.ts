@@ -3,12 +3,12 @@ import { getMySqlPool } from '../../utils/mysql'
 export default defineEventHandler(async (event) => {
   const u = event.context.adminUser as { id: number; role: string } | undefined
   if (!u || u.role !== 'super') {
-    throw createError({ statusCode: 403, statusMessage: 'forbidden' })
+    throw createError({ statusCode: 403, statusMessage: '无权限' })
   }
 
   const pool = getMySqlPool()
   if (!pool) {
-    throw createError({ statusCode: 500, statusMessage: 'MySQL is disabled' })
+    throw createError({ statusCode: 500, statusMessage: '数据库未启用' })
   }
 
   const [rows] = await pool.execute(
@@ -24,4 +24,3 @@ export default defineEventHandler(async (event) => {
     updatedAt: new Date(String(r.updated_at)).toISOString()
   }))
 })
-

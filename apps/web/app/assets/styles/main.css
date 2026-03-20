@@ -25,6 +25,10 @@ body {
   padding: 24px 0;
 }
 
+.message{
+  z-index: 9999 !important;
+}
+
 @media (max-width: 768px) {
   .page {
     padding: 16px 0;

@@ -1,8 +1,30 @@
+import { createRequire } from 'node:module'
+import { dirname, join } from 'node:path'
+
+const require = createRequire(import.meta.url)
+const dayjsEsmDir = dirname(require.resolve('dayjs/esm/index.js'))
+const normalizePath = (p: string) => p.replace(/\\/g, '/')
+
 export default defineNuxtConfig({
   ssr: true,
   devtools: { enabled: true },
   modules: ['@element-plus/nuxt', '@nuxt/eslint'],
   css: ['~/assets/styles/main.css'],
+  vite: {
+    resolve: {
+      alias: [
+        { find: /^dayjs$/, replacement: normalizePath(join(dayjsEsmDir, 'index.js')) },
+        {
+          find: /^dayjs\/plugin\/(.+)\.js$/,
+          replacement: normalizePath(join(dayjsEsmDir, 'plugin', '$1', 'index.js')),
+        },
+        {
+          find: /^dayjs\/locale\/(.+)\.js$/,
+          replacement: normalizePath(join(dayjsEsmDir, 'locale', '$1.js')),
+        },
+      ],
+    }
+  },
   app: {
     head: {
       htmlAttrs: { lang: 'zh-CN' },

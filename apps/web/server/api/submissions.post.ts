@@ -10,7 +10,7 @@ type CreateSubmissionBody = {
 export default defineEventHandler(async (event) => {
   const pool = getMySqlPool()
   if (!pool) {
-    throw createError({ statusCode: 500, statusMessage: 'MySQL is disabled' })
+    throw createError({ statusCode: 500, statusMessage: '数据库未启用' })
   }
 
   const body = (await readBody(event)) as CreateSubmissionBody
@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   const contact = String(body?.contact || '').trim()
 
   if (!title || !url) {
-    throw createError({ statusCode: 400, statusMessage: 'title and url are required' })
+    throw createError({ statusCode: 400, statusMessage: '标题和链接不能为空' })
   }
 
   const [dupRows] = await pool.execute(
@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
     [url]
   )
   if ((dupRows as Array<Record<string, unknown>>).length > 0) {
-    throw createError({ statusCode: 409, statusMessage: 'duplicate submission' })
+    throw createError({ statusCode: 409, statusMessage: '请勿重复提交' })
   }
 
   const [result] = await pool.execute(
@@ -40,4 +40,3 @@ export default defineEventHandler(async (event) => {
 
   return { id: Number((result as { insertId?: number }).insertId), ok: true }
 })
-

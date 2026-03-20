@@ -10,17 +10,17 @@ type UpdateAdminUserBody = {
 export default defineEventHandler(async (event) => {
   const u = event.context.adminUser as { id: number; role: string } | undefined
   if (!u || u.role !== 'super') {
-    throw createError({ statusCode: 403, statusMessage: 'forbidden' })
+    throw createError({ statusCode: 403, statusMessage: '无权限' })
   }
 
   const id = Number(getRouterParam(event, 'id'))
   if (!Number.isFinite(id) || id <= 0) {
-    throw createError({ statusCode: 400, statusMessage: 'invalid id' })
+    throw createError({ statusCode: 400, statusMessage: '无效的 ID' })
   }
 
   const pool = getMySqlPool()
   if (!pool) {
-    throw createError({ statusCode: 500, statusMessage: 'MySQL is disabled' })
+    throw createError({ statusCode: 500, statusMessage: '数据库未启用' })
   }
 
   const body = (await readBody(event)) as UpdateAdminUserBody
@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
   if (body?.password != null) {
     const password = String(body.password || '')
     if (!password) {
-      throw createError({ statusCode: 400, statusMessage: 'password cannot be empty' })
+      throw createError({ statusCode: 400, statusMessage: '密码不能为空' })
     }
     const { saltHex, hashHex } = hashPassword(password)
     fields.push('password_salt = ?', 'password_hash = ?')
@@ -57,4 +57,3 @@ export default defineEventHandler(async (event) => {
 
   return { ok: true }
 })
-

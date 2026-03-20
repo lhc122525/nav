@@ -10,12 +10,12 @@ type CreateAdminUserBody = {
 export default defineEventHandler(async (event) => {
   const u = event.context.adminUser as { id: number; role: string } | undefined
   if (!u || u.role !== 'super') {
-    throw createError({ statusCode: 403, statusMessage: 'forbidden' })
+    throw createError({ statusCode: 403, statusMessage: '无权限' })
   }
 
   const pool = getMySqlPool()
   if (!pool) {
-    throw createError({ statusCode: 500, statusMessage: 'MySQL is disabled' })
+    throw createError({ statusCode: 500, statusMessage: '数据库未启用' })
   }
 
   const body = (await readBody(event)) as CreateAdminUserBody
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   const role = body?.role === 'super' ? 'super' : 'admin'
 
   if (!username || !password) {
-    throw createError({ statusCode: 400, statusMessage: 'username and password are required' })
+    throw createError({ statusCode: 400, statusMessage: '用户名和密码不能为空' })
   }
 
   const { saltHex, hashHex } = hashPassword(password)
@@ -36,11 +36,10 @@ export default defineEventHandler(async (event) => {
     )
     return { id: Number((result as { insertId?: number }).insertId) }
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : 'create failed'
+    const msg = e instanceof Error ? e.message : '创建失败'
     if (msg.includes('Duplicate')) {
-      throw createError({ statusCode: 409, statusMessage: 'username already exists' })
+      throw createError({ statusCode: 409, statusMessage: '用户名已存在' })
     }
-    throw createError({ statusCode: 500, statusMessage: 'create failed' })
+    throw createError({ statusCode: 500, statusMessage: '创建失败' })
   }
 })
-

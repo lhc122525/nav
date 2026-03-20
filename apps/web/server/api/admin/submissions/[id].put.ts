@@ -12,23 +12,23 @@ type HandleSubmissionBody = {
 export default defineEventHandler(async (event) => {
   const u = event.context.adminUser as { id: number } | undefined
   if (!u) {
-    throw createError({ statusCode: 401, statusMessage: 'unauthorized' })
+    throw createError({ statusCode: 401, statusMessage: '未登录' })
   }
 
   const id = Number(getRouterParam(event, 'id'))
   if (!Number.isFinite(id) || id <= 0) {
-    throw createError({ statusCode: 400, statusMessage: 'invalid id' })
+    throw createError({ statusCode: 400, statusMessage: '无效的 ID' })
   }
 
   const pool = getMySqlPool()
   if (!pool) {
-    throw createError({ statusCode: 500, statusMessage: 'MySQL is disabled' })
+    throw createError({ statusCode: 500, statusMessage: '数据库未启用' })
   }
 
   const body = (await readBody(event)) as HandleSubmissionBody
   const action = body?.action
   if (action !== 'approve' && action !== 'reject') {
-    throw createError({ statusCode: 400, statusMessage: 'invalid action' })
+    throw createError({ statusCode: 400, statusMessage: '无效的操作' })
   }
 
   const [rows] = await pool.execute(
@@ -37,12 +37,12 @@ export default defineEventHandler(async (event) => {
   )
   const row = (rows as Array<Record<string, unknown>>)[0]
   if (!row) {
-    throw createError({ statusCode: 404, statusMessage: 'not found' })
+    throw createError({ statusCode: 404, statusMessage: '未找到' })
   }
 
   const currentStatus = String(row.status || '')
   if (currentStatus !== 'pending') {
-    throw createError({ statusCode: 409, statusMessage: 'already handled' })
+    throw createError({ statusCode: 409, statusMessage: '已处理' })
   }
 
   if (action === 'reject') {
@@ -78,9 +78,9 @@ export default defineEventHandler(async (event) => {
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : ''
     if (msg.includes('Duplicate')) {
-      throw createError({ statusCode: 409, statusMessage: 'link already exists' })
+      throw createError({ statusCode: 409, statusMessage: '链接已存在' })
     }
-    throw createError({ statusCode: 500, statusMessage: 'approve failed' })
+    throw createError({ statusCode: 500, statusMessage: '审核通过失败' })
   }
 
   await pool.execute(
@@ -90,4 +90,3 @@ export default defineEventHandler(async (event) => {
 
   return { ok: true }
 })
-
