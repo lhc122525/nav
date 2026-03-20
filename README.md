@@ -44,4 +44,7 @@ pnpm dev
 pnpm build
 pnpm lint
 pnpm check-types
+pnpm -C apps/web db:push
+pnpm -C apps/web db:generate
+pnpm -C apps/web db:migrate
 ```
