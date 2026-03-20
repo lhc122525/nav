@@ -128,6 +128,22 @@
         <el-form-item label="确认密码" prop="passwordConfirm">
           <el-input v-model.trim="registerForm.passwordConfirm" type="password" autocomplete="new-password" show-password />
         </el-form-item>
+        <el-form-item label="验证码" prop="captcha">
+          <div class="captchaRow">
+            <el-input
+              v-model.trim="registerForm.captcha"
+              autocomplete="off"
+              placeholder="请输入验证码"
+              @keydown.enter.prevent="submitRegister"
+            />
+            <el-button class="captchaText" text @click="refreshRegisterCaptcha">
+              {{ registerCaptchaText }}
+            </el-button>
+            <!-- <el-button class="captchaRefresh" text @click="refreshRegisterCaptcha">
+              刷新
+            </el-button> -->
+          </div>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="registerOpen = false">取消</el-button>
@@ -160,7 +176,29 @@ const registerOpen = ref(false)
 
 const loginForm = reactive({ username: '', password: '' })
 const registerFormRef = ref<FormInstance>()
-const registerForm = reactive({ username: '', password: '', passwordConfirm: '' })
+const registerForm = reactive({ username: '', password: '', passwordConfirm: '', captcha: '' })
+
+function generateCaptchaText(length: number) {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
+  const digits = '23456789'
+  const chars = alphabet + digits
+  let result = ''
+  for (let i = 0; i < length; i += 1) result += chars[Math.floor(Math.random() * chars.length)]
+  return result
+}
+
+const registerCaptchaText = ref(generateCaptchaText(5))
+function refreshRegisterCaptcha() {
+  registerCaptchaText.value = generateCaptchaText(5)
+  registerForm.captcha = ''
+  registerFormRef.value?.clearValidate(['captcha'])
+}
+
+watch(registerOpen, (open) => {
+  if (!open) return
+  refreshRegisterCaptcha()
+})
+
 const registerRules: FormRules = {
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
@@ -178,6 +216,19 @@ const registerRules: FormRules = {
         else callback()
       },
       trigger: 'blur',
+    },
+  ],
+  captcha: [
+    { required: true, message: '请输入验证码', trigger: 'blur' },
+    {
+      validator: (_rule, value: unknown, callback: (error?: Error) => void) => {
+        const input = String(value || '').trim().toUpperCase()
+        const expected = String(registerCaptchaText.value || '').trim().toUpperCase()
+        if (!input) callback(new Error('请输入验证码'))
+        else if (input !== expected) callback(new Error('验证码错误，请重试'))
+        else callback()
+      },
+      trigger: ['blur', 'change'],
     },
   ],
 }
@@ -257,6 +308,7 @@ async function submitRegister() {
     registerOpen.value = false
     registerForm.password = ''
     registerForm.passwordConfirm = ''
+    registerForm.captcha = ''
     loginForm.username = registerForm.username
     loginForm.password = ''
     loginOpen.value = true
@@ -266,6 +318,7 @@ async function submitRegister() {
       plain: true,
     })
   } catch {
+    refreshRegisterCaptcha()
     // const msg = typeof (e as { msg?: unknown } | null)?.msg === 'string' ? String((e as { msg?: unknown }).msg) : undefined
     // ElMessage({
     //   message: msg || (e instanceof Error ? e.message : '注册失败，请重试'),
@@ -343,5 +396,27 @@ async function submitRegister() {
   .mobileOnly {
     display: inline-flex;
   }
+}
+
+.captchaRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.captchaText {
+  min-width: 110px;
+  justify-content: center;
+  font-weight: 700;
+  letter-spacing: 2px;
+  border: 1px solid var(--el-border-color);
+  border-radius: 6px;
+  padding: 0 12px;
+  height: 32px;
+}
+
+.captchaRefresh {
+  white-space: nowrap;
 }
 </style>

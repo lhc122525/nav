@@ -8,7 +8,7 @@ const normalizePath = (p: string) => p.replace(/\\/g, '/')
 export default defineNuxtConfig({
   ssr: true,
   devtools: { enabled: true },
-  devServer: { port: 8998 },
+  devServer: { host: '127.0.0.1', port: 8998 },
   modules: ['@element-plus/nuxt', '@nuxt/eslint'],
   css: ['~/assets/styles/main.css'],
   vite: {

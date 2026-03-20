@@ -9,6 +9,7 @@ type AdminLink = {
   description: string
   iconUrl: string
   isActive: boolean
+  isRecommended: boolean
   sort: number
   createdAt: string
   updatedAt: string
@@ -36,25 +37,56 @@ export default defineEventHandler(async (event) => {
     params.push(`%${q}%`, `%${q}%`, `%${q}%`)
   }
 
-  const [rows] = await pool.execute(
-    `SELECT id, category_id, title, url, description, icon_url, is_active, sort, created_at, updated_at
-     FROM links
-     WHERE ${whereParts.join(' AND ')}
-     ORDER BY sort ASC, id DESC
-     LIMIT ${limit}`,
-    params
-  )
+  try {
+    const [rows] = await pool.execute(
+      `SELECT id, category_id, title, url, description, icon_url, is_active, is_recommended, sort, created_at, updated_at
+       FROM links
+       WHERE ${whereParts.join(' AND ')}
+       ORDER BY sort ASC, id DESC
+       LIMIT ${limit}`,
+      params
+    )
 
-  return (rows as Array<Record<string, unknown>>).map((r) => ({
-    id: Number(r.id),
-    categoryId: r.category_id == null ? null : Number(r.category_id),
-    title: String(r.title || ''),
-    url: String(r.url || ''),
-    description: String(r.description || ''),
-    iconUrl: String(r.icon_url || ''),
-    isActive: Boolean(r.is_active),
-    sort: Number(r.sort || 0),
-    createdAt: new Date(String(r.created_at)).toISOString(),
-    updatedAt: new Date(String(r.updated_at)).toISOString()
-  })) as AdminLink[]
+    return (rows as Array<Record<string, unknown>>).map((r) => ({
+      id: Number(r.id),
+      categoryId: r.category_id == null ? null : Number(r.category_id),
+      title: String(r.title || ''),
+      url: String(r.url || ''),
+      description: String(r.description || ''),
+      iconUrl: String(r.icon_url || ''),
+      isActive: Boolean(r.is_active),
+      isRecommended: Boolean(r.is_recommended),
+      sort: Number(r.sort || 0),
+      createdAt: new Date(String(r.created_at)).toISOString(),
+      updatedAt: new Date(String(r.updated_at)).toISOString()
+    })) as AdminLink[]
+  } catch (e: unknown) {
+    const anyError = e as { code?: unknown; message?: unknown }
+    if (anyError?.code !== 'ER_BAD_FIELD_ERROR') throw e
+    if (String(anyError?.message || '').includes('is_recommended')) {
+      const [rows] = await pool.execute(
+        `SELECT id, category_id, title, url, description, icon_url, is_active, sort, created_at, updated_at
+         FROM links
+         WHERE ${whereParts.join(' AND ')}
+         ORDER BY sort ASC, id DESC
+         LIMIT ${limit}`,
+        params
+      )
+
+      return (rows as Array<Record<string, unknown>>).map((r) => ({
+        id: Number(r.id),
+        categoryId: r.category_id == null ? null : Number(r.category_id),
+        title: String(r.title || ''),
+        url: String(r.url || ''),
+        description: String(r.description || ''),
+        iconUrl: String(r.icon_url || ''),
+        isActive: Boolean(r.is_active),
+        isRecommended: false,
+        sort: Number(r.sort || 0),
+        createdAt: new Date(String(r.created_at)).toISOString(),
+        updatedAt: new Date(String(r.updated_at)).toISOString()
+      })) as AdminLink[]
+    }
+    throw e
+  }
 })

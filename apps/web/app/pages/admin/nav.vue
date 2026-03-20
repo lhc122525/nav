@@ -63,6 +63,12 @@
                 {{ categoryName(row.categoryId) }}
               </template>
             </el-table-column>
+            <el-table-column prop="isRecommended" label="推荐" width="90">
+              <template #default="{ row }">
+                <el-tag v-if="row.isRecommended" type="warning">是</el-tag>
+                <el-tag v-else type="info">否</el-tag>
+              </template>
+            </el-table-column>
             <el-table-column prop="isActive" label="启用" width="90">
               <template #default="{ row }">
                 <el-tag v-if="row.isActive" type="success">是</el-tag>
@@ -107,6 +113,9 @@
         <el-form-item label="启用">
           <el-switch v-model="form.isActive" />
         </el-form-item>
+        <el-form-item label="推荐">
+          <el-switch v-model="form.isRecommended" />
+        </el-form-item>
         <el-form-item label="排序">
           <el-input-number v-model="form.sort" :min="0" :max="100000" />
         </el-form-item>
@@ -147,6 +156,7 @@ type AdminLink = {
   description: string
   iconUrl: string
   isActive: boolean
+  isRecommended: boolean
   sort: number
   createdAt: string
   updatedAt: string
@@ -159,6 +169,7 @@ type LinkForm = {
   description: string
   iconUrl: string
   isActive: boolean
+  isRecommended: boolean
   sort: number
 }
 
@@ -189,6 +200,7 @@ const form = reactive<LinkForm>({
   description: '',
   iconUrl: '',
   isActive: true,
+  isRecommended: false,
   sort: 0
 })
 
@@ -238,6 +250,7 @@ function openCreate() {
   form.description = ''
   form.iconUrl = ''
   form.isActive = true
+  form.isRecommended = false
   form.sort = 0
   dialogOpen.value = true
 }
@@ -250,6 +263,7 @@ function openEdit(row: AdminLink) {
   form.description = row.description
   form.iconUrl = row.iconUrl
   form.isActive = row.isActive
+  form.isRecommended = row.isRecommended
   form.sort = row.sort
   dialogOpen.value = true
 }
@@ -262,6 +276,7 @@ async function save() {
     description: form.description,
     iconUrl: form.iconUrl,
     isActive: form.isActive,
+    isRecommended: form.isRecommended,
     sort: form.sort
   }
 

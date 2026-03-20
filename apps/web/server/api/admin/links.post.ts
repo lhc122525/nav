@@ -7,6 +7,7 @@ type CreateLinkBody = {
   description?: string
   iconUrl?: string
   isActive?: boolean
+  isRecommended?: boolean
   sort?: number
 }
 
@@ -22,6 +23,7 @@ export default defineEventHandler(async (event) => {
   const description = String(body?.description || '').trim()
   const iconUrl = String(body?.iconUrl || '').trim()
   const isActive = body?.isActive == null ? true : Boolean(body.isActive)
+  const isRecommended = body?.isRecommended == null ? false : Boolean(body.isRecommended)
   const sort = Number(body?.sort || 0)
 
   const categoryIdRaw = body?.categoryId
@@ -32,18 +34,33 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: '标题和链接不能为空' })
   }
 
-  const [result] = await pool.execute(
-    'INSERT INTO links (category_id, title, url, description, icon_url, is_active, sort) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [
-      categoryId,
-      title,
-      url,
-      description,
-      iconUrl,
-      isActive ? 1 : 0,
-      Number.isFinite(sort) ? sort : 0
-    ]
-  )
+  let result: unknown
+  try {
+    ;[result] = await pool.execute(
+      'INSERT INTO links (category_id, title, url, description, icon_url, is_active, is_recommended, sort) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        categoryId,
+        title,
+        url,
+        description,
+        iconUrl,
+        isActive ? 1 : 0,
+        isRecommended ? 1 : 0,
+        Number.isFinite(sort) ? sort : 0
+      ]
+    )
+  } catch (e: unknown) {
+    const anyError = e as { code?: unknown; message?: unknown }
+    if (anyError?.code !== 'ER_BAD_FIELD_ERROR') throw e
+    if (String(anyError?.message || '').includes('is_recommended')) {
+      ;[result] = await pool.execute(
+        'INSERT INTO links (category_id, title, url, description, icon_url, is_active, sort) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [categoryId, title, url, description, iconUrl, isActive ? 1 : 0, Number.isFinite(sort) ? sort : 0]
+      )
+    } else {
+      throw e
+    }
+  }
 
   return { id: Number((result as { insertId?: number }).insertId) }
 })

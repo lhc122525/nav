@@ -7,6 +7,7 @@ type UpdateLinkBody = {
   description?: string
   iconUrl?: string
   isActive?: boolean
+  isRecommended?: boolean
   sort?: number
 }
 
@@ -28,6 +29,7 @@ export default defineEventHandler(async (event) => {
   const description = body?.description != null ? String(body.description).trim() : undefined
   const iconUrl = body?.iconUrl != null ? String(body.iconUrl).trim() : undefined
   const isActive = body?.isActive != null ? Boolean(body.isActive) : undefined
+  const isRecommended = body?.isRecommended != null ? Boolean(body.isRecommended) : undefined
   const sort = body?.sort != null ? Number(body.sort) : undefined
 
   const categoryIdRaw = body?.categoryId
@@ -74,6 +76,10 @@ export default defineEventHandler(async (event) => {
     fields.push('is_active = ?')
     values.push(isActive ? 1 : 0)
   }
+  if (isRecommended !== undefined) {
+    fields.push('is_recommended = ?')
+    values.push(isRecommended ? 1 : 0)
+  }
   if (sort !== undefined) {
     fields.push('sort = ?')
     values.push(Number.isFinite(sort) ? sort : 0)
@@ -82,6 +88,26 @@ export default defineEventHandler(async (event) => {
   if (fields.length === 0) return { ok: true }
 
   values.push(id)
-  await pool.execute(`UPDATE links SET ${fields.join(', ')} WHERE id = ?`, values)
+  try {
+    await pool.execute(`UPDATE links SET ${fields.join(', ')} WHERE id = ?`, values)
+  } catch (e: unknown) {
+    const anyError = e as { code?: unknown; message?: unknown }
+    if (anyError?.code !== 'ER_BAD_FIELD_ERROR') throw e
+    if (!String(anyError?.message || '').includes('is_recommended')) throw e
+
+    const degradedFields: string[] = []
+    const degradedValues: Array<string | number | null> = []
+    for (let i = 0; i < fields.length; i += 1) {
+      const f = fields[i]!
+      const v = values[i]!
+      if (f === 'is_recommended = ?') continue
+      degradedFields.push(f)
+      degradedValues.push(v)
+    }
+
+    if (degradedFields.length === 0) return { ok: true }
+    degradedValues.push(id)
+    await pool.execute(`UPDATE links SET ${degradedFields.join(', ')} WHERE id = ?`, degradedValues)
+  }
   return { ok: true }
 })
