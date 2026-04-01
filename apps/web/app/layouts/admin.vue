@@ -101,5 +101,9 @@ function onSelect(index: string) {
 .main {
   padding: 12px 0;
 }
+
+.container{
+  max-width: 100%;
+}
 </style>
 

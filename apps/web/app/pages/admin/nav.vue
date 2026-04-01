@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-row :gutter="12">
-      <el-col :xs="24" :md="7" :lg="6">
+      <el-col :xs="24" :md="7" :lg="5">
         <el-card shadow="never">
           <template #header>
             <div class="cardHeader">
@@ -14,8 +14,8 @@
 
           <el-table :data="categories" size="small" row-key="id" style="width: 100%">
             <el-table-column prop="name" label="名称" min-width="120" />
-            <el-table-column prop="slug" label="slug" min-width="120" />
-            <el-table-column prop="sort" label="排序" width="70" />
+            <!-- <el-table-column prop="slug" label="slug" min-width="120" /> -->
+            <!-- <el-table-column prop="sort" label="排序" width="70" /> -->
             <el-table-column label="操作" width="120">
               <template #default="{ row }">
                 <el-button link type="primary" @click="openCategoryEdit(row)">
@@ -30,7 +30,7 @@
         </el-card>
       </el-col>
 
-      <el-col :xs="24" :md="17" :lg="18">
+      <el-col :xs="24" :md="17" :lg="19">
         <el-card shadow="never" style="margin-bottom: 12px">
           <el-form :inline="true" @submit.prevent>
             <el-form-item label="关键词">

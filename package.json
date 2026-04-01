@@ -16,5 +16,12 @@
   "packageManager": "pnpm@10.23.0",
   "engines": {
     "node": ">=18"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "esbuild",
+      "mysql2"
+    ]
   }
 }

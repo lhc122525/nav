@@ -1,64 +1,60 @@
 <template>
-  <el-container>
-    <el-header height="56px">
-      <div class="container header">
+  <el-container class="layoutContainer">
+    <el-header height="60px" class="mainHeader" :class="{ 'isDark': isHome }">
+      <div class="container headerContent">
         <NuxtLink class="brand" to="/">
-          {{ siteName }}
+          <el-icon :size="18" class="brandIcon"><StarFilled /></el-icon>
+          <span class="brandText">mini首页</span>
         </NuxtLink>
-        <div class="desktopOnly">
-          <NuxtLink class="nav" to="/">
-            首页
+
+        <nav class="desktopNav">
+          <NuxtLink class="navLink" to="/submit" active-class="active">
+            <el-icon class="navIcon yellow"><Star /></el-icon> 申请收录
           </NuxtLink>
-          <NuxtLink class="nav" to="/submit">
-            申请收录
+          <NuxtLink class="navLink" to="/guestbook" active-class="active">
+            <el-icon class="navIcon red"><ChatDotRound /></el-icon> 留言板
           </NuxtLink>
-          <NuxtLink class="nav" to="/guestbook">
-            留言板
-          </NuxtLink>
-        </div>
+        </nav>
+
         <div class="spacer" />
-        <div class="desktopOnly">
-          <el-dropdown v-if="!me?.user" @command="onGuestCommand">
-            <span class="userTrigger">
-              未登录
-            </span>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="login">
-                  登录
-                </el-dropdown-item>
-                <el-dropdown-item command="register">
-                  注册
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+
+        <div class="headerActions desktopNav">
+          <div v-if="isHome" class="headerTime">
+            <span class="time">{{ nowTimeText }}</span>
+            <span class="date">{{ nowDateText }}</span>
+          </div>
+
+          <el-button link class="actionIconBtn">
+            <el-icon :size="18"><ChatLineRound /></el-icon>
+          </el-button>
+          
+          <el-button v-if="!me?.user" type="success" class="loginBtn" @click="onGuestCommand('login')">
+            登录
+          </el-button>
           <el-dropdown v-else @command="onUserCommand">
-            <span class="userTrigger">
-              {{ me.user.username }}
-            </span>
+            <el-button link class="userProfile">
+              <el-avatar :size="28" class="userAvatar">{{ me.user.username[0] }}</el-avatar>
+              <span class="username">{{ me.user.username }}</span>
+              <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+            </el-button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="logout">
-                  退出登录
+                <el-dropdown-item command="logout" class="logoutItem">
+                  <el-icon><SwitchButton /></el-icon> 退出登录
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
-          <!-- <NuxtLink class="link" to="/admin/nav">
-            后台
-          </NuxtLink>
-          <NuxtLink class="link" to="/openapi">
-            OpenAPI
-          </NuxtLink> -->
         </div>
-        <el-button class="mobileOnly" @click="mobileMenuOpen = true">
-          菜单
+
+        <el-button class="mobileMenuBtn" circle @click="mobileMenuOpen = true">
+          <el-icon :size="20"><MenuIcon /></el-icon>
         </el-button>
       </div>
     </el-header>
-    <el-main>
-      <div class="container page">
+
+    <el-main class="layoutMain">
+      <div class="mainContent">
         <slot />
       </div>
     </el-main>
@@ -156,11 +152,46 @@
 </template>
 
 <script setup lang="ts">
+import {
+  StarFilled,
+  Star,
+  ArrowDown,
+  SwitchButton,
+  Promotion,
+  ChatDotRound,
+  ChatLineRound,
+  Menu as MenuIcon
+} from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage } from 'element-plus'
 
 const { public: publicConfig } = useRuntimeConfig()
 const siteName = computed(() => publicConfig.siteName || '导航站')
+const isHome = computed(() => route.path === '/')
+
+const now = ref(new Date())
+let timer: ReturnType<typeof setInterval> | undefined
+onMounted(() => {
+  timer = setInterval(() => {
+    now.value = new Date()
+  }, 1000)
+})
+onBeforeUnmount(() => {
+  if (timer) clearInterval(timer)
+})
+
+const nowTimeText = computed(() => {
+  const d = now.value
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  return `${hh}:${mm}`
+})
+const nowDateText = computed(() => {
+  const d = now.value
+  const date = new Intl.DateTimeFormat('zh-CN', { month: '2-digit', day: '2-digit' }).format(d)
+  const weekday = new Intl.DateTimeFormat('zh-CN', { weekday: 'short' }).format(d)
+  return `${date} ${weekday}`
+})
 
 type MeResponse = { user: null | { id: number; username: string; role: 'admin' | 'user' } }
 
@@ -333,69 +364,244 @@ async function submitRegister() {
 </script>
 
 <style scoped>
-.header {
+.layoutContainer {
+  min-height: 100vh;
+  background-color: #f6f8fa;
+  overflow: visible;
+}
+
+.mainHeader {
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #e1e4e8;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
   display: flex;
   align-items: center;
-  height: 56px;
+  transition: all 0.3s;
+}
+
+.mainHeader.isDark {
+  background-color: #000;
+  border-bottom: none;
+  backdrop-filter: none;
+}
+
+.actionIconBtn {
+  color: rgba(255, 255, 255, 0.6);
+  padding: 8px;
+}
+
+.actionIconBtn:hover {
+  color: #fff;
+}
+
+.headerContent {
+  display: flex;
+  align-items: center;
+  width: 100%;
 }
 
 .brand {
-  font-size: 16px;
-  font-weight: 600;
-  color: inherit;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   text-decoration: none;
+  color: #24292e;
+  margin-right: 30px;
+}
+
+.isDark .brand {
+  color: #fff;
+}
+
+.brandIcon {
+  color: #0969da;
+}
+
+.isDark .brandIcon {
+  color: #ffca28;
+}
+
+.navIcon {
+  font-size: 16px;
+}
+
+.navIcon.yellow {
+  color: #ffca28;
+}
+
+.navIcon.red {
+  color: #ff4d4f;
+}
+
+.brandText {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.desktopNav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.navLink {
+  text-decoration: none;
+  color: #57606a;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.isDark .navLink {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.navLink:hover {
+  background-color: #f3f4f6;
+  color: #24292e;
+}
+
+.isDark .navLink:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.navLink.active {
+  color: #0969da;
+  background-color: #eaf2ff;
+  font-weight: 600;
+}
+
+.isDark .navLink.active {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .spacer {
   flex: 1;
 }
 
-.nav {
-  margin-left: 14px;
-  color: inherit;
-  text-decoration: none;
-  opacity: 0.9;
-}
-
-.link {
-  margin-left: 14px;
-  color: inherit;
-  text-decoration: none;
-  opacity: 0.9;
-}
-
-.userTrigger {
-  margin-left: 14px;
-  cursor: pointer;
-  opacity: 0.95;
-  user-select: none;
-}
-
-.desktopOnly {
+.headerTime {
   display: flex;
   align-items: center;
+  gap: 8px;
+  margin-right: 16px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-.mobileOnly {
+.headerTime .time {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.headerTime .date {
+  opacity: 0.8;
+}
+
+.loginBtn {
+  font-weight: 600;
+  border-radius: 18px;
+  padding: 6px 16px;
+  height: 32px;
+  font-size: 13px;
+  background-color: #28c76f !important;
+  border-color: #28c76f !important;
+}
+
+.userProfile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.isDark .userProfile {
+  color: #fff;
+}
+
+.userProfile:hover {
+  background-color: #f3f4f6;
+}
+
+.isDark .userProfile:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.username {
+  font-weight: 600;
+  color: #24292e;
+}
+
+.isDark .username {
+  color: #fff;
+}
+
+.userAvatar {
+  background-color: #0969da;
+  font-weight: 700;
+}
+
+.logoutItem {
+  color: #cf222e;
+}
+
+.mobileMenuBtn {
   display: none;
 }
 
-.mobileUser {
-  margin-bottom: 12px;
+.isDark .mobileMenuBtn {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+  background: transparent;
 }
 
-.mobileUsername {
-  font-weight: 600;
+.layoutMain {
+  padding: 0;
+  overflow: visible;
+}
+
+.mainContent {
+  padding: 0;
+  overflow: visible;
 }
 
 @media (max-width: 768px) {
-  .desktopOnly {
+  .desktopNav {
     display: none;
   }
-
-  .mobileOnly {
-    display: inline-flex;
+  .mobileMenuBtn {
+    display: flex;
   }
+  .brand {
+    margin-right: 0;
+  }
+}
+
+.mobileUser {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #f1f2f4;
+}
+
+.mobileUsername {
+  font-size: 18px;
+  font-weight: 700;
+  color: #24292e;
 }
 
 .captchaRow {
