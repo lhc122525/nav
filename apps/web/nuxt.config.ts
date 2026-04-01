@@ -6,7 +6,7 @@ const dayjsEsmDir = dirname(require.resolve('dayjs/esm/index.js'))
 const normalizePath = (p: string) => p.replace(/\\/g, '/')
 
 export default defineNuxtConfig({
-  ssr: true,
+  ssr: false,
   devtools: { enabled: true },
   devServer: { host: '127.0.0.1', port: 8998 },
   modules: ['@element-plus/nuxt', '@nuxt/eslint'],

@@ -7,12 +7,12 @@ export default defineEventHandler(async (event) => {
   const { type, id } = body
   
   if (!type || !id || !['engine', 'link'].includes(type)) {
-    throw createError({ statusCode: 400, statusMessage: '参数错误' })
+    return { success: false, message: '参数错误' }
   }
 
   const pool = getMySqlPool()
   if (!pool) {
-    throw createError({ statusCode: 500, statusMessage: '数据库未启用' })
+    return { success: false, message: '数据库未启用' }
   }
 
   // 1. 获取当前用户 ID (如果已登录)

@@ -54,7 +54,7 @@
       <div class="container mainLayout">
         <el-row :gutter="24">
           <!-- Sidebar: Visible on Desktop -->
-          <el-col :md="6" :lg="5" class="mainSidebar">
+          <el-col :md="4" :lg="4" class="mainSidebar">
             <aside class="aside">
               <div class="asideContent">
                 <div class="asideHeader">
@@ -76,7 +76,7 @@
           </el-col>
 
           <!-- Main Content Area -->
-          <el-col :xs="24" :md="18" :lg="19" class="mainContentArea">
+          <el-col :xs="24" :md="20" :lg="20" class="mainContentArea">
             <section class="block contentArea" v-if="activeCategoryId === 0">
               <el-row :gutter="20">
                 <el-col :xs="24" :xl="8" :lg="8" :md="24">
@@ -272,15 +272,33 @@ function onSelect(index: string) {
   navigateTo({ path: '/', query }, { replace: true })
 }
 
+// 统计埋点记录，带简易防抖
+const lastStatsRecord = new Map<string, number>()
+async function recordStats(type: 'engine' | 'link', id: number) {
+  const key = `${type}_${id}`
+  const now = Date.now()
+  const lastTime = lastStatsRecord.get(key) || 0
+  
+  // 1秒内重复点击同一项不计入统计
+  if (now - lastTime < 1000) return
+  
+  lastStatsRecord.set(key, now)
+  try {
+    await $fetch('/api/stats/record', {
+      method: 'POST',
+      body: { type, id }
+    })
+  } catch (err) {
+    // 接口报错时静默处理，不抛出异常，允许下次尝试
+    lastStatsRecord.delete(key)
+  }
+}
+
 function open(url: string, linkId?: number) {
   if (!url) return
   
   if (linkId) {
-    // 记录导航点击统计
-    $fetch('/api/stats/record', {
-      method: 'POST',
-      body: { type: 'link', id: linkId }
-    }).catch(() => {})
+    recordStats('link', linkId)
   }
 
   navigateTo(url, { external: true, open: { target: '_blank' } })
@@ -313,8 +331,31 @@ interface SearchCategory {
   engines: SearchEngine[]
 }
 
+const { data: userData } = await useFetch<{ user: { id: number; username: string; role: string } | null }>('/api/auth/me', { server: true })
+const user = computed(() => userData.value?.user)
+
+const { data: commonEnginesData } = await useFetch<{ engines: SearchEngine[] }>('/api/stats/common-engines', { 
+  server: true,
+  watch: [user] // 当用户信息变化时重新获取
+})
+
 const { data: searchCategoriesData } = await useFetch<SearchCategory[]>('/api/search-categories', { server: true })
-const searchCategories = computed(() => searchCategoriesData.value || [])
+
+const searchCategories = computed(() => {
+  const categories = [...(searchCategoriesData.value || [])]
+  
+  // 如果已登录且有常用引擎，则在最前面插入【常用】栏
+  if (user.value && commonEnginesData.value?.engines && commonEnginesData.value.engines.length > 0) {
+    const commonCategory: SearchCategory = {
+      id: -1, // 使用一个特殊 ID 表示“常用”
+      name: '常用',
+      engines: commonEnginesData.value.engines
+    }
+    categories.unshift(commonCategory)
+  }
+  
+  return categories
+})
 
 const activeSearchTabId = ref<number | null>(null)
 const activeEngineId = ref<number | null>(null)
@@ -326,25 +367,32 @@ const CACHE_KEY_ENGINE_PREFIX = 'search_engine_id_'
 
 // 初始化默认选中的分类和引擎
 watch(searchCategories, (newVal) => {
-  if (newVal && newVal.length > 0 && activeSearchTabId.value === null) {
-    // 1. 优先从本地缓存获取
-    const cachedTabId = localStorage.getItem(CACHE_KEY_TAB)
-    if (cachedTabId && newVal.some(c => c.id === Number(cachedTabId))) {
-      activeSearchTabId.value = Number(cachedTabId)
-    } else {
-      // 2. 否则选中第一个
-      activeSearchTabId.value = newVal[0].id
+  if (newVal && newVal.length > 0) {
+    const isValid = activeSearchTabId.value !== null && newVal.some(c => c.id === activeSearchTabId.value)
+    
+    if (!isValid) {
+      // 1. 优先从本地缓存获取
+      const cachedTabId = localStorage.getItem(CACHE_KEY_TAB)
+      if (cachedTabId && newVal.some(c => c.id === Number(cachedTabId))) {
+        activeSearchTabId.value = Number(cachedTabId)
+      } else {
+        // 2. 否则选中第一个
+        activeSearchTabId.value = newVal[0].id
+      }
     }
     
     // 强制触发一次引擎选中逻辑（针对首个分类）
     const engines = newVal.find(c => c.id === activeSearchTabId.value)?.engines || []
     if (engines.length > 0) {
-      const cachedEngineId = localStorage.getItem(CACHE_KEY_ENGINE_PREFIX + activeSearchTabId.value)
-      if (cachedEngineId && engines.some(e => e.id === Number(cachedEngineId))) {
-        activeEngineId.value = Number(cachedEngineId)
-      } else {
-        const defaultEngine = engines.find(e => e.isDefault) || engines[0]
-        activeEngineId.value = defaultEngine.id
+      const isValidEngine = activeEngineId.value !== null && engines.some(e => e.id === activeEngineId.value)
+      if (!isValidEngine) {
+        const cachedEngineId = localStorage.getItem(CACHE_KEY_ENGINE_PREFIX + activeSearchTabId.value)
+        if (cachedEngineId && engines.some(e => e.id === Number(cachedEngineId))) {
+          activeEngineId.value = Number(cachedEngineId)
+        } else {
+          const defaultEngine = engines.find(e => e.isDefault) || engines[0]
+          activeEngineId.value = defaultEngine.id
+        }
       }
     }
   }
@@ -396,11 +444,8 @@ function submitSearch() {
   const kw = searchKeyword.value.trim()
   if (!kw || !activeEngine.value) return
   
-  // 记录搜索统计
-  $fetch('/api/stats/record', {
-    method: 'POST',
-    body: { type: 'engine', id: activeEngine.value.id }
-  }).catch(() => {})
+  // 记录搜索统计 (防抖)
+  recordStats('engine', activeEngine.value.id)
 
   let url = activeEngine.value.url
   if (url.includes('%s')) {
@@ -698,6 +743,7 @@ function submitSearch() {
   display: flex;
   gap: 12px;
   align-items: center;
+  padding: 10px;
 }
 
 .linkIcon {
@@ -744,7 +790,7 @@ function submitSearch() {
   font-size: 12px;
   color: #57606a;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
   line-height: 1.4;
