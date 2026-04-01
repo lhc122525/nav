@@ -54,29 +54,54 @@
 
         <el-card shadow="never">
           <el-table :data="rows" style="width: 100%" row-key="id">
-            <el-table-column prop="id" label="ID" width="80" />
+            <el-table-column prop="id" label="ID" width="60" />
+            <el-table-column prop="iconUrl" label="图标" width="60">
+              <template #default="{ row }">
+                <el-image
+                  v-if="row.iconUrl"
+                  :src="row.iconUrl"
+                  style="width: 24px; height: 24px"
+                  fit="contain"
+                  :preview-src-list="[row.iconUrl]"
+                  preview-teleported
+                >
+                  <template #error>
+                    <div style="font-size: 12px; color: #999">N/A</div>
+                  </template>
+                </el-image>
+                <span v-else>-</span>
+              </template>
+            </el-table-column>
             <el-table-column prop="title" label="标题" min-width="180" />
             <el-table-column prop="url" label="URL" min-width="220" />
-            <el-table-column prop="description" label="描述" min-width="200" />
+            <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
             <el-table-column prop="categoryId" label="分类" width="140">
               <template #default="{ row }">
                 {{ categoryName(row.categoryId) }}
               </template>
             </el-table-column>
-            <el-table-column prop="isRecommended" label="推荐" width="90">
+            <el-table-column prop="isRecommended" label="推荐" width="80">
               <template #default="{ row }">
-                <el-tag v-if="row.isRecommended" type="warning">是</el-tag>
-                <el-tag v-else type="info">否</el-tag>
+                <el-switch
+                  v-model="row.isRecommended"
+                  size="small"
+                  :loading="updatingRows.has(row.id)"
+                  @change="(val: boolean) => toggleLinkStatus(row, 'isRecommended', val)"
+                />
               </template>
             </el-table-column>
-            <el-table-column prop="isActive" label="启用" width="90">
+            <el-table-column prop="isActive" label="启用" width="80">
               <template #default="{ row }">
-                <el-tag v-if="row.isActive" type="success">是</el-tag>
-                <el-tag v-else type="info">否</el-tag>
+                <el-switch
+                  v-model="row.isActive"
+                  size="small"
+                  :loading="updatingRows.has(row.id)"
+                  @change="(val: boolean) => toggleLinkStatus(row, 'isActive', val)"
+                />
               </template>
             </el-table-column>
             <el-table-column prop="sort" label="排序" width="90" />
-            <el-table-column label="操作" width="180">
+            <el-table-column label="操作" width="110" fixed="right">
               <template #default="{ row }">
                 <el-button link type="primary" @click="openEdit(row)">
                   编辑
@@ -97,7 +122,10 @@
           <el-input v-model="form.title" />
         </el-form-item>
         <el-form-item label="URL">
-          <el-input v-model="form.url" />
+          <div style="display: flex; gap: 8px; width: 100%">
+            <el-input v-model="form.url" placeholder="https://..." />
+            <el-button type="primary" :loading="crawling" @click="crawlUrl">获取信息</el-button>
+          </div>
         </el-form-item>
         <el-form-item label="描述">
           <el-input v-model="form.description" type="textarea" :rows="3" />
@@ -108,7 +136,19 @@
           </el-select>
         </el-form-item>
         <el-form-item label="图标">
-          <el-input v-model="form.iconUrl" placeholder="https://..." />
+          <div style="display: flex; gap: 8px; width: 100%; align-items: center">
+            <el-input v-model="form.iconUrl" placeholder="https://..." />
+            <el-image
+              v-if="form.iconUrl"
+              :src="form.iconUrl"
+              style="width: 32px; height: 32px; flex-shrink: 0"
+              fit="contain"
+            >
+              <template #error>
+                <div style="font-size: 12px; color: #999">N/A</div>
+              </template>
+            </el-image>
+          </div>
         </el-form-item>
         <el-form-item label="启用">
           <el-switch v-model="form.isActive" />
@@ -192,6 +232,8 @@ const categories = ref<Category[]>([])
 
 const rows = ref<AdminLink[]>([])
 const dialogOpen = ref(false)
+const crawling = ref(false)
+const updatingRows = reactive(new Set<number>())
 const editing = ref<AdminLink | null>(null)
 const form = reactive<LinkForm>({
   categoryId: null,
@@ -268,6 +310,49 @@ function openEdit(row: AdminLink) {
   dialogOpen.value = true
 }
 
+async function crawlUrl() {
+  const url = form.url?.trim()
+  if (!url || !url.startsWith('http')) {
+    ElMessage.warning('请输入有效的 HTTP(S) 地址')
+    return
+  }
+
+  crawling.value = true
+  try {
+    const data = await $api<{ title: string; description: string; iconUrl: string; url: string }>('/api/admin/links/crawl', {
+      method: 'POST',
+      body: { url }
+    })
+    
+    if (data.title) form.title = data.title
+    if (data.description) form.description = data.description
+    if (data.iconUrl) form.iconUrl = data.iconUrl
+    if (data.url) form.url = data.url
+
+    ElMessage.success('获取成功')
+  } catch (e: any) {
+    ElMessage.error(e.statusMessage || '获取失败')
+  } finally {
+    crawling.value = false
+  }
+}
+
+async function toggleLinkStatus(row: AdminLink, field: 'isActive' | 'isRecommended', value: boolean) {
+  updatingRows.add(row.id)
+  try {
+    await $api(`/api/admin/links/${row.id}`, {
+      method: 'PUT',
+      body: { [field]: value }
+    })
+    ElMessage.success('更新成功')
+  } catch (e: any) {
+    row[field] = !value // 失败时回滚状态
+    ElMessage.error(e.statusMessage || '更新失败')
+  } finally {
+    updatingRows.delete(row.id)
+  }
+}
+
 async function save() {
   const payload = {
     categoryId: form.categoryId,
@@ -291,8 +376,23 @@ async function save() {
 }
 
 async function remove(row: AdminLink) {
-  await $api(`/api/admin/links/${row.id}`, { method: 'DELETE' })
-  await reloadLinks()
+  try {
+    await ElMessageBox.confirm(`确定要删除链接 "${row.title}" 吗？`, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+  } catch {
+    return
+  }
+
+  try {
+    await $api(`/api/admin/links/${row.id}`, { method: 'DELETE' })
+    ElMessage.success('删除成功')
+    await reloadLinks()
+  } catch (e: any) {
+    ElMessage.error('删除失败')
+  }
 }
 
 function openCategoryCreate() {
@@ -323,8 +423,28 @@ async function saveCategory() {
 }
 
 async function removeCategory(row: Category) {
-  await $api(`/api/admin/categories/${row.id}`, { method: 'DELETE' })
-  await reloadCategories()
+  try {
+    await ElMessageBox.confirm(`确定要删除分类 "${row.name}" 吗？`, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+  } catch {
+    return
+  }
+
+  try {
+    await $api(`/api/admin/categories/${row.id}`, { method: 'DELETE' })
+    ElMessage.success('删除成功')
+    await reloadCategories()
+  } catch (e: any) {
+    const status = getErrorStatus(e)
+    if (status === 409) {
+      // ElMessage.error(e.statusMessage || '该分类中有导航数据，禁止删除')
+    } else {
+      ElMessage.error('删除失败')
+    }
+  }
 }
 
 try {

@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   const [rows] = await pool.execute('SELECT COUNT(1) AS cnt FROM links WHERE category_id = ?', [id])
   const cnt = Number((rows as Array<Record<string, unknown>>)[0]?.cnt || 0)
   if (cnt > 0) {
-    throw createError({ statusCode: 409, statusMessage: '该分类下仍有链接' })
+    throw createError({ statusCode: 409, statusMessage: '该分类下有导航数据，禁止删除' })
   }
 
   const [result] = await pool.execute('DELETE FROM categories WHERE id = ?', [id])
