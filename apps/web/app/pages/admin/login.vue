@@ -27,6 +27,7 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({ layout: false })
 useHead(() => ({ title: '后台登录 - 导航站' }))
 
 const username = ref('')

@@ -1,5 +1,5 @@
 <template>
-  <NuxtLayout name="admin">
+  <div>
     <el-row :gutter="12">
       <!-- 左侧分类列表 -->
       <el-col :xs="24" :md="7" :lg="4">
@@ -131,7 +131,7 @@
         <el-button type="primary" :loading="engineDialog.loading" @click="submitEngine">确定</el-button>
       </template>
     </el-dialog>
-  </NuxtLayout>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -140,7 +140,8 @@ import { Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 definePageMeta({
-  middleware: ['admin-auth']
+  middleware: ['admin-auth'],
+  layout: 'admin'
 })
 
 // 分类数据

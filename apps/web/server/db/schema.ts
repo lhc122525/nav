@@ -141,6 +141,8 @@ export const guestbookMessages = mysqlTable(
   'guestbook_messages',
   {
     id: bigint('id', { mode: 'number', unsigned: true }).autoincrement().notNull().primaryKey(),
+    userId: bigint('user_id', { mode: 'number', unsigned: true })
+      .references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
     nickname: varchar('nickname', { length: 50 }).notNull().default(''),
     content: varchar('content', { length: 500 }).notNull(),
     isVisible: boolean('is_visible').notNull().default(true),
@@ -150,7 +152,8 @@ export const guestbookMessages = mysqlTable(
   },
   (table) => ({
     idxGuestbookVisible: index('idx_guestbook_visible').on(table.isVisible),
-    idxGuestbookCreated: index('idx_guestbook_created').on(table.createdAt)
+    idxGuestbookCreated: index('idx_guestbook_created').on(table.createdAt),
+    idxGuestbookUser: index('idx_guestbook_user').on(table.userId)
   })
 )
 
@@ -220,4 +223,32 @@ export const linkStats = mysqlTable(
     ukLinkStats: uniqueIndex('uk_link_stats').on(table.linkId, table.userId, table.date),
     idxLinkStatsDate: index('idx_link_stats_date').on(table.date)
   })
+)
+
+export const ads = mysqlTable(
+  'ads',
+  {
+    id: bigint('id', { mode: 'number', unsigned: true }).autoincrement().notNull().primaryKey(),
+    title: varchar('title', { length: 100 }).notNull(),
+    imageUrl: varchar('image_url', { length: 500 }).notNull(),
+    url: varchar('url', { length: 500 }).notNull(),
+    sort: int('sort').notNull().default(0),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow().onUpdateNow()
+  },
+  (table) => ({
+    idxAdsSort: index('idx_ads_sort').on(table.sort),
+    idxAdsActive: index('idx_ads_active').on(table.isActive)
+  })
+)
+
+export const adConfigs = mysqlTable(
+  'ad_configs',
+  {
+    id: bigint('id', { mode: 'number', unsigned: true }).autoincrement().notNull().primaryKey(),
+    displayCount: int('display_count').notNull().default(2),
+    isRandom: boolean('is_random').notNull().default(false),
+    updatedAt: timestamp('updated_at').notNull().defaultNow().onUpdateNow()
+  }
 )

@@ -33,10 +33,10 @@ function getMySqlConfig(): MySqlConfig {
   if (!host && isDev) {
     return {
       host: '127.0.0.1',
-      port: 3306,
-      user: user || 'navigation',
-      password: password || 'navigation_password',
-      database: database || 'navigation'
+      port: 8999,
+      user: user || 'nszm',
+      password: password || 'nszm123..',
+      database: database || 'nav'
     }
   }
 

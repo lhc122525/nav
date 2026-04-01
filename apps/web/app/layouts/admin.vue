@@ -39,6 +39,10 @@
             <el-icon><Document /></el-icon>
             <template #title>收录管理</template>
           </el-menu-item>
+          <el-menu-item index="/admin/ads">
+            <el-icon><Picture /></el-icon>
+            <template #title>广告管理</template>
+          </el-menu-item>
         </el-menu>
       </el-scrollbar>
     </el-aside>
@@ -74,6 +78,7 @@ const active = computed(() => {
   if (route.path.startsWith('/admin/include')) return '/admin/include'
   if (route.path.startsWith('/admin/search')) return '/admin/search'
   if (route.path.startsWith('/admin/stats')) return '/admin/stats'
+  if (route.path.startsWith('/admin/ads')) return '/admin/ads'
   return '/admin/nav'
 })
 

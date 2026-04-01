@@ -1,8 +1,8 @@
 import { getMySqlPool } from '../utils/mysql'
-import { getHeader, getRequestIP } from 'h3'
+import { getCookie, getHeader, getRequestIP } from 'h3'
+import { USER_SESSION_COOKIE } from '../utils/userAuth'
 
 type CreateMessageBody = {
-  nickname?: string
   content?: string
 }
 
@@ -12,8 +12,29 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: '数据库未启用' })
   }
 
+  // Verify login
+  const token = getCookie(event, USER_SESSION_COOKIE)
+  if (!token) {
+    throw createError({ statusCode: 401, statusMessage: '请登录后再试' })
+  }
+
+  const [sessionRows] = await pool.execute(
+    `SELECT s.expires_at, u.id, u.username, u.is_active
+     FROM user_sessions s
+     JOIN users u ON u.id = s.user_id
+     WHERE s.token = ?
+     LIMIT 1`,
+    [token]
+  )
+  const sessionRow = (sessionRows as Array<Record<string, unknown>>)[0]
+  if (!sessionRow || Number(sessionRow.is_active) !== 1 || new Date(String(sessionRow.expires_at)).getTime() <= Date.now()) {
+    throw createError({ statusCode: 401, statusMessage: '登录已过期，请重新登录' })
+  }
+
+  const userId = Number(sessionRow.id)
+  const username = String(sessionRow.username)
+
   const body = (await readBody(event)) as CreateMessageBody
-  const nickname = String(body?.nickname || '').trim()
   const content = String(body?.content || '').trim()
 
   if (!content) {
@@ -36,8 +57,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const [result] = await pool.execute(
-    'INSERT INTO guestbook_messages (nickname, content, is_visible, ip, user_agent) VALUES (?, ?, 1, ?, ?)',
-    [nickname, content, ip, ua]
+    'INSERT INTO guestbook_messages (user_id, nickname, content, is_visible, ip, user_agent) VALUES (?, ?, ?, 1, ?, ?)',
+    [userId, username, content, ip, ua]
   )
 
   return { ok: true, id: Number((result as { insertId?: number }).insertId) }

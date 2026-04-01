@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="container">
     <el-card shadow="never" style="margin-bottom: 12px">
       <template #header>
         <div class="header">
@@ -7,12 +7,20 @@
         </div>
       </template>
 
-      <el-form label-width="72px" @submit.prevent>
-        <el-form-item label="昵称">
-          <el-input v-model="form.nickname" placeholder="可选" />
+      <div v-if="!me?.user" class="login-tip">
+        <el-alert type="info" :closable="false" show-icon>
+          请登录后再发表留言。
+        </el-alert>
+      </div>
+      <el-form v-else label-width="72px" @submit.prevent>
+        <el-form-item label="发言人">
+          <div class="current-user">
+            <el-avatar :size="24">{{ me.user.username[0] }}</el-avatar>
+            <span class="username">{{ me.user.username }}</span>
+          </div>
         </el-form-item>
         <el-form-item label="内容">
-          <el-input v-model="form.content" type="textarea" :rows="3" />
+          <el-input v-model="form.content" type="textarea" :rows="3" placeholder="请输入留言内容" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="submitting" @click="submit">
@@ -21,7 +29,7 @@
         </el-form-item>
       </el-form>
 
-      <el-alert v-if="status.type" :type="status.type" :title="status.message" show-icon />
+      <el-alert v-if="status.type" :type="status.type" :title="status.message" show-icon style="margin-top: 12px" />
     </el-card>
 
     <el-card shadow="never">
@@ -30,32 +38,64 @@
           最新留言
         </div>
       </template>
-      <el-empty v-if="messages.length === 0" description="暂无留言" />
-      <el-timeline v-else>
-        <el-timeline-item v-for="m in messages" :key="m.id" :timestamp="formatTime(m.createdAt)">
-          <div class="msgTitle">
-            <span class="nickname">{{ m.nickname || '匿名' }}</span>
+      
+      <div v-loading="pending">
+        <el-empty v-if="!messages.length && !pending" description="暂无留言" />
+        <template v-else>
+          <el-timeline>
+            <el-timeline-item v-for="m in messages" :key="m.id" :timestamp="formatTime(m.createdAt)" placement="top">
+              <div class="msgTitle">
+                <el-avatar :size="28" class="msgAvatar">{{ m.nickname[0] }}</el-avatar>
+                <span class="nickname">{{ m.nickname }}</span>
+              </div>
+              <div class="msgContent">
+                {{ m.content }}
+              </div>
+            </el-timeline-item>
+          </el-timeline>
+
+          <div v-if="total > limit" class="pagination-wrap">
+            <el-pagination
+              v-model:current-page="page"
+              layout="prev, pager, next"
+              :total="total"
+              :page-size="limit"
+              background
+            />
           </div>
-          <div class="msgContent">
-            {{ m.content }}
-          </div>
-        </el-timeline-item>
-      </el-timeline>
+        </template>
+      </div>
     </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
 type Message = { id: number; nickname: string; content: string; createdAt: string }
+type GuestbookResponse = { list: Message[]; total: number }
+type MeResponse = { user: null | { id: number; username: string; role: 'admin' | 'user' } }
 
 useHead(() => ({ title: '留言板 - 导航站' }))
 
-const form = reactive({ nickname: '', content: '' })
+const { data: meData } = await useFetch<MeResponse>('/api/auth/me')
+const me = computed(() => meData.value)
+
+const form = reactive({ content: '' })
 const submitting = ref(false)
 const status = reactive<{ type: '' | 'success' | 'error'; message: string }>({ type: '', message: '' })
 
-const { data, refresh } = await useFetch<Message[]>('/api/guestbook', { server: true })
-const messages = computed(() => data.value || [])
+const page = ref(1)
+const limit = ref(10)
+
+const { data, refresh, pending } = await useFetch<GuestbookResponse>('/api/guestbook', {
+  query: {
+    page,
+    limit
+  },
+  watch: [page]
+})
+
+const messages = computed(() => data.value?.list || [])
+const total = computed(() => data.value?.total || 0)
 
 function formatTime(iso: string) {
   const d = new Date(iso)
@@ -67,13 +107,20 @@ async function submit() {
   const { $api } = useNuxtApp()
   status.type = ''
   status.message = ''
+  
+  if (!form.content.trim()) {
+    status.type = 'error'
+    status.message = '内容不能为空'
+    return
+  }
+
   submitting.value = true
   try {
     await $api('/api/guestbook', { method: 'POST', body: form })
     status.type = 'success'
     status.message = '提交成功！'
-    form.nickname = ''
     form.content = ''
+    page.value = 1
     await refresh()
   } catch (e: unknown) {
     status.type = 'error'
@@ -86,22 +133,57 @@ async function submit() {
 </script>
 
 <style scoped>
+.container {
+  padding: 24px;
+}
+
 .header {
   font-weight: 600;
+}
+
+.login-tip {
+  margin-bottom: 12px;
+}
+
+.current-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.current-user .username {
+  font-weight: 600;
+  color: #303133;
 }
 
 .msgTitle {
   display: flex;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.msgAvatar {
+  background-color: #409eff;
+  font-size: 14px;
 }
 
 .nickname {
   font-weight: 600;
+  color: #303133;
 }
 
 .msgContent {
   white-space: pre-wrap;
   word-break: break-word;
+  color: #606266;
+  line-height: 1.6;
+  padding-left: 36px;
+}
+
+.pagination-wrap {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
 }
 </style>

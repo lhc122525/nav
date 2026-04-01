@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="container">
     <el-card shadow="never" style="margin-bottom: 12px">
       <template #header>
         <div class="header">
@@ -7,15 +7,20 @@
         </div>
       </template>
 
-      <el-form label-width="90px" @submit.prevent>
+      <div v-if="!me?.user" class="login-tip">
+        <el-alert type="info" :closable="false" show-icon>
+          请登录后再提交收录申请。
+        </el-alert>
+      </div>
+      <el-form v-else label-width="90px" @submit.prevent>
         <el-form-item label="站点标题">
-          <el-input v-model="form.title" />
+          <el-input v-model="form.title" placeholder="例如：我的博客" />
         </el-form-item>
         <el-form-item label="站点 URL">
           <el-input v-model="form.url" placeholder="https://..." />
         </el-form-item>
         <el-form-item label="简短描述">
-          <el-input v-model="form.description" type="textarea" :rows="3" />
+          <el-input v-model="form.description" type="textarea" :rows="3" placeholder="介绍一下这个站点..." />
         </el-form-item>
         <el-form-item label="联系方式">
           <el-input v-model="form.contact" placeholder="可选：邮箱/微信等" />
@@ -33,7 +38,12 @@
 </template>
 
 <script setup lang="ts">
+type MeResponse = { user: null | { id: number; username: string; role: 'admin' | 'user' } }
+
 useHead(() => ({ title: '申请收录 - 导航站' }))
+
+const { data: meData } = await useFetch<MeResponse>('/api/auth/me')
+const me = computed(() => meData.value)
 
 const form = reactive({
   title: '',
@@ -46,6 +56,20 @@ const submitting = ref(false)
 const status = reactive<{ type: '' | 'success' | 'error'; message: string }>({ type: '', message: '' })
 
 async function submit() {
+  if (submitting.value) return // Basic debounce
+  
+  if (!me.value?.user) {
+    status.type = 'error'
+    status.message = '请登录后再提交'
+    return
+  }
+
+  if (!form.title.trim() || !form.url.trim()) {
+    status.type = 'error'
+    status.message = '站点标题和 URL 不能为空'
+    return
+  }
+
   const { $api } = useNuxtApp()
   status.type = ''
   status.message = ''
@@ -71,5 +95,11 @@ async function submit() {
 <style scoped>
 .header {
   font-weight: 600;
+}
+.container {
+  padding: 24px;
+}
+.login-tip {
+  margin-bottom: 24px;
 }
 </style>

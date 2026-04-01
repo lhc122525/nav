@@ -54,7 +54,7 @@
       <div class="container mainLayout">
         <el-row :gutter="24">
           <!-- Sidebar: Visible on Desktop -->
-          <el-col :md="4" :lg="4" class="mainSidebar">
+          <el-col :xs="24" :sm="6" :md="4" :lg="4" :xl="4" class="mainSidebar">
             <aside class="aside">
               <div class="asideContent">
                 <div class="asideHeader">
@@ -84,30 +84,29 @@
           </el-col>
 
           <!-- Main Content Area -->
-          <el-col :xs="24" :md="20" :lg="20" class="mainContentArea">
+          <el-col :xs="24" :sm="18" :md="20" :lg="20" :xl="20" class="mainContentArea">
             <section class="block contentArea" v-if="activeCategoryId === 0">
               <el-row :gutter="20">
                 <!-- <div class="sectionTitle">
                   <el-icon><Promotion /></el-icon>
                   <span>公告/广告</span>
                 </div> -->
-                <el-col :xs="12" :xl="12" :lg="12" :md="12">
-                  <el-card class="adCard modernCard" shadow="hover">
-                    <div class="adBody">
-                      <div class="adPlaceholder">
-                        <el-icon :size="40"><Picture /></el-icon>
-                        <p>广告位</p>
+                <el-col v-for="(ad, index) in ads" :key="index" :xs="12" :xl="24 / (ads.length || 1)" :lg="24 / (ads.length || 1)" :md="24 / (ads.length || 1)">
+                  <a :href="ad.url" target="_blank" class="adLink">
+                    <el-card class="adCard modernCard" shadow="hover">
+                      <div class="adBody">
+                        <el-image :src="ad.imageUrl" fit="cover" class="adImage" />
+                        <div class="adTitleOverlay">{{ ad.title }}</div>
                       </div>
-                    </div>
-                  </el-card>
+                    </el-card>
+                  </a>
                 </el-col>
-
-                <el-col :xs="12" :xl="12" :lg="12" :md="12">
+                <el-col v-if="ads.length === 0" :xs="24" :xl="24" :lg="24" :md="24">
                   <el-card class="adCard modernCard" shadow="hover">
                     <div class="adBody">
                       <div class="adPlaceholder">
                         <el-icon :size="40"><Picture /></el-icon>
-                        <p>广告位</p>
+                        <p>广告位招租</p>
                       </div>
                     </div>
                   </el-card>
@@ -123,7 +122,7 @@
                 <span>推荐导航</span>
               </div>
               <el-row :gutter="16">
-                <el-col v-for="item in recommendedLinks" :key="item.id" :xs="24" :sm="12" :md="12" :lg="8" :xl="6">
+                <el-col v-for="item in recommendedLinks" :key="item.id" :xs="12" :sm="8" :md="6" class="col-5">
                   <div class="linkCardWrapper" @click="open(item.url, item.id)">
                     <div class="linkCard modernCard" shadow="hover">
                       <div class="linkContent">
@@ -150,7 +149,7 @@
                 <span>常用导航</span>
               </div>
               <el-row :gutter="16">
-                <el-col v-for="item in commonLinks" :key="item.id" :xs="24" :sm="12" :md="12" :lg="8" :xl="6">
+                <el-col v-for="item in commonLinks" :key="item.id" :xs="12" :sm="8" :md="6" class="col-5">
                   <div class="linkCardWrapper" @click="open(item.url, item.id)">
                     <div class="linkCard modernCard" shadow="hover">
                       <div class="linkContent">
@@ -182,11 +181,8 @@
                     <el-col
                       v-for="item in linksByCategory.get(c.id) || []"
                       :key="item.id"
-                      :xs="24"
-                      :sm="12"
-                      :md="12"
-                      :lg="8"
-                      :xl="6"
+                      :xs="12" :sm="8" :md="6"
+                      class="col-5"
                     >
                       <div class="linkCardWrapper" @click="open(item.url, item.id)">
                         <div class="linkCard modernCard" shadow="hover">
@@ -320,6 +316,9 @@ const linksByCategory = computed(() => {
   }
   return map
 })
+
+const { data: adsData } = await useFetch<{ ads: { title: string, imageUrl: string, url: string }[] }>('/api/ads', { server: true })
+const ads = computed(() => adsData.value?.ads || [])
 
 function onSelect(index: string) {
   drawerOpen.value = false
@@ -748,6 +747,13 @@ function submitSearch() {
   padding: 12px;
 }
 
+@media (min-width: 1200px) {
+  .col-5 {
+    flex: 0 0 20%;
+    max-width: 20%;
+  }
+}
+
 .block {
   margin-bottom: 18px;
 }
@@ -783,6 +789,36 @@ function submitSearch() {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #f6f8fa;
+  position: relative;
+  overflow: hidden;
+}
+
+.adImage {
+  width: 100%;
+  height: 100%;
+  transition: transform 0.3s;
+}
+
+.adCard:hover .adImage {
+  transform: scale(1.05);
+}
+
+.adTitleOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  padding: 4px 8px;
+  font-size: 12px;
+  text-align: center;
+  backdrop-filter: blur(2px);
+}
+
+.adLink {
+  text-decoration: none;
 }
 
 .adPlaceholder {

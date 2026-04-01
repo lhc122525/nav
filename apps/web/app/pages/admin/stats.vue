@@ -1,6 +1,5 @@
 <template>
-  <NuxtLayout name="admin">
-    <div class="statsPage">
+  <div class="statsPage">
       <el-row :gutter="20">
         <el-col :span="6" v-for="item in summaryCards" :key="item.label">
           <el-card shadow="never" class="summaryCard">
@@ -116,10 +115,10 @@
         </el-col>
       </el-row>
     </div>
-  </NuxtLayout>
 </template>
 
 <script setup lang="ts">
+definePageMeta({ middleware: ['admin-auth'], layout: 'admin' })
 import { useFetch } from '#app'
 
 interface TrendItem {

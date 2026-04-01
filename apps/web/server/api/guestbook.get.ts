@@ -3,23 +3,33 @@ import { getQueryInt } from '../utils/http'
 
 export default defineEventHandler(async (event) => {
   const pool = getMySqlPool()
-  if (!pool) return []
+  if (!pool) return { list: [], total: 0 }
 
   const query = getQuery(event) as Record<string, unknown>
-  const limit = Math.min(Math.max(getQueryInt(query, 'limit', 50), 1), 200)
+  const page = Math.max(getQueryInt(query, 'page', 1), 1)
+  const limit = Math.min(Math.max(getQueryInt(query, 'limit', 20), 1), 100)
+  const offset = (page - 1) * limit
+
+  const [countRows] = await pool.execute(
+    'SELECT COUNT(*) as total FROM guestbook_messages WHERE is_visible = 1'
+  )
+  const total = Number((countRows as Array<Record<string, unknown>>)[0]?.total || 0)
 
   const [rows] = await pool.execute(
-    `SELECT id, nickname, content, created_at
-     FROM guestbook_messages
-     WHERE is_visible = 1
-     ORDER BY created_at DESC
-     LIMIT ${limit}`
+    `SELECT m.id, m.nickname, m.content, m.created_at, u.username as current_username
+     FROM guestbook_messages m
+     LEFT JOIN users u ON u.id = m.user_id
+     WHERE m.is_visible = 1
+     ORDER BY m.created_at DESC
+     LIMIT ${limit} OFFSET ${offset}`
   )
 
-  return (rows as Array<Record<string, unknown>>).map((r) => ({
+  const list = (rows as Array<Record<string, unknown>>).map((r) => ({
     id: Number(r.id),
-    nickname: String(r.nickname || ''),
+    nickname: String(r.current_username || r.nickname || '匿名'),
     content: String(r.content || ''),
     createdAt: new Date(String(r.created_at)).toISOString()
   }))
+
+  return { list, total }
 })
