@@ -66,6 +66,14 @@
                     <el-icon><Collection /></el-icon>
                     <span>全部</span>
                   </el-menu-item>
+                  <el-menu-item index="-1">
+                    <el-icon><Star /></el-icon>
+                    <span>推荐导航</span>
+                  </el-menu-item>
+                  <el-menu-item v-if="user" index="-2">
+                    <el-icon><StarFilled /></el-icon>
+                    <span>常用导航</span>
+                  </el-menu-item>
                   <el-menu-item v-for="c in categories" :key="c.id" :index="String(c.id)">
                     <el-icon><Folder /></el-icon>
                     <span>{{ c.name }}</span>
@@ -79,11 +87,11 @@
           <el-col :xs="24" :md="20" :lg="20" class="mainContentArea">
             <section class="block contentArea" v-if="activeCategoryId === 0">
               <el-row :gutter="20">
-                <el-col :xs="24" :xl="8" :lg="8" :md="24">
-                  <div class="sectionTitle">
-                    <el-icon><Promotion /></el-icon>
-                    <span>公告/广告</span>
-                  </div>
+                <!-- <div class="sectionTitle">
+                  <el-icon><Promotion /></el-icon>
+                  <span>公告/广告</span>
+                </div> -->
+                <el-col :xs="12" :xl="12" :lg="12" :md="12">
                   <el-card class="adCard modernCard" shadow="hover">
                     <div class="adBody">
                       <div class="adPlaceholder">
@@ -94,32 +102,72 @@
                   </el-card>
                 </el-col>
 
-                <el-col :xs="24" :xl="16" :lg="16" :md="24">
-                  <div class="sectionTitle">
-                    <el-icon><Star /></el-icon>
-                    <span>推荐导航</span>
-                  </div>
-                  <el-row :gutter="16">
-                    <el-col v-for="item in recommendedLinks" :key="item.id" :xs="24" :sm="12" :md="12" :lg="8" :xl="6">
-                      <div class="linkCardWrapper" @click="open(item.url, item.id)">
-                        <div class="linkCard modernCard" shadow="hover">
-                          <div class="linkContent">
-                            <div class="linkIcon">
-                              <img v-if="item.iconUrl" :src="item.iconUrl" :alt="item.title">
-                              <div v-else class="iconPlaceholder">{{ item.title[0] }}</div>
-                            </div>
-                            <div class="linkInfo">
-                              <div class="title">{{ item.title }}</div>
-                              <div class="desc" :title="item.description">{{ item.description }}</div>
-                            </div>
-                          </div>
-                        </div>
+                <el-col :xs="12" :xl="12" :lg="12" :md="12">
+                  <el-card class="adCard modernCard" shadow="hover">
+                    <div class="adBody">
+                      <div class="adPlaceholder">
+                        <el-icon :size="40"><Picture /></el-icon>
+                        <p>广告位</p>
                       </div>
-                    </el-col>
-                  </el-row>
-                  <el-empty v-if="recommendedLinks.length === 0" description="暂无推荐导航" />
+                    </div>
+                  </el-card>
                 </el-col>
               </el-row>
+              
+            </section>
+
+            <!-- 推荐导航 (选中独立分类时) -->
+            <section class="block contentArea" v-if="activeCategoryId === -1 || activeCategoryId === 0">
+              <div class="sectionTitle">
+                <el-icon><Star /></el-icon>
+                <span>推荐导航</span>
+              </div>
+              <el-row :gutter="16">
+                <el-col v-for="item in recommendedLinks" :key="item.id" :xs="24" :sm="12" :md="12" :lg="8" :xl="6">
+                  <div class="linkCardWrapper" @click="open(item.url, item.id)">
+                    <div class="linkCard modernCard" shadow="hover">
+                      <div class="linkContent">
+                        <div class="linkIcon">
+                          <img v-if="item.iconUrl" :src="item.iconUrl" :alt="item.title">
+                          <div v-else class="iconPlaceholder">{{ item.title[0] }}</div>
+                        </div>
+                        <div class="linkInfo">
+                          <div class="title">{{ item.title }}</div>
+                          <div class="desc" :title="item.description">{{ item.description }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </el-col>
+              </el-row>
+              <el-empty v-if="recommendedLinks.length === 0" description="暂无推荐导航" />
+            </section>
+
+            <!-- 常用导航 (选中独立分类时) -->
+            <section class="block contentArea" v-if="(activeCategoryId === -2 || activeCategoryId === 0) && user">
+              <div class="sectionTitle">
+                <el-icon><StarFilled /></el-icon>
+                <span>常用导航</span>
+              </div>
+              <el-row :gutter="16">
+                <el-col v-for="item in commonLinks" :key="item.id" :xs="24" :sm="12" :md="12" :lg="8" :xl="6">
+                  <div class="linkCardWrapper" @click="open(item.url, item.id)">
+                    <div class="linkCard modernCard" shadow="hover">
+                      <div class="linkContent">
+                        <div class="linkIcon">
+                          <img v-if="item.iconUrl" :src="item.iconUrl" :alt="item.title">
+                          <div v-else class="iconPlaceholder">{{ item.title[0] }}</div>
+                        </div>
+                        <div class="linkInfo">
+                          <div class="title">{{ item.title }}</div>
+                          <div class="desc" :title="item.description">{{ item.description }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </el-col>
+              </el-row>
+              <el-empty v-if="commonLinks.length === 0" description="暂无常用导航" />
             </section>
 
             <section class="block">
@@ -128,7 +176,7 @@
                 <section v-for="c in categories.filter(cat => activeCategoryId === 0 || cat.id === activeCategoryId)" :key="c.id" class="categorySection">
                   <div class="categoryHeader">
                     <span class="categoryTitle">{{ c.name }}</span>
-                    <el-button link type="primary" @click="onSelect(String(c.id))">更多 <el-icon><ArrowRight /></el-icon></el-button>
+                    <!-- <el-button link type="primary" @click="onSelect(String(c.id))">更多 <el-icon><ArrowRight /></el-icon></el-button> -->
                   </div>
                   <el-row :gutter="16">
                     <el-col
@@ -173,6 +221,14 @@
           <el-icon><Collection /></el-icon>
           <span>全部</span>
         </el-menu-item>
+        <el-menu-item index="-1">
+          <el-icon><Star /></el-icon>
+          <span>推荐导航</span>
+        </el-menu-item>
+        <el-menu-item v-if="user" index="-2">
+          <el-icon><StarFilled /></el-icon>
+          <span>常用导航</span>
+        </el-menu-item>
         <el-menu-item v-for="c in categories" :key="c.id" :index="String(c.id)">
           <el-icon><Folder /></el-icon>
           <span>{{ c.name }}</span>
@@ -192,6 +248,7 @@ import {
   Promotion,
   Picture,
   Star,
+  StarFilled,
   Grid,
   ArrowRight,
   ArrowLeft
@@ -232,6 +289,8 @@ const activeCategoryId = ref(Number(route.query.categoryId) || 0)
 
 const activeCategoryName = computed(() => {
   if (activeCategoryId.value === 0) return '全部'
+  if (activeCategoryId.value === -1) return '推荐导航'
+  if (activeCategoryId.value === -2) return '常用导航'
   const hit = categories.value.find((c) => c.id === activeCategoryId.value)
   return hit?.name || '分类'
 })
@@ -239,11 +298,11 @@ const activeCategoryName = computed(() => {
 const { data: linksData } = await useFetch<NavLink[]>('/api/links', { params: { limit: 500 }, server: true })
 const allLinks = computed(() => linksData.value || [])
 
-const { data: recommendedData } = await useFetch<NavLink[]>('/api/links', {
-  params: { limit: 12, recommended: 1 },
+// 推荐导航 (含全站排行填充)
+const { data: recommendedData } = await useFetch<{ links: NavLink[] }>('/api/links/recommended', {
   server: true
 })
-const recommendedLinks = computed(() => recommendedData.value || [])
+const recommendedLinks = computed(() => recommendedData.value?.links || [])
 
 const categoryLinks = computed(() => {
   if (activeCategoryId.value <= 0) return []
@@ -265,10 +324,10 @@ const linksByCategory = computed(() => {
 function onSelect(index: string) {
   drawerOpen.value = false
   const id = Number(index)
-  activeCategoryId.value = (Number.isFinite(id) && id > 0) ? id : 0
+  activeCategoryId.value = id
   
   // Update URL query without full navigation
-  const query = activeCategoryId.value > 0 ? { categoryId: String(activeCategoryId.value) } : {}
+  const query = activeCategoryId.value !== 0 ? { categoryId: String(activeCategoryId.value) } : {}
   navigateTo({ path: '/', query }, { replace: true })
 }
 
@@ -333,6 +392,13 @@ interface SearchCategory {
 
 const { data: userData } = await useFetch<{ user: { id: number; username: string; role: string } | null }>('/api/auth/me', { server: true })
 const user = computed(() => userData.value?.user)
+
+// 常用导航
+const { data: commonLinksData } = await useFetch<{ links: NavLink[] }>('/api/stats/common-links', { 
+  server: true,
+  watch: [user]
+})
+const commonLinks = computed(() => commonLinksData.value?.links || [])
 
 const { data: commonEnginesData } = await useFetch<{ engines: SearchEngine[] }>('/api/stats/common-engines', { 
   server: true,
@@ -794,6 +860,21 @@ function submitSearch() {
   -webkit-box-orient: vertical;
   overflow: hidden;
   line-height: 1.4;
+}
+
+.mt20 {
+  margin-top: 20px;
+}
+
+.linkIcon.small {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+}
+
+.linkInfo .title.small {
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .categorySection {
