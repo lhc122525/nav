@@ -1,11 +1,19 @@
 <template>
   <el-container class="adminLayout">
     <el-aside :width="collapsed ? '64px' : '220px'" class="aside">
-      <div class="asideTop">
-        <!-- <NuxtLink class="brand" to="/">
-          {{ siteName }}
-        </NuxtLink> -->
-        <div class="title" @click="collapsed = !collapsed">{{ siteName }}</div>
+      <div class="asideTop" :class="{ isCollapsed: collapsed }" @click="collapsed = !collapsed">
+        <img
+          v-if="!collapsed"
+          src="/assets/logo2.png"
+          alt="Logo"
+          class="logoFull"
+        />
+        <img
+          v-else
+          src="/assets/logo.png"
+          alt="Logo"
+          class="logoSmall"
+        />
       </div>
       <el-scrollbar>
         <el-menu
@@ -13,12 +21,23 @@
           :collapse="collapsed"
           :collapse-transition="false"
           @select="onSelect"
+          class="adminMenu"
         >
           <el-menu-item index="/admin/nav">
-            <span>导航管理</span>
+            <el-icon><Menu /></el-icon>
+            <template #title>导航管理</template>
+          </el-menu-item>
+          <el-menu-item index="/admin/search">
+            <el-icon><Search /></el-icon>
+            <template #title>搜索管理</template>
+          </el-menu-item>
+          <el-menu-item index="/admin/stats">
+            <el-icon><PieChart /></el-icon>
+            <template #title>统计分析</template>
           </el-menu-item>
           <el-menu-item index="/admin/include">
-            <span>收录管理</span>
+            <el-icon><Document /></el-icon>
+            <template #title>收录管理</template>
           </el-menu-item>
         </el-menu>
       </el-scrollbar>
@@ -26,12 +45,13 @@
 
     <el-container>
       <el-header height="56px" class="header">
-        <el-button @click="collapsed = !collapsed">
-          {{ collapsed ? '展开' : '折叠' }}
+        <el-button link class="collapseBtn" @click="collapsed = !collapsed">
+          <el-icon v-if="collapsed"><Expand /></el-icon>
+          <el-icon v-else><Fold /></el-icon>
         </el-button>
         <div class="spacer" />
         <NuxtLink class="homeLink" to="/">
-          返回首页
+          <el-button link>返回首页</el-button>
         </NuxtLink>
       </el-header>
       <el-main class="main">
@@ -44,6 +64,7 @@
 </template>
 
 <script setup lang="ts">
+import { Menu, Document, Expand, Fold, Search, PieChart } from '@element-plus/icons-vue'
 const collapsed = ref(false)
 const route = useRoute()
 const router = useRouter()
@@ -51,6 +72,8 @@ const { public: publicConfig } = useRuntimeConfig()
 const siteName = computed(() => publicConfig.siteName || '导航站')
 const active = computed(() => {
   if (route.path.startsWith('/admin/include')) return '/admin/include'
+  if (route.path.startsWith('/admin/search')) return '/admin/search'
+  if (route.path.startsWith('/admin/stats')) return '/admin/stats'
   return '/admin/nav'
 })
 
@@ -62,30 +85,62 @@ function onSelect(index: string) {
 <style scoped>
 .adminLayout {
   min-height: 100vh;
+  background-color: #f5f7fa;
 }
 
 .aside {
-  border-right: 1px solid var(--el-border-color);
-  background: var(--el-bg-color);
+  border-right: 1px solid var(--el-border-color-light);
+  background: #fff;
+  transition: width 0.3s;
+  display: flex;
+  flex-direction: column;
 }
 
 .asideTop {
-  height: 56px;
+  height: 60px;
   display: flex;
   align-items: center;
-  padding: 0 12px;
+  justify-content: center;
+  padding: 0 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  overflow: hidden;
+  background: #fff;
 }
 
-.brand {
-  color: inherit;
-  text-decoration: none;
-  font-weight: 600;
+.logoFull {
+  height: 40px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.logoSmall {
+  height: 32px;
+  width: 32px;
+  object-fit: contain;
+}
+
+.adminMenu {
+  border-right: none;
+}
+
+.adminMenu:not(.el-menu--collapse) {
+  width: 220px;
 }
 
 .header {
   display: flex;
   align-items: center;
-  border-bottom: 1px solid var(--el-border-color);
+  background: #fff;
+  border-bottom: 1px solid var(--el-border-color-light);
+  padding: 0 20px;
+}
+
+.collapseBtn {
+  font-size: 20px;
+  padding: 0;
+  height: 32px;
+  width: 32px;
 }
 
 .spacer {
@@ -93,17 +148,19 @@ function onSelect(index: string) {
 }
 
 .homeLink {
-  color: inherit;
+  color: var(--el-text-color-regular);
   text-decoration: none;
-  opacity: 0.9;
 }
 
 .main {
-  padding: 12px 0;
+  padding: 20px;
+  background-color: #f5f7fa;
 }
 
-.container{
+.container {
   max-width: 100%;
+  padding: 0;
+  margin: 0 auto;
 }
 </style>
 

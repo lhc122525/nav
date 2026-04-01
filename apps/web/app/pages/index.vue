@@ -12,13 +12,13 @@
         <div class="searchContent">
           <div class="searchTabs">
             <span 
-              v-for="tab in ['站内', '搜索', '网盘', '社区', '生活', '求职']" 
-              :key="tab"
+              v-for="cat in searchCategories" 
+              :key="cat.id"
               class="tabItem" 
-              :class="{ active: activeSearchTab === tab }"
-              @click="activeSearchTab = tab"
+              :class="{ active: activeSearchTabId === cat.id }"
+              @click="activeSearchTabId = cat.id"
             >
-              {{ tab }}
+              {{ cat.name }}
             </span>
           </div>
 
@@ -38,13 +38,13 @@
 
           <div class="engineTabs">
             <span
-              v-for="engine in engines"
-              :key="engine.value"
+              v-for="engine in currentEngines"
+              :key="engine.id"
               class="engineItem"
-              :class="{ active: searchEngine === engine.value }"
-              @click="searchEngine = engine.value"
+              :class="{ active: activeEngineId === engine.id }"
+              @click="activeEngineId = engine.id"
             >
-              {{ engine.label }}
+              {{ engine.name }}
             </span>
           </div>
         </div>
@@ -101,7 +101,7 @@
                   </div>
                   <el-row :gutter="16">
                     <el-col v-for="item in recommendedLinks" :key="item.id" :xs="24" :sm="12" :md="12" :lg="8" :xl="6">
-                      <div class="linkCardWrapper" @click="open(item.url)">
+                      <div class="linkCardWrapper" @click="open(item.url, item.id)">
                         <div class="linkCard modernCard" shadow="hover">
                           <div class="linkContent">
                             <div class="linkIcon">
@@ -140,7 +140,7 @@
                       :lg="8"
                       :xl="6"
                     >
-                      <div class="linkCardWrapper" @click="open(item.url)">
+                      <div class="linkCardWrapper" @click="open(item.url, item.id)">
                         <div class="linkCard modernCard" shadow="hover">
                           <div class="linkContent">
                             <div class="linkIcon">
@@ -196,8 +196,6 @@ import {
   ArrowRight,
   ArrowLeft
 } from '@element-plus/icons-vue'
-
-const activeSearchTab = ref('搜索')
 
 type Category = { id: number; name: string; slug: string; sort: number }
 type NavLink = {
@@ -274,8 +272,17 @@ function onSelect(index: string) {
   navigateTo({ path: '/', query }, { replace: true })
 }
 
-function open(url: string) {
+function open(url: string, linkId?: number) {
   if (!url) return
+  
+  if (linkId) {
+    // 记录导航点击统计
+    $fetch('/api/stats/record', {
+      method: 'POST',
+      body: { type: 'link', id: linkId }
+    }).catch(() => {})
+  }
+
   navigateTo(url, { external: true, open: { target: '_blank' } })
 }
 
@@ -290,33 +297,120 @@ onBeforeUnmount(() => {
   if (timer) clearInterval(timer)
 })
 
-type SearchEngine = 'baidu' | 'bing' | 'google'
-const searchEngine = useCookie<SearchEngine>('navigation_search_engine', { default: () => 'baidu' })
-const searchKeyword = ref('')
-
-function getSearchUrl(engine: SearchEngine, keyword: string) {
-  const q = encodeURIComponent(keyword.trim())
-  if (engine === 'bing') return `https://www.bing.com/search?q=${q}`
-  if (engine === 'google') return `https://www.google.com/search?q=${q}`
-  return `https://www.baidu.com/s?wd=${q}`
+// 搜索管理动态数据
+interface SearchEngine {
+  id: number
+  categoryId: number
+  name: string
+  url: string
+  iconUrl: string
+  isDefault: boolean
 }
 
-const engines = [
-  { label: '百度', value: 'baidu' },
-  { label: 'Google', value: 'google' },
-  { label: 'Bing', value: 'bing' }
-]
+interface SearchCategory {
+  id: number
+  name: string
+  engines: SearchEngine[]
+}
+
+const { data: searchCategoriesData } = await useFetch<SearchCategory[]>('/api/search-categories', { server: true })
+const searchCategories = computed(() => searchCategoriesData.value || [])
+
+const activeSearchTabId = ref<number | null>(null)
+const activeEngineId = ref<number | null>(null)
+const searchKeyword = ref('')
+
+// 本地存储的 Key
+const CACHE_KEY_TAB = 'search_tab_id'
+const CACHE_KEY_ENGINE_PREFIX = 'search_engine_id_'
+
+// 初始化默认选中的分类和引擎
+watch(searchCategories, (newVal) => {
+  if (newVal && newVal.length > 0 && activeSearchTabId.value === null) {
+    // 1. 优先从本地缓存获取
+    const cachedTabId = localStorage.getItem(CACHE_KEY_TAB)
+    if (cachedTabId && newVal.some(c => c.id === Number(cachedTabId))) {
+      activeSearchTabId.value = Number(cachedTabId)
+    } else {
+      // 2. 否则选中第一个
+      activeSearchTabId.value = newVal[0].id
+    }
+    
+    // 强制触发一次引擎选中逻辑（针对首个分类）
+    const engines = newVal.find(c => c.id === activeSearchTabId.value)?.engines || []
+    if (engines.length > 0) {
+      const cachedEngineId = localStorage.getItem(CACHE_KEY_ENGINE_PREFIX + activeSearchTabId.value)
+      if (cachedEngineId && engines.some(e => e.id === Number(cachedEngineId))) {
+        activeEngineId.value = Number(cachedEngineId)
+      } else {
+        const defaultEngine = engines.find(e => e.isDefault) || engines[0]
+        activeEngineId.value = defaultEngine.id
+      }
+    }
+  }
+}, { immediate: true })
+
+const currentEngines = computed(() => {
+  const cat = searchCategories.value.find(c => c.id === activeSearchTabId.value)
+  return cat?.engines || []
+})
+
+// 当切换分类时，记录分类 ID 并决定选中的引擎
+watch(activeSearchTabId, (newTabId) => {
+  if (newTabId !== null) {
+    localStorage.setItem(CACHE_KEY_TAB, String(newTabId))
+    
+    // 切换分类后，尝试恢复该分类下缓存的引擎
+    const cachedEngineId = localStorage.getItem(CACHE_KEY_ENGINE_PREFIX + newTabId)
+    const engines = searchCategories.value.find(c => c.id === newTabId)?.engines || []
+    
+    if (cachedEngineId && engines.some(e => e.id === Number(cachedEngineId))) {
+      activeEngineId.value = Number(cachedEngineId)
+    } else {
+      // 如果没有缓存，选中该分类下的默认引擎或第一个引擎
+      const defaultEngine = engines.find(e => e.isDefault) || engines[0]
+      activeEngineId.value = defaultEngine?.id || null
+    }
+  }
+})
+
+// 监听引擎切换，记录到本地
+watch(activeEngineId, (newEngineId) => {
+  if (newEngineId !== null && activeSearchTabId.value !== null) {
+    localStorage.setItem(CACHE_KEY_ENGINE_PREFIX + activeSearchTabId.value, String(newEngineId))
+  }
+})
+
+const activeEngine = computed(() => {
+  return currentEngines.value.find(e => e.id === activeEngineId.value)
+})
 
 const searchPlaceholder = computed(() => {
-  if (searchEngine.value === 'baidu') return '百度一下'
-  if (searchEngine.value === 'google') return 'Google 搜索'
+  if (activeEngine.value) {
+    return `在 ${activeEngine.value.name} 中搜索...`
+  }
   return '搜索你想要的...'
 })
 
 function submitSearch() {
   const kw = searchKeyword.value.trim()
-  if (!kw) return
-  open(getSearchUrl(searchEngine.value || 'baidu', kw))
+  if (!kw || !activeEngine.value) return
+  
+  // 记录搜索统计
+  $fetch('/api/stats/record', {
+    method: 'POST',
+    body: { type: 'engine', id: activeEngine.value.id }
+  }).catch(() => {})
+
+  let url = activeEngine.value.url
+  if (url.includes('%s')) {
+    url = url.replace('%s', encodeURIComponent(kw))
+  } else {
+    // 如果没有占位符，尝试拼接到末尾（虽然不推荐，但作为兜底）
+    const separator = url.includes('?') ? '&' : '?'
+    url = `${url}${separator}q=${encodeURIComponent(kw)}`
+  }
+  open(url)
 }
 </script>
 

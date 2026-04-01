@@ -153,3 +153,71 @@ export const guestbookMessages = mysqlTable(
     idxGuestbookCreated: index('idx_guestbook_created').on(table.createdAt)
   })
 )
+
+export const searchCategories = mysqlTable(
+  'search_categories',
+  {
+    id: bigint('id', { mode: 'number', unsigned: true }).autoincrement().notNull().primaryKey(),
+    name: varchar('name', { length: 50 }).notNull(),
+    sort: int('sort').notNull().default(0),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow().onUpdateNow()
+  }
+)
+
+export const searchEngines = mysqlTable(
+  'search_engines',
+  {
+    id: bigint('id', { mode: 'number', unsigned: true }).autoincrement().notNull().primaryKey(),
+    categoryId: bigint('category_id', { mode: 'number', unsigned: true })
+      .references(() => searchCategories.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    name: varchar('name', { length: 50 }).notNull(),
+    url: varchar('url', { length: 500 }).notNull(),
+    iconUrl: varchar('icon_url', { length: 500 }).notNull().default(''),
+    sort: int('sort').notNull().default(0),
+    isDefault: boolean('is_default').notNull().default(false),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow().onUpdateNow()
+  },
+  (table) => ({
+    idxSearchEnginesCategory: index('idx_search_engines_category').on(table.categoryId)
+  })
+)
+
+export const searchStats = mysqlTable(
+  'search_stats',
+  {
+    id: bigint('id', { mode: 'number', unsigned: true }).autoincrement().notNull().primaryKey(),
+    engineId: bigint('engine_id', { mode: 'number', unsigned: true })
+      .notNull()
+      .references(() => searchEngines.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    userId: bigint('user_id', { mode: 'number', unsigned: true })
+      .references(() => users.id, { onDelete: 'set null', onUpdate: 'cascade' }),
+    date: varchar('date', { length: 10 }).notNull(), // YYYY-MM-DD
+    count: int('count').notNull().default(1),
+    updatedAt: timestamp('updated_at').notNull().defaultNow().onUpdateNow()
+  },
+  (table) => ({
+    ukSearchStats: uniqueIndex('uk_search_stats').on(table.engineId, table.userId, table.date),
+    idxSearchStatsDate: index('idx_search_stats_date').on(table.date)
+  })
+)
+
+export const linkStats = mysqlTable(
+  'link_stats',
+  {
+    id: bigint('id', { mode: 'number', unsigned: true }).autoincrement().notNull().primaryKey(),
+    linkId: bigint('link_id', { mode: 'number', unsigned: true })
+      .notNull()
+      .references(() => links.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    userId: bigint('user_id', { mode: 'number', unsigned: true })
+      .references(() => users.id, { onDelete: 'set null', onUpdate: 'cascade' }),
+    date: varchar('date', { length: 10 }).notNull(), // YYYY-MM-DD
+    count: int('count').notNull().default(1),
+    updatedAt: timestamp('updated_at').notNull().defaultNow().onUpdateNow()
+  },
+  (table) => ({
+    ukLinkStats: uniqueIndex('uk_link_stats').on(table.linkId, table.userId, table.date),
+    idxLinkStatsDate: index('idx_link_stats_date').on(table.date)
+  })
+)

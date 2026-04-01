@@ -24,10 +24,10 @@
             <span class="date">{{ nowDateText }}</span>
           </div>
 
-          <el-button link class="actionIconBtn">
+          <!-- <el-button link class="actionIconBtn">
             <el-icon :size="18"><ChatLineRound /></el-icon>
           </el-button>
-          
+           -->
           <el-button v-if="!me?.user" type="success" class="loginBtn" @click="onGuestCommand('login')">
             登录
           </el-button>
@@ -184,7 +184,8 @@ const nowTimeText = computed(() => {
   const d = now.value
   const hh = String(d.getHours()).padStart(2, '0')
   const mm = String(d.getMinutes()).padStart(2, '0')
-  return `${hh}:${mm}`
+  const ss = String(d.getSeconds()).padStart(2, '0')
+  return `${hh}:${mm}:${ss}`  
 })
 const nowDateText = computed(() => {
   const d = now.value
@@ -494,8 +495,8 @@ async function submitRegister() {
   align-items: center;
   gap: 8px;
   margin-right: 16px;
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 14px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -505,7 +506,7 @@ async function submitRegister() {
 }
 
 .headerTime .date {
-  opacity: 0.8;
+  opacity: 1;
 }
 
 .loginBtn {
@@ -542,6 +543,7 @@ async function submitRegister() {
 .username {
   font-weight: 600;
   color: #24292e;
+  padding-left: 5px;
 }
 
 .isDark .username {
