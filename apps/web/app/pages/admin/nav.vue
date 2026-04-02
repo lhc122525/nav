@@ -141,7 +141,7 @@
       </el-col>
     </el-row>
 
-    <el-dialog v-model="dialogOpen" :title="editing?.id ? '编辑链接' : '新增链接'" width="560px">
+    <el-dialog v-model="dialogOpen" :title="editing?.id ? '编辑链接' : '新增链接'" width="100%" style="max-width: 600px;">
       <el-form label-width="90px">
         <el-form-item label="标题">
           <el-input v-model="form.title" />
@@ -165,7 +165,6 @@
                 :value="c.id" 
               />
             </el-option-group>
-            <!-- 兼容性：如果一个分类既没有父级也没有子级，说明它目前只能作为一个孤立的一级分类，不应直接添加链接 -->
           </el-select>
           <div class="formTip" style="font-size: 12px; color: #909399; margin-top: 4px;">
             注：导航只能添加在二级分类下
@@ -202,7 +201,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="categoryCreateVisible" :title="categoryForm.id ? '编辑分类' : '新增分类'" width="460px">
+    <el-dialog v-model="categoryCreateVisible" :title="categoryForm.id ? '编辑分类' : '新增分类'" width="100%" style="max-width: 600px;">
       <el-form label-width="90px">
         <el-form-item label="父级分类">
           <el-select v-model="categoryForm.parentId" clearable placeholder="不选则为一级分类" style="width: 100%">
@@ -230,50 +229,99 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="categoryMaintenanceVisible" title="分类排序/维护" width="680px" @closed="onCategoryMaintenanceClosed">
-      <div class="categoryMaintenanceList">
-        <div
-          v-for="(item, index) in maintenanceCategories"
-          :key="item.id || index"
-          class="maintenanceItem"
-          draggable="true"
-          @dragstart="onDragStart($event, index)"
-          @dragover.prevent
-          @drop="onDrop($event, index)"
-        >
-          <div class="dragHandle">
-            <el-icon><Menu /></el-icon>
-          </div>
-          <el-select v-model="item.parentId" clearable placeholder="父级" style="width: 120px">
-            <template #empty>
-              <p style="padding: 8px; font-size: 12px; color: #909399; text-align: center; margin: 0">
-                请先保存顶级分类
-              </p>
-            </template>
+    <el-dialog 
+      v-model="categoryMaintenanceVisible" 
+      title="分类排序/维护" 
+      width="100%" 
+      style="max-width: 1200px;"
+      @closed="onCategoryMaintenanceClosed"
+    >
+      <template #header>
+        <div style="display: flex; gap: 8px;">
+          <el-button type="primary" @click="openCategoryCreate()">
+            <el-icon><Plus /></el-icon> 新增分类
+          </el-button>
+          <el-button @click="loadMaintenanceCategories">
+            <el-icon><Refresh /></el-icon> 刷新
+          </el-button>
+        </div>
+      </template>
+      
+      <VirtualTreeTable
+        v-model:expand-row-keys="expandedRowKeys"
+        :data="maintenanceCategories"
+        :columns="maintenanceColumns"
+        :height="500"
+        :row-height="52"
+        :indent-size="12"
+        row-key="id"
+        children-key="_children"
+      >
+        <template #cell-tree-expand="{ row, expandable, expanded }">
+          <span 
+            v-if="expandable" 
+            class="custom-arrow"
+            :class="{ expanded }"
+            @click.stop="handleToggleExpand(row.id)"
+          >
+            ▶
+          </span>
+          <span v-else style="width: 16px;"></span>
+        </template>
+        
+        <template #cell-name="{ row }">
+          <el-input v-model="row.name" size="small" placeholder="分类名称" />
+        </template>
+        
+        <template #cell-slug="{ row }">
+          <el-input v-model="row.slug" size="small" placeholder="slug" />
+        </template>
+        
+        <template #cell-parentId="{ row }">
+          <span v-if="!row.parentId" style="color: #c0c4cc;">一级分类</span>
+          <el-select v-else v-model="row.parentId" clearable size="small" placeholder="选择父级" style="width: calc(100% - 16px)">
             <el-option 
-              v-for="pc in maintenanceCategories.filter(c => !c.parentId && c.id !== item.id && !c._isNew)" 
+              v-for="pc in topLevelCategories.filter(c => c.id !== row.id)" 
               :key="pc.id" 
               :label="pc.name" 
               :value="pc.id" 
+              
             />
           </el-select>
-          <el-input v-model="item.name" placeholder="名称" style="width: 120px" />
-          <el-input v-model="item.slug" placeholder="标识 (slug)" style="width: 120px" />
-          <el-input-number v-model="item.sort" :min="0" placeholder="排序" style="width: 100px" />
-          <el-button type="danger" link @click="removeMaintenanceItem(index)">
-            删除
+        </template>
+        
+        <template #cell-sort="{ row }">
+          <el-input-number 
+            v-model="row.sort" 
+            :min="0" 
+            size="small" 
+            controls-position="right"
+            style="width: 80px"
+          />
+        </template>
+        
+        <template #cell-actions="{ row }">
+          <el-button 
+            v-if="!row.parentId" 
+            link 
+            type="success" 
+            size="small" 
+            @click="openCategoryCreate(row.id)"
+          >
+            +子分类
           </el-button>
-        </div>
-      </div>
-      <div style="margin-top: 16px; text-align: center">
-        <el-button @click="addMaintenanceItem">
-          添加分类
-        </el-button>
-      </div>
+          <el-popconfirm title="确定要删除该分类吗？" @confirm="deleteCategoryInMaintenance(row)">
+            <template #reference>
+              <el-button link type="danger" size="small">删除</el-button>
+            </template>
+          </el-popconfirm>
+        </template>
+      </VirtualTreeTable>
+      
       <template #footer>
         <el-button @click="categoryMaintenanceVisible = false">取消</el-button>
         <el-button type="primary" :loading="savingMaintenance" @click="saveMaintenance">
-          保存
+          保存全部修改
         </el-button>
       </template>
     </el-dialog>
@@ -281,8 +329,11 @@
 </template>
 
 <script setup lang="ts">
-import { Menu, ArrowRight, CaretRight, CaretBottom } from '@element-plus/icons-vue'
+import { ArrowRight, CaretRight, CaretBottom, Plus, Refresh } from '@element-plus/icons-vue'
+import type { Column } from '~/components/VirtualTreeTable.vue'
+
 type Category = { id: number; parentId: number | null; name: string; slug: string; sort: number }
+
 type AdminLink = {
   id: number
   categoryId: number | null
@@ -318,8 +369,28 @@ const query = ref('')
 const categoryId = ref<number | undefined>(undefined)
 
 const categories = ref<Category[]>([])
-const maintenanceCategories = ref<(Category & { _isNew?: boolean; _isDeleted?: boolean })[]>([])
+const maintenanceCategories = ref<(Category & { _children?: Category[] })[]>([])
 const categoryMaintenanceVisible = ref(false)
+const editingRowId = ref<number | null>(null)
+const expandedRowKeys = ref<number[]>([])
+
+const maintenanceColumns: Column[] = [
+  { key: 'name', dataKey: 'name', label: '分类名称', width: 150 },
+  { key: 'slug', dataKey: 'slug', label: '标识 (slug)', width: 100 },
+  { key: 'parentId', dataKey: 'parentId', label: '父级分类', width: 120 },
+  { key: 'sort', dataKey: 'sort', label: '排序', width: 90 },
+  { key: 'actions', dataKey: 'actions', label: '操作', align: 'center', fixed: 'right', width: 180 }
+]
+
+function handleToggleExpand(key: number) {
+  const index = expandedRowKeys.value.indexOf(key)
+  if (index > -1) {
+    expandedRowKeys.value.splice(index, 1)
+  } else {
+    expandedRowKeys.value.push(key)
+  }
+}
+
 const categoryCreateVisible = ref(false)
 const savingCategory = ref(false)
 const categoryForm = reactive({
@@ -330,10 +401,8 @@ const categoryForm = reactive({
   sort: 0
 })
 const savingMaintenance = ref(false)
-const dragIndex = ref<number | null>(null)
 
 const topLevelCategories = computed(() => categories.value.filter(c => !c.parentId))
-const subCategories = computed(() => categories.value.filter(c => c.parentId))
 
 const rows = ref<AdminLink[]>([])
 const dialogOpen = ref(false)
@@ -376,7 +445,6 @@ function getErrorStatus(e: unknown): number | undefined {
 async function reloadCategories() {
   const data = await $api<Category[]>('/api/admin/categories', { params: { limit: 500 }, headers: requestHeaders })
   categories.value = data
-  // 默认展开所有一级分类
   data.filter(c => !c.parentId).forEach(c => {
     expandedCategories.value.add(c.id)
   })
@@ -453,8 +521,9 @@ async function crawlUrl() {
     if (data.url) form.url = data.url
 
     ElMessage.success('获取成功')
-  } catch (e: any) {
-    ElMessage.error(e.statusMessage || '获取失败')
+  } catch (e: unknown) {
+    const error = e as { statusMessage?: string }
+    ElMessage.error(error.statusMessage || '获取失败')
   } finally {
     crawling.value = false
   }
@@ -478,8 +547,9 @@ async function checkConnectivity() {
     })
     ElMessageBox.alert(`检测完成！共检测 ${data.total} 个站点，其中 ${data.failed} 个站点不可访问并已自动禁用。`, '检测结果')
     await reloadLinks()
-  } catch (e: any) {
-    ElMessage.error(e.statusMessage || '检测失败')
+  } catch (e: unknown) {
+    const error = e as { statusMessage?: string }
+    ElMessage.error(error.statusMessage || '检测失败')
   } finally {
     checkingConnectivity.value = false
   }
@@ -493,9 +563,10 @@ async function toggleLinkStatus(row: AdminLink, field: 'isActive' | 'isRecommend
       body: { [field]: value }
     })
     ElMessage.success('更新成功')
-  } catch (e: any) {
-    row[field] = !value // 失败时回滚状态
-    ElMessage.error(e.statusMessage || '更新失败')
+  } catch (e: unknown) {
+    const error = e as { statusMessage?: string }
+    row[field] = !value
+    ElMessage.error(error.statusMessage || '更新失败')
   } finally {
     updatingRows.delete(row.id)
   }
@@ -543,17 +614,24 @@ async function remove(row: AdminLink) {
     await $api(`/api/admin/links/${row.id}`, { method: 'DELETE' })
     ElMessage.success('删除成功')
     await reloadLinks()
-  } catch (e: any) {
+  } catch {
     ElMessage.error('删除失败')
   }
 }
 
-function openCategoryCreate() {
+function openCategoryCreate(parentId: number | null = null) {
   categoryForm.id = 0
-  categoryForm.parentId = null
+  categoryForm.parentId = typeof parentId === 'number' ? parentId : null
   categoryForm.name = ''
   categoryForm.slug = ''
-  categoryForm.sort = categories.value.length * 10
+  
+  if (parentId === null) {
+    categoryForm.sort = (topLevelCategories.value.length + 1) * 10
+  } else {
+    const siblingCount = categories.value.filter(c => c.parentId === parentId).length
+    categoryForm.sort = (siblingCount + 1) * 10
+  }
+  
   categoryCreateVisible.value = true
 }
 
@@ -581,75 +659,98 @@ async function saveCategory() {
     ElMessage.success('保存成功')
     categoryCreateVisible.value = false
     await reloadCategories()
-  } catch (e: any) {
-    ElMessage.error(e.statusMessage || '保存失败')
+    
+    if (categoryMaintenanceVisible.value) {
+      loadMaintenanceCategories()
+    }
+  } catch (e: unknown) {
+    const error = e as { statusMessage?: string }
+    ElMessage.error(error.statusMessage || '保存失败')
   } finally {
     savingCategory.value = false
   }
 }
 
+function _buildTreeData(data: Category[]): (Category & { _children?: Category[] })[] {
+  const map = new Map<number, Category & { _children?: Category[] }>()
+  const roots: (Category & { _children?: Category[] })[] = []
+  
+  data.forEach(item => {
+    map.set(item.id, { ...item, _children: [] })
+  })
+  
+  map.forEach(item => {
+    if (item.parentId && map.has(item.parentId)) {
+      map.get(item.parentId)!._children!.push(item)
+    } else {
+      roots.push(item)
+    }
+  })
+  
+  return roots.sort((a, b) => (a.sort || 0) - (b.sort || 0))
+}
+
+function loadMaintenanceCategories() {
+  maintenanceCategories.value = _buildTreeData(categories.value)
+  expandedRowKeys.value = categories.value
+    .filter(c => !c.parentId)
+    .map(c => c.id)
+}
+
 function openCategoryMaintenance() {
-  maintenanceCategories.value = JSON.parse(JSON.stringify(categories.value))
+  loadMaintenanceCategories()
   categoryMaintenanceVisible.value = true
 }
 
-function addMaintenanceItem() {
-  maintenanceCategories.value.push({
-    id: 0,
-    parentId: null,
-    name: '',
-    slug: '',
-    sort: maintenanceCategories.value.length * 10,
-    _isNew: true
-  })
+function editCategoryInMaintenance(row: Category) {
+  categoryForm.id = row.id
+  categoryForm.parentId = row.parentId
+  categoryForm.name = row.name
+  categoryForm.slug = row.slug
+  categoryForm.sort = row.sort
+  categoryCreateVisible.value = true
 }
 
-function removeMaintenanceItem(index: number) {
-  const item = maintenanceCategories.value[index]
-  if (item._isNew) {
-    maintenanceCategories.value.splice(index, 1)
-  } else {
-    // 标记为删除，或者直接调用 API。这里先简单实现：弹窗内直接删除会比较复杂，因为有外键。
-    // 按照用户需求“支持增删改”，如果删除已有分类且有数据，后端会拦截。
-    ElMessageBox.confirm(`确定要删除分类 "${item.name}" 吗？`, '提示', {
-      type: 'warning'
-    }).then(async () => {
-      try {
-        await $api(`/api/admin/categories/${item.id}`, { method: 'DELETE' })
-        maintenanceCategories.value.splice(index, 1)
-        ElMessage.success('删除成功')
-      } catch (e: any) {
-        const status = getErrorStatus(e)
-        if (status === 409) {
-          ElMessage.error('该分类下有链接，无法删除')
-        } else {
-          ElMessage.error('删除失败')
-        }
-      }
-    }).catch(() => {})
+async function deleteCategoryInMaintenance(row: Category) {
+  try {
+    await $api(`/api/admin/categories/${row.id}`, { method: 'DELETE' })
+    ElMessage.success('删除成功')
+    await reloadCategories()
+    loadMaintenanceCategories()
+  } catch (e: unknown) {
+    const status = getErrorStatus(e)
+    if (status === 409) {
+      ElMessage.error('该分类下有链接，无法删除')
+    } else {
+      ElMessage.error('删除失败')
+    }
   }
 }
 
 async function saveMaintenance() {
   savingMaintenance.value = true
   try {
-    for (let i = 0; i < maintenanceCategories.value.length; i++) {
-      const item = maintenanceCategories.value[i]
-      // 更新排序
-      item.sort = i * 10
-      
-      const payload = { parentId: item.parentId, name: item.name, slug: item.slug, sort: item.sort }
-      if (item._isNew) {
-        await $api('/api/admin/categories', { method: 'POST', body: payload })
-      } else {
-        await $api(`/api/admin/categories/${item.id}`, { method: 'PUT', body: payload })
-      }
+    const flatList: Category[] = []
+    function flatten(items: (Category & { _children?: Category[] })[]) {
+      items.forEach(item => {
+        flatList.push({ id: item.id, parentId: item.parentId, name: item.name, slug: item.slug, sort: item.sort })
+        if (item._children?.length) flatten(item._children)
+      })
     }
+    flatten(maintenanceCategories.value)
+    
+    const promises = flatList.map(item => {
+      const payload = { parentId: item.parentId, name: item.name, slug: item.slug, sort: item.sort }
+      return $api(`/api/admin/categories/${item.id}`, { method: 'PUT', body: payload })
+    })
+    
+    await Promise.all(promises)
     ElMessage.success('保存成功')
     categoryMaintenanceVisible.value = false
     await reloadCategories()
-  } catch (e: any) {
-    ElMessage.error(e.statusMessage || '保存过程中出现错误')
+  } catch (e: unknown) {
+    const error = e as { statusMessage?: string }
+    ElMessage.error(error.statusMessage || '保存过程中出现错误')
   } finally {
     savingMaintenance.value = false
   }
@@ -657,47 +758,8 @@ async function saveMaintenance() {
 
 function onCategoryMaintenanceClosed() {
   maintenanceCategories.value = []
-}
-
-// 简单拖拽实现
-function onDragStart(e: DragEvent, index: number) {
-  dragIndex.value = index
-  if (e.dataTransfer) {
-    e.dataTransfer.effectAllowed = 'move'
-  }
-}
-
-function onDrop(e: DragEvent, index: number) {
-  if (dragIndex.value === null || dragIndex.value === index) return
-  const list = maintenanceCategories.value
-  const item = list.splice(dragIndex.value, 1)[0]
-  list.splice(index, 0, item)
-  dragIndex.value = null
-}
-
-async function removeCategory(row: Category) {
-  try {
-    await ElMessageBox.confirm(`确定要删除分类 "${row.name}" 吗？`, '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
-  } catch {
-    return
-  }
-
-  try {
-    await $api(`/api/admin/categories/${row.id}`, { method: 'DELETE' })
-    ElMessage.success('删除成功')
-    await reloadCategories()
-  } catch (e: any) {
-    const status = getErrorStatus(e)
-    if (status === 409) {
-      // ElMessage.error(e.statusMessage || '该分类中有导航数据，禁止删除')
-    } else {
-      ElMessage.error('删除失败')
-    }
-  }
+  editingRowId.value = null
+  expandedRowKeys.value = []
 }
 
 try {
@@ -801,33 +863,34 @@ try {
   font-weight: normal;
 }
 
-.categoryMaintenanceList {
-  max-height: 400px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+:deep(.tree-expand-icon) {
+  color: #409eff;
+  margin-right: 4px;
+  cursor: pointer;
 }
 
-.maintenanceItem {
-  display: flex;
+:deep(.custom-arrow) {
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  background-color: #fff;
-  cursor: move;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  color: #606266;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  user-select: none;
 }
 
-.maintenanceItem:hover {
-  border-color: #409eff;
+:deep(.custom-arrow:hover) {
+  color: #409eff;
 }
 
-.dragHandle {
-  cursor: move;
-  color: #909399;
+:deep(.custom-arrow.expanded) {
+  transform: rotate(90deg);
+}
+
+:deep(.cell) {
   display: flex;
-  align-items: center;
 }
 </style>

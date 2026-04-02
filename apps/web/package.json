@@ -27,10 +27,14 @@
   },
   "devDependencies": {
     "@nuxt/eslint": "^0.7.6",
+    "@types/jsdom": "^28.0.1",
     "@vue/language-core": "^3.0.6",
+    "axios": "^1.14.0",
     "drizzle-kit": "^0.31.4",
     "eslint": "^9.35.0",
+    "jsdom": "^29.0.1",
     "less": "^4.6.4",
+    "tsx": "^4.21.0",
     "vue-tsc": "^3.2.6"
   }
 }
