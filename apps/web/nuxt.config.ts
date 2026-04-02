@@ -6,12 +6,16 @@ const dayjsEsmDir = dirname(require.resolve('dayjs/esm/index.js'))
 const normalizePath = (p: string) => p.replace(/\\/g, '/')
 
 export default defineNuxtConfig({
+  compatibilityDate: '2026-04-01',
   ssr: false,
   devtools: { enabled: true },
-  devServer: { host: '127.0.0.1', port: 8998 },
+  devServer: { host: '127.0.0.1', port: 8991 },
   modules: ['@element-plus/nuxt', '@nuxt/eslint'],
   css: ['~/assets/styles/main.css'],
   vite: {
+    optimizeDeps: {
+      include: ['dayjs', 'dayjs/plugin/*.js']
+    },
     resolve: {
       alias: [
         { find: /^dayjs$/, replacement: normalizePath(join(dayjsEsmDir, 'index.js')) },

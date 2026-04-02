@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-row :gutter="12">
-      <el-col :xs="24" :md="7" :lg="4">
+      <el-col :xs="24" :md="7" :lg="6">
         <el-card shadow="never">
           <template #header>
             <div class="cardHeader">
@@ -25,20 +25,39 @@
             >
               全部
             </div>
-            <div
-              v-for="c in categories"
-              :key="c.id"
-              class="categoryItem"
-              :class="{ active: categoryId === c.id }"
-              @click="selectCategory(c.id)"
-            >
-              {{ c.name }} <span class="categorySlug">({{ c.slug }})</span>
-            </div>
+            <template v-for="pc in topLevelCategories" :key="pc.id">
+              <div
+                class="categoryItem parentCategory"
+                @click="toggleExpand(pc.id, $event)"
+              >
+                <div 
+                  v-if="categories.some(c => c.parentId === pc.id)" 
+                  class="expandIcon"
+                >
+                  <el-icon v-if="expandedCategories.has(pc.id)"><CaretBottom /></el-icon>
+                  <el-icon v-else><CaretRight /></el-icon>
+                </div>
+                <div v-else class="expandPlaceholder"></div>
+                {{ pc.name }} <span class="categorySlug">({{ pc.slug }})</span>
+              </div>
+              <div v-if="expandedCategories.has(pc.id)">
+                <div
+                  v-for="c in categories.filter(cat => cat.parentId === pc.id)"
+                  :key="c.id"
+                  class="categoryItem subCategory"
+                  :class="{ active: categoryId === c.id }"
+                  @click="selectCategory(c.id)"
+                >
+                  <el-icon style="margin-right: 4px"><ArrowRight /></el-icon>
+                  {{ c.name }} <span class="categorySlug">({{ c.slug }})</span>
+                </div>
+              </div>
+            </template>
           </div>
         </el-card>
       </el-col>
 
-      <el-col :xs="24" :md="17" :lg="20">
+      <el-col :xs="24" :md="17" :lg="18">
         <el-card shadow="never" style="margin-bottom: 12px">
           <el-form :inline="true" @submit.prevent>
             <el-form-item label="关键词">
@@ -137,9 +156,20 @@
           <el-input v-model="form.description" type="textarea" :rows="3" />
         </el-form-item>
         <el-form-item label="分类">
-          <el-select v-model="form.categoryId" clearable placeholder="不设置" style="width: 100%">
-            <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
+          <el-select v-model="form.categoryId" placeholder="请选择二级分类" style="width: 100%">
+            <el-option-group v-for="pc in topLevelCategories" :key="pc.id" :label="pc.name">
+              <el-option 
+                v-for="c in categories.filter(cat => cat.parentId === pc.id)" 
+                :key="c.id" 
+                :label="c.name" 
+                :value="c.id" 
+              />
+            </el-option-group>
+            <!-- 兼容性：如果一个分类既没有父级也没有子级，说明它目前只能作为一个孤立的一级分类，不应直接添加链接 -->
           </el-select>
+          <div class="formTip" style="font-size: 12px; color: #909399; margin-top: 4px;">
+            注：导航只能添加在二级分类下
+          </div>
         </el-form-item>
         <el-form-item label="图标">
           <div style="display: flex; gap: 8px; width: 100%; align-items: center">
@@ -172,7 +202,35 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="categoryMaintenanceVisible" title="分类维护" width="680px" @closed="onCategoryMaintenanceClosed">
+    <el-dialog v-model="categoryCreateVisible" :title="categoryForm.id ? '编辑分类' : '新增分类'" width="460px">
+      <el-form label-width="90px">
+        <el-form-item label="父级分类">
+          <el-select v-model="categoryForm.parentId" clearable placeholder="不选则为一级分类" style="width: 100%">
+            <el-option 
+              v-for="pc in topLevelCategories.filter(c => c.id !== categoryForm.id)" 
+              :key="pc.id" 
+              :label="pc.name" 
+              :value="pc.id" 
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="名称">
+          <el-input v-model="categoryForm.name" placeholder="例如：影视休闲" />
+        </el-form-item>
+        <el-form-item label="标识(Slug)">
+          <el-input v-model="categoryForm.slug" placeholder="例如：movies" />
+        </el-form-item>
+        <el-form-item label="排序">
+          <el-input-number v-model="categoryForm.sort" :min="0" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="categoryCreateVisible = false">取消</el-button>
+        <el-button type="primary" :loading="savingCategory" @click="saveCategory">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="categoryMaintenanceVisible" title="分类排序/维护" width="680px" @closed="onCategoryMaintenanceClosed">
       <div class="categoryMaintenanceList">
         <div
           v-for="(item, index) in maintenanceCategories"
@@ -186,8 +244,21 @@
           <div class="dragHandle">
             <el-icon><Menu /></el-icon>
           </div>
-          <el-input v-model="item.name" placeholder="名称" style="width: 150px" />
-          <el-input v-model="item.slug" placeholder="标识 (slug)" style="width: 150px" />
+          <el-select v-model="item.parentId" clearable placeholder="父级" style="width: 120px">
+            <template #empty>
+              <p style="padding: 8px; font-size: 12px; color: #909399; text-align: center; margin: 0">
+                请先保存顶级分类
+              </p>
+            </template>
+            <el-option 
+              v-for="pc in maintenanceCategories.filter(c => !c.parentId && c.id !== item.id && !c._isNew)" 
+              :key="pc.id" 
+              :label="pc.name" 
+              :value="pc.id" 
+            />
+          </el-select>
+          <el-input v-model="item.name" placeholder="名称" style="width: 120px" />
+          <el-input v-model="item.slug" placeholder="标识 (slug)" style="width: 120px" />
           <el-input-number v-model="item.sort" :min="0" placeholder="排序" style="width: 100px" />
           <el-button type="danger" link @click="removeMaintenanceItem(index)">
             删除
@@ -210,8 +281,8 @@
 </template>
 
 <script setup lang="ts">
-import { Menu } from '@element-plus/icons-vue'
-type Category = { id: number; name: string; slug: string; sort: number }
+import { Menu, ArrowRight, CaretRight, CaretBottom } from '@element-plus/icons-vue'
+type Category = { id: number; parentId: number | null; name: string; slug: string; sort: number }
 type AdminLink = {
   id: number
   categoryId: number | null
@@ -249,8 +320,20 @@ const categoryId = ref<number | undefined>(undefined)
 const categories = ref<Category[]>([])
 const maintenanceCategories = ref<(Category & { _isNew?: boolean; _isDeleted?: boolean })[]>([])
 const categoryMaintenanceVisible = ref(false)
+const categoryCreateVisible = ref(false)
+const savingCategory = ref(false)
+const categoryForm = reactive({
+  id: 0,
+  parentId: null as number | null,
+  name: '',
+  slug: '',
+  sort: 0
+})
 const savingMaintenance = ref(false)
 const dragIndex = ref<number | null>(null)
+
+const topLevelCategories = computed(() => categories.value.filter(c => !c.parentId))
+const subCategories = computed(() => categories.value.filter(c => c.parentId))
 
 const rows = ref<AdminLink[]>([])
 const dialogOpen = ref(false)
@@ -272,7 +355,12 @@ const form = reactive<LinkForm>({
 function categoryName(id: number | null) {
   if (id == null) return '-'
   const hit = categories.value.find((c) => c.id === id)
-  return hit?.name || String(id)
+  if (!hit) return String(id)
+  if (hit.parentId) {
+    const parent = categories.value.find(c => c.id === hit.parentId)
+    return `${parent?.name || '?' } / ${hit.name}`
+  }
+  return hit.name
 }
 
 const requestHeaders = import.meta.server ? useRequestHeaders(['cookie']) : undefined
@@ -288,6 +376,10 @@ function getErrorStatus(e: unknown): number | undefined {
 async function reloadCategories() {
   const data = await $api<Category[]>('/api/admin/categories', { params: { limit: 500 }, headers: requestHeaders })
   categories.value = data
+  // 默认展开所有一级分类
+  data.filter(c => !c.parentId).forEach(c => {
+    expandedCategories.value.add(c.id)
+  })
 }
 
 async function reloadLinks() {
@@ -297,6 +389,17 @@ async function reloadLinks() {
 
   const data = await $api<AdminLink[]>('/api/admin/links', { params, headers: requestHeaders })
   rows.value = data
+}
+
+const expandedCategories = ref<Set<number>>(new Set())
+
+function toggleExpand(id: number, event?: Event) {
+  if (event) event.stopPropagation()
+  if (expandedCategories.value.has(id)) {
+    expandedCategories.value.delete(id)
+  } else {
+    expandedCategories.value.add(id)
+  }
 }
 
 function selectCategory(id: number | undefined) {
@@ -399,6 +502,11 @@ async function toggleLinkStatus(row: AdminLink, field: 'isActive' | 'isRecommend
 }
 
 async function save() {
+  if (!form.categoryId) {
+    ElMessage.warning('请选择一个二级分类')
+    return
+  }
+  
   const payload = {
     categoryId: form.categoryId,
     title: form.title,
@@ -441,14 +549,43 @@ async function remove(row: AdminLink) {
 }
 
 function openCategoryCreate() {
-  maintenanceCategories.value.push({
-    id: 0,
-    name: '',
-    slug: '',
-    sort: maintenanceCategories.value.length * 10,
-    _isNew: true
-  })
-  categoryMaintenanceVisible.value = true
+  categoryForm.id = 0
+  categoryForm.parentId = null
+  categoryForm.name = ''
+  categoryForm.slug = ''
+  categoryForm.sort = categories.value.length * 10
+  categoryCreateVisible.value = true
+}
+
+async function saveCategory() {
+  if (!categoryForm.name || !categoryForm.slug) {
+    ElMessage.warning('名称和标识不能为空')
+    return
+  }
+  
+  savingCategory.value = true
+  try {
+    const payload = { 
+      parentId: categoryForm.parentId, 
+      name: categoryForm.name, 
+      slug: categoryForm.slug, 
+      sort: categoryForm.sort 
+    }
+    
+    if (categoryForm.id) {
+      await $api(`/api/admin/categories/${categoryForm.id}`, { method: 'PUT', body: payload })
+    } else {
+      await $api('/api/admin/categories', { method: 'POST', body: payload })
+    }
+    
+    ElMessage.success('保存成功')
+    categoryCreateVisible.value = false
+    await reloadCategories()
+  } catch (e: any) {
+    ElMessage.error(e.statusMessage || '保存失败')
+  } finally {
+    savingCategory.value = false
+  }
 }
 
 function openCategoryMaintenance() {
@@ -459,6 +596,7 @@ function openCategoryMaintenance() {
 function addMaintenanceItem() {
   maintenanceCategories.value.push({
     id: 0,
+    parentId: null,
     name: '',
     slug: '',
     sort: maintenanceCategories.value.length * 10,
@@ -500,7 +638,7 @@ async function saveMaintenance() {
       // 更新排序
       item.sort = i * 10
       
-      const payload = { name: item.name, slug: item.slug, sort: item.sort }
+      const payload = { parentId: item.parentId, name: item.name, slug: item.slug, sort: item.sort }
       if (item._isNew) {
         await $api('/api/admin/categories', { method: 'POST', body: payload })
       } else {
@@ -595,11 +733,31 @@ try {
   padding: 8px 12px;
   cursor: pointer;
   border-radius: 4px;
-  transition: background-color 0.2s;
+  margin-bottom: 4px;
   font-size: 14px;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
-  gap: 4px;
+}
+
+.expandIcon {
+  margin-right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  color: #909399;
+}
+
+.expandIcon:hover {
+  background-color: #f2f6fc;
+  color: #409eff;
+}
+
+.expandPlaceholder {
+  width: 20px;
 }
 
 .categoryItem:hover {
@@ -610,6 +768,31 @@ try {
   background-color: #ecf5ff;
   color: #409eff;
   font-weight: bold;
+}
+
+.parentCategory {
+  font-weight: 600;
+  color: #303133;
+}
+
+.subCategory {
+  padding-left: 28px;
+  color: #606266;
+  position: relative;
+}
+
+.subCategory::before {
+  content: '';
+  position: absolute;
+  left: 18px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: #dcdfe6;
+}
+
+.subCategory:last-child::before {
+  height: 50%;
 }
 
 .categorySlug {

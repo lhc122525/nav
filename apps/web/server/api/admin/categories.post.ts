@@ -1,6 +1,7 @@
 import { getMySqlPool } from '../../utils/mysql'
 
 type CreateCategoryBody = {
+  parentId?: number | null
   name?: string
   slug?: string
   sort?: number
@@ -13,6 +14,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = (await readBody(event)) as CreateCategoryBody
+  const parentId = body?.parentId != null ? Number(body.parentId) : null
   const name = String(body?.name || '').trim()
   const slug = String(body?.slug || '').trim()
   const sort = Number(body?.sort || 0)
@@ -23,8 +25,8 @@ export default defineEventHandler(async (event) => {
 
   try {
     const [result] = await pool.execute(
-      'INSERT INTO categories (name, slug, sort) VALUES (?, ?, ?)',
-      [name, slug, Number.isFinite(sort) ? sort : 0]
+      'INSERT INTO categories (parent_id, name, slug, sort) VALUES (?, ?, ?, ?)',
+      [parentId, name, slug, Number.isFinite(sort) ? sort : 0]
     )
     return { id: Number((result as { insertId?: number }).insertId) }
   } catch (e: unknown) {

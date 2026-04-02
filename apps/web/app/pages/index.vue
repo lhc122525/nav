@@ -74,10 +74,25 @@
                     <el-icon><StarFilled /></el-icon>
                     <span>常用导航</span>
                   </el-menu-item>
-                  <el-menu-item v-for="c in categories" :key="c.id" :index="String(c.id)">
-                    <el-icon><Folder /></el-icon>
-                    <span>{{ c.name }}</span>
-                  </el-menu-item>
+                  
+                  <template v-for="pc in topLevelCategories" :key="pc.id">
+                    <!-- <el-sub-menu v-if="categories.some(c => c.parentId === pc.id)" :index="String(pc.id)">
+                      <template #title>
+                        <el-icon><Folder /></el-icon>
+                        <span>{{ pc.name }}</span>
+                      </template>
+                      <el-menu-item :index="String(pc.id)">
+                        <span>全部 {{ pc.name }}</span>
+                      </el-menu-item>
+                      <el-menu-item v-for="c in categories.filter(cat => cat.parentId === pc.id)" :key="c.id" :index="String(c.id)">
+                        <span>{{ c.name }}</span>
+                      </el-menu-item>
+                    </el-sub-menu> -->
+                    <el-menu-item :index="String(pc.id)">
+                      <el-icon><Folder /></el-icon>
+                      <span>{{ pc.name }}</span>
+                    </el-menu-item>
+                  </template>
                 </el-menu>
               </div>
             </aside>
@@ -172,14 +187,24 @@
             <section class="block">
              
               <div class="categorySections">
-                <section v-for="c in categories.filter(cat => activeCategoryId === 0 || cat.id === activeCategoryId)" :key="c.id" class="categorySection">
+                <section v-for="c in displayCategories" :key="c.id" class="categorySection">
                   <div class="categoryHeader">
                     <span class="categoryTitle">{{ c.name }}</span>
-                    <!-- <el-button link type="primary" @click="onSelect(String(c.id))">更多 <el-icon><ArrowRight /></el-icon></el-button> -->
+                    <div class="subCategoryLinks" v-if="categories.some(cat => cat.parentId === c.id)">
+                      <span 
+                        v-for="(sub, sIdx) in categories.filter(cat => cat.parentId === c.id)" 
+                        :key="sub.id" 
+                        class="subCategoryLink"
+                        :class="{ active: activeCategoryId === sub.id || (activeCategoryId === 0 && sIdx === 0) || (activeCategoryId === c.id && sIdx === 0) }"
+                        @click="onSelect(String(sub.id))"
+                      >
+                        {{ sub.name }}
+                      </span>
+                    </div>
                   </div>
                   <el-row :gutter="16">
                     <el-col
-                      v-for="item in linksByCategory.get(c.id) || []"
+                      v-for="item in (activeCategoryId === c.id || !categories.some(cat => cat.id === activeCategoryId && cat.parentId === c.id)) ? getCategoryLinks(c.id) : (linksByCategory.get(activeCategoryId) || [])"
                       :key="item.id"
                       :xs="12" :sm="8" :md="6"
                       class="col-5"
@@ -200,7 +225,7 @@
                       </div>
                     </el-col>
                   </el-row>
-                  <el-empty v-if="(linksByCategory.get(c.id) || []).length === 0" description="暂无数据" />
+                  <el-empty v-if="((activeCategoryId === c.id || !categories.some(cat => cat.id === activeCategoryId && cat.parentId === c.id)) ? getCategoryLinks(c.id) : (linksByCategory.get(activeCategoryId) || [])).length === 0" description="暂无数据" />
                 </section>
               </div>
             </section>
@@ -225,10 +250,25 @@
           <el-icon><StarFilled /></el-icon>
           <span>常用导航</span>
         </el-menu-item>
-        <el-menu-item v-for="c in categories" :key="c.id" :index="String(c.id)">
-          <el-icon><Folder /></el-icon>
-          <span>{{ c.name }}</span>
-        </el-menu-item>
+        
+        <template v-for="pc in topLevelCategories" :key="pc.id">
+          <el-sub-menu v-if="categories.some(c => c.parentId === pc.id)" :index="String(pc.id)">
+            <template #title>
+              <el-icon><Folder /></el-icon>
+              <span>{{ pc.name }}</span>
+            </template>
+            <el-menu-item :index="String(pc.id)">
+              <span>全部 {{ pc.name }}</span>
+            </el-menu-item>
+            <el-menu-item v-for="c in categories.filter(cat => cat.parentId === pc.id)" :key="c.id" :index="String(c.id)">
+              <span>{{ c.name }}</span>
+            </el-menu-item>
+          </el-sub-menu>
+          <el-menu-item v-else :index="String(pc.id)">
+            <el-icon><Folder /></el-icon>
+            <span>{{ pc.name }}</span>
+          </el-menu-item>
+        </template>
       </el-menu>
     </el-drawer>
   </div>
@@ -250,7 +290,7 @@ import {
   ArrowLeft
 } from '@element-plus/icons-vue'
 
-type Category = { id: number; name: string; slug: string; sort: number }
+type Category = { id: number; parentId: number | null; name: string; slug: string; sort: number }
 type NavLink = {
   id: number
   categoryId: number | null
@@ -279,9 +319,28 @@ useHead(() => ({
 
 const { data: categoriesData } = await useFetch<Category[]>('/api/categories', { server: true })
 const categories = computed(() => categoriesData.value || [])
+const topLevelCategories = computed(() => categories.value.filter(c => !c.parentId))
 
 const route = useRoute()
 const activeCategoryId = ref(Number(route.query.categoryId) || 0)
+
+// Sync activeCategoryId with route query
+watch(() => route.query.categoryId, (newId) => {
+  activeCategoryId.value = Number(newId) || 0
+})
+
+// If initial category is a parent with children, auto-select the first child
+watch([categories, activeCategoryId], ([newCats, currentId]) => {
+  if (newCats.length > 0 && currentId > 0) {
+    const cat = newCats.find(c => c.id === currentId)
+    if (cat && !cat.parentId) {
+      const children = newCats.filter(c => c.parentId === cat.id)
+      if (children.length > 0) {
+        activeCategoryId.value = children[0].id
+      }
+    }
+  }
+}, { immediate: true })
 
 const activeCategoryName = computed(() => {
   if (activeCategoryId.value === 0) return '全部'
@@ -300,11 +359,6 @@ const { data: recommendedData } = await useFetch<{ links: NavLink[] }>('/api/lin
 })
 const recommendedLinks = computed(() => recommendedData.value?.links || [])
 
-const categoryLinks = computed(() => {
-  if (activeCategoryId.value <= 0) return []
-  return allLinks.value.filter((l) => l.categoryId === activeCategoryId.value)
-})
-
 const linksByCategory = computed(() => {
   const map = new Map<number, NavLink[]>()
   for (const link of allLinks.value) {
@@ -317,12 +371,61 @@ const linksByCategory = computed(() => {
   return map
 })
 
+const displayCategories = computed(() => {
+  if (activeCategoryId.value === 0) {
+    return topLevelCategories.value
+  }
+  const selected = categories.value.find(c => c.id === activeCategoryId.value)
+  if (!selected) return []
+  
+  if (!selected.parentId) {
+    // Selected a top level category
+    return [selected]
+  } else {
+    // Selected a sub category, show its parent's section but maybe filtered?
+    // Actually, if a sub category is selected, we usually just show that sub category's links.
+    // But to match the UI, we might want to show the parent header.
+    const parent = categories.value.find(c => c.id === selected.parentId)
+    return parent ? [parent] : [selected]
+  }
+})
+
+function getCategoryLinks(catId: number) {
+  const cat = categories.value.find(c => c.id === catId)
+  if (!cat) return []
+  
+  if (cat.parentId) {
+    return linksByCategory.value.get(cat.id) || []
+  }
+  
+  // It's a top level category, return links of the first child if any
+  const children = categories.value.filter(c => c.parentId === cat.id)
+  if (children.length > 0) {
+    return linksByCategory.value.get(children[0].id) || []
+  }
+  
+  // No children, return direct links
+  return linksByCategory.value.get(cat.id) || []
+}
+
 const { data: adsData } = await useFetch<{ ads: { title: string, imageUrl: string, url: string }[] }>('/api/ads', { server: true })
 const ads = computed(() => adsData.value?.ads || [])
 
 function onSelect(index: string) {
   drawerOpen.value = false
-  const id = Number(index)
+  let id = Number(index)
+  
+  // If it's a parent category with children, auto-select the first child
+  if (id > 0) {
+    const cat = categories.value.find(c => c.id === id)
+    if (cat && !cat.parentId) {
+      const children = categories.value.filter(c => c.parentId === id)
+      if (children.length > 0) {
+        id = children[0].id
+      }
+    }
+  }
+  
   activeCategoryId.value = id
   
   // Update URL query without full navigation
@@ -926,16 +1029,43 @@ function submitSearch() {
 .categoryHeader {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  padding-bottom: 8px;
+  justify-content: flex-start;
+  gap: 20px;
+  margin-bottom: 20px;
   border-bottom: 1px solid #f1f2f4;
+  padding-bottom: 12px;
 }
 
 .categoryTitle {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
   color: #24292e;
+  position: relative;
+}
+
+.subCategoryLinks {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.subCategoryLink {
+  font-size: 14px;
+  color: #57606a;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 4px 0;
+  border-bottom: 2px solid transparent;
+}
+
+.subCategoryLink:hover {
+  color: #0969da;
+}
+
+.subCategoryLink.active {
+  color: #0969da;
+  font-weight: 600;
+  border-bottom-color: #0969da;
 }
 
 .activeCategoryTitle {

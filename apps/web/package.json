@@ -4,18 +4,19 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
-    "dev": "node -e \"const net=require('net');const port=8998;const host='127.0.0.1';const s=net.createServer();s.once('error',()=>{console.error('端口 '+port+' 已被占用，请释放后再启动');process.exit(1)});s.once('listening',()=>s.close(()=>process.exit(0)));s.listen(port,host);\" && nuxt dev --host 127.0.0.1 --port 8998",
+    "dev": "node -e \"const net=require('net');const port=8991;const host='127.0.0.1';const s=net.createServer();s.once('error',()=>{console.error('端口 '+port+' 已被占用，请释放后再启动');process.exit(1)});s.once('listening',()=>s.close(()=>process.exit(0)));s.listen(port,host);\" && nuxt dev --host 127.0.0.1 --port 8991",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "generate": "nuxt generate",
     "lint": "eslint .",
     "check-types": "nuxi typecheck",
-    "preview": "node -e \"const net=require('net');const port=8998;const host='127.0.0.1';const s=net.createServer();s.once('error',()=>{console.error('端口 '+port+' 已被占用，请释放后再启动');process.exit(1)});s.once('listening',()=>s.close(()=>process.exit(0)));s.listen(port,host);\" && nuxt preview --host 127.0.0.1 --port 8998",
+    "preview": "node -e \"const net=require('net');const port=8991;const host='127.0.0.1';const s=net.createServer();s.once('error',()=>{console.error('端口 '+port+' 已被占用，请释放后再启动');process.exit(1)});s.once('listening',()=>s.close(()=>process.exit(0)));s.listen(port,host);\" && nuxt preview --host 127.0.0.1 --port 8991",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
     "@element-plus/nuxt": "^1.1.2",
+    "dayjs": "^1.11.20",
     "drizzle-orm": "^0.44.5",
     "element-plus": "^2.11.4",
     "mysql2": "^3.15.1",

@@ -1,6 +1,7 @@
 import { getMySqlPool } from '../../../utils/mysql'
 
 type UpdateCategoryBody = {
+  parentId?: number | null
   name?: string
   slug?: string
   sort?: number
@@ -18,6 +19,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = (await readBody(event)) as UpdateCategoryBody
+  const parentId = body?.parentId !== undefined ? (body.parentId != null ? Number(body.parentId) : null) : undefined
   const name = body?.name != null ? String(body.name).trim() : undefined
   const slug = body?.slug != null ? String(body.slug).trim() : undefined
   const sort = body?.sort != null ? Number(body.sort) : undefined
@@ -30,8 +32,12 @@ export default defineEventHandler(async (event) => {
   }
 
   const fields: string[] = []
-  const values: Array<string | number> = []
+  const values: Array<string | number | null> = []
 
+  if (parentId !== undefined) {
+    fields.push('parent_id = ?')
+    values.push(parentId)
+  }
   if (name !== undefined) {
     fields.push('name = ?')
     values.push(name)

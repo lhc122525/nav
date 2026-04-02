@@ -13,6 +13,8 @@ export const categories = mysqlTable(
   'categories',
   {
     id: bigint('id', { mode: 'number', unsigned: true }).autoincrement().notNull().primaryKey(),
+    parentId: bigint('parent_id', { mode: 'number', unsigned: true })
+      .references(() => categories.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
     name: varchar('name', { length: 50 }).notNull(),
     slug: varchar('slug', { length: 80 }).notNull(),
     sort: int('sort').notNull().default(0),

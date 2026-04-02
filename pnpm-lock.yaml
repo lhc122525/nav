@@ -23,6 +23,9 @@ importers:
       '@element-plus/nuxt':
         specifier: ^1.1.2
         version: 1.1.5(@element-plus/icons-vue@2.3.2(vue@3.5.30(typescript@5.9.2)))(element-plus@2.13.5(typescript@5.9.2)(vue@3.5.30(typescript@5.9.2)))(magicast@0.5.2)
+      dayjs:
+        specifier: ^1.11.20
+        version: 1.11.20
       drizzle-orm:
         specifier: ^0.44.5
         version: 0.44.7(mysql2@3.20.0(@types/node@22.15.3))
