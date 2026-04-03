@@ -1,6 +1,6 @@
 <template>
   <el-container class="adminLayout">
-    <el-aside :width="collapsed ? '64px' : '220px'" class="aside">
+    <el-aside :width="collapsed ? '64px' : '221px'" class="aside">
       <div class="asideTop" :class="{ isCollapsed: collapsed }" @click="collapsed = !collapsed">
         <img
           v-if="!collapsed"
@@ -15,7 +15,7 @@
           class="logoSmall"
         />
       </div>
-      <el-scrollbar>
+      <el-scrollbar style="flex:2">
         <el-menu
           :default-active="active"
           :collapse="collapsed"
@@ -89,7 +89,8 @@ function onSelect(index: string) {
 
 <style scoped>
 .adminLayout {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: auto;
   background-color: #f5f7fa;
 }
 
@@ -99,10 +100,12 @@ function onSelect(index: string) {
   transition: width 0.3s;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  overflow-x: hidden;
 }
 
 .asideTop {
-  height: 60px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -158,7 +161,7 @@ function onSelect(index: string) {
 }
 
 .main {
-  padding: 20px;
+  padding: 10px;
   background-color: #f5f7fa;
 }
 
@@ -166,6 +169,7 @@ function onSelect(index: string) {
   max-width: 100%;
   padding: 0;
   margin: 0 auto;
+  height: 100%;
 }
 </style>
 

@@ -1,8 +1,8 @@
 <template>
-  <div>
-    <el-row :gutter="12">
-      <el-col :xs="24" :md="7" :lg="6">
-        <el-card shadow="never">
+  <div style="height: 100%;">
+    <el-row :gutter="12" style="height: 100%;">
+      <el-col :xs="24" :md="7" :lg="6" style="height: 100%;">
+        <el-card shadow="never" style="height: 100%;overflow: auto;">
           <template #header>
             <div class="cardHeader">
               <span>分类</span>
@@ -57,13 +57,13 @@
         </el-card>
       </el-col>
 
-      <el-col :xs="24" :md="17" :lg="18">
-        <el-card shadow="never" style="margin-bottom: 12px">
-          <el-form :inline="true" @submit.prevent>
-            <el-form-item label="关键词">
+      <el-col :xs="24" :md="17" :lg="18" style="height: 100%;display: flex;flex-direction: column;">
+        <el-card shadow="never" style="margin-bottom: 12px;padding: 0;">
+          <el-form :inline="true" @submit.prevent style="display: flex;flex-wrap: wrap;gap: 10px;">
+            <el-form-item label="关键词" style="margin-bottom: 0;">
               <el-input v-model="query" placeholder="标题 / URL / 描述" clearable style="width: 260px" />
             </el-form-item>
-            <el-form-item>
+            <el-form-item style="margin: 0;">
               <el-button type="primary" @click="reloadLinks">
                 查询
               </el-button>
@@ -77,8 +77,8 @@
           </el-form>
         </el-card>
 
-        <el-card shadow="never">
-          <el-table :data="rows" style="width: 100%" row-key="id">
+        <el-card shadow="never" style="flex:2;overflow: hidden;padding: 0;">
+          <el-table :data="rows" style="width: 100%" row-key="id" height="100%">
             <el-table-column prop="id" label="ID" width="60" />
             <el-table-column prop="iconUrl" label="图标" width="60">
               <template #default="{ row }">
