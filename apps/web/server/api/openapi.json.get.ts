@@ -209,9 +209,43 @@ export default defineEventHandler((event) => {
           parameters: [
             { name: 'q', in: 'query', required: false, schema: { type: 'string' } },
             { name: 'categoryId', in: 'query', required: false, schema: { type: 'integer' } },
+            { name: 'page', in: 'query', required: false, schema: { type: 'integer' } },
             { name: 'limit', in: 'query', required: false, schema: { type: 'integer' } }
           ],
-          responses: { '200': { description: 'OK' } }
+          responses: {
+            '200': {
+              description: 'OK',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      total: { type: 'integer' },
+                      list: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'integer' },
+                            categoryId: { type: ['integer', 'null'] },
+                            title: { type: 'string' },
+                            url: { type: 'string' },
+                            description: { type: 'string' },
+                            iconUrl: { type: 'string' },
+                            isActive: { type: 'boolean' },
+                            isRecommended: { type: 'boolean' },
+                            sort: { type: 'integer' },
+                            createdAt: { type: 'string' },
+                            updatedAt: { type: 'string' }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
         post: {
           summary: '后台：创建链接',

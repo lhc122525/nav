@@ -1,7 +1,7 @@
 <template>
   <div style="height: 100%;">
     <el-row :gutter="12" style="height: 100%;">
-      <el-col :xs="24" :md="7" :lg="6" style="height: 100%;">
+      <el-col :xs="24" :md="6" :lg="5" style="height: 100%;">
         <el-card shadow="never" style="height: 100%;overflow: auto;">
           <template #header>
             <div class="cardHeader">
@@ -57,14 +57,14 @@
         </el-card>
       </el-col>
 
-      <el-col :xs="24" :md="17" :lg="18" style="height: 100%;display: flex;flex-direction: column;">
+      <el-col :xs="24" :md="18" :lg="19" style="height: 100%;display: flex;flex-direction: column;">
         <el-card shadow="never" style="margin-bottom: 12px;padding: 0;">
           <el-form :inline="true" @submit.prevent style="display: flex;flex-wrap: wrap;gap: 10px;">
             <el-form-item label="关键词" style="margin-bottom: 0;">
               <el-input v-model="query" placeholder="标题 / URL / 描述" clearable style="width: 260px" />
             </el-form-item>
             <el-form-item style="margin: 0;">
-              <el-button type="primary" @click="reloadLinks">
+              <el-button type="primary" @click="onSearch">
                 查询
               </el-button>
               <el-button @click="openCreate">
@@ -77,66 +77,81 @@
           </el-form>
         </el-card>
 
-        <el-card shadow="never" style="flex:2;overflow: hidden;padding: 0;">
-          <el-table :data="rows" style="width: 100%" row-key="id" height="100%">
-            <el-table-column prop="id" label="ID" width="60" />
-            <el-table-column prop="iconUrl" label="图标" width="60">
-              <template #default="{ row }">
-                <el-image
-                  v-if="row.iconUrl"
-                  :src="row.iconUrl"
-                  style="width: 24px; height: 24px"
-                  fit="contain"
-                  :preview-src-list="[row.iconUrl]"
-                  preview-teleported
-                >
-                  <template #error>
-                    <div style="font-size: 12px; color: #999">N/A</div>
-                  </template>
-                </el-image>
-                <span v-else>-</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="title" label="标题" min-width="180" />
-            <el-table-column prop="url" label="URL" min-width="220" />
-            <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
-            <el-table-column prop="categoryId" label="分类" width="140">
-              <template #default="{ row }">
-                {{ categoryName(row.categoryId) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="isRecommended" label="推荐" width="80">
-              <template #default="{ row }">
-                <el-switch
-                  v-model="row.isRecommended"
-                  size="small"
-                  :loading="updatingRows.has(row.id)"
-                  @change="(val: boolean) => toggleLinkStatus(row, 'isRecommended', val)"
-                />
-              </template>
-            </el-table-column>
-            <el-table-column prop="isActive" label="启用" width="80">
-              <template #default="{ row }">
-                <el-switch
-                  v-model="row.isActive"
-                  size="small"
-                  :loading="updatingRows.has(row.id)"
-                  @change="(val: boolean) => toggleLinkStatus(row, 'isActive', val)"
-                />
-              </template>
-            </el-table-column>
-            <el-table-column prop="sort" label="排序" width="90" />
-            <el-table-column label="操作" width="110" fixed="right">
-              <template #default="{ row }">
-                <el-button link type="primary" @click="openEdit(row)">
-                  编辑
-                </el-button>
-                <el-button link type="danger" @click="remove(row)">
-                  删除
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+        <el-card shadow="never" style="flex:2;overflow: hidden;padding: 0;" body-style="padding: 0;display: flex;flex-direction: column;">
+          <div style="flex: 2;height: 100%;overflow: hidden;">
+            <el-table :data="rows" style="width: 100%" row-key="id" height="100%">
+              <el-table-column prop="id" label="ID" width="60" />
+              <el-table-column prop="iconUrl" label="图标" width="60">
+                <template #default="{ row }">
+                  <el-image
+                    v-if="row.iconUrl"
+                    :src="row.iconUrl"
+                    style="width: 24px; height: 24px"
+                    fit="contain"
+                    :preview-src-list="[row.iconUrl]"
+                    preview-teleported
+                  >
+                    <template #error>
+                      <div style="font-size: 12px; color: #999">N/A</div>
+                    </template>
+                  </el-image>
+                  <span v-else>-</span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="title" label="标题" min-width="180" />
+              <el-table-column prop="url" label="URL" min-width="220" />
+              <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
+              <el-table-column prop="categoryId" label="分类" width="140">
+                <template #default="{ row }">
+                  {{ categoryName(row.categoryId) }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="isRecommended" label="推荐" width="80">
+                <template #default="{ row }">
+                  <el-switch
+                    v-model="row.isRecommended"
+                    size="small"
+                    :loading="updatingRows.has(row.id)"
+                    @change="(val: boolean) => toggleLinkStatus(row, 'isRecommended', val)"
+                  />
+                </template>
+              </el-table-column>
+              <el-table-column prop="isActive" label="启用" width="80">
+                <template #default="{ row }">
+                  <el-switch
+                    v-model="row.isActive"
+                    size="small"
+                    :loading="updatingRows.has(row.id)"
+                    @change="(val: boolean) => toggleLinkStatus(row, 'isActive', val)"
+                  />
+                </template>
+              </el-table-column>
+              <el-table-column prop="sort" label="排序" width="90" />
+              <el-table-column label="操作" width="110" fixed="right">
+                <template #default="{ row }">
+                  <el-button link type="primary" @click="openEdit(row)">
+                    编辑
+                  </el-button>
+                  <el-button link type="danger" @click="remove(row)">
+                    删除
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+
+          <div style="padding: 12px; display: flex; justify-content: flex-end; border-top: 1px solid #f0f0f0;">
+            <el-pagination
+              v-model:current-page="page"
+              v-model:page-size="pageSize"
+              :total="total"
+              :page-sizes="[10, 20, 50, 100]"
+              layout="total, sizes, prev, pager, next, jumper"
+              size="small"
+              @size-change="handleSizeChange"
+              @current-change="handlePageChange"
+            />
+          </div>
         </el-card>
       </el-col>
     </el-row>
@@ -405,6 +420,9 @@ const savingMaintenance = ref(false)
 const topLevelCategories = computed(() => categories.value.filter(c => !c.parentId))
 
 const rows = ref<AdminLink[]>([])
+const total = ref(0)
+const page = ref(1)
+const pageSize = ref(20)
 const dialogOpen = ref(false)
 const crawling = ref(false)
 const checkingConnectivity = ref(false)
@@ -451,12 +469,32 @@ async function reloadCategories() {
 }
 
 async function reloadLinks() {
-  const params: Record<string, string | number> = { limit: 500 }
+  const params: Record<string, string | number> = { 
+    page: page.value,
+    limit: pageSize.value 
+  }
   if (query.value.trim()) params.q = query.value.trim()
   if (categoryId.value !== undefined) params.categoryId = categoryId.value
 
-  const data = await $api<AdminLink[]>('/api/admin/links', { params, headers: requestHeaders })
-  rows.value = data
+  const data = await $api<{ total: number; list: AdminLink[] }>('/api/admin/links', { params, headers: requestHeaders })
+  rows.value = data.list
+  total.value = data.total
+}
+
+function handlePageChange(val: number) {
+  page.value = val
+  reloadLinks()
+}
+
+function handleSizeChange(val: number) {
+  pageSize.value = val
+  page.value = 1
+  reloadLinks()
+}
+
+function onSearch() {
+  page.value = 1
+  reloadLinks()
 }
 
 const expandedCategories = ref<Set<number>>(new Set())
@@ -472,6 +510,7 @@ function toggleExpand(id: number, event?: Event) {
 
 function selectCategory(id: number | undefined) {
   categoryId.value = id
+  page.value = 1
   reloadLinks()
 }
 

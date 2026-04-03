@@ -24,7 +24,9 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event) as Record<string, unknown>
   const q = getQueryString(query, 'q')
   const categoryId = getQueryInt(query, 'categoryId', 0)
-  const limit = Math.min(Math.max(getQueryInt(query, 'limit', 200), 1), 500)
+  const page = Math.max(getQueryInt(query, 'page', 1), 1)
+  const limit = Math.min(Math.max(getQueryInt(query, 'limit', 20), 1), 500)
+  const offset = (page - 1) * limit
 
   const whereParts: string[] = ['1=1']
   const params: Array<string | number> = []
@@ -38,16 +40,21 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
+    const [[{ total }]] = await pool.execute(
+      `SELECT COUNT(*) as total FROM links WHERE ${whereParts.join(' AND ')}`,
+      params
+    ) as any
+
     const [rows] = await pool.execute(
       `SELECT id, category_id, title, url, description, icon_url, is_active, is_recommended, sort, created_at, updated_at
        FROM links
        WHERE ${whereParts.join(' AND ')}
        ORDER BY sort ASC, id DESC
-       LIMIT ${limit}`,
+       LIMIT ${limit} OFFSET ${offset}`,
       params
     )
 
-    return (rows as Array<Record<string, unknown>>).map((r) => ({
+    const list = (rows as Array<Record<string, unknown>>).map((r) => ({
       id: Number(r.id),
       categoryId: r.category_id == null ? null : Number(r.category_id),
       title: String(r.title || ''),
@@ -60,20 +67,27 @@ export default defineEventHandler(async (event) => {
       createdAt: new Date(String(r.created_at)).toISOString(),
       updatedAt: new Date(String(r.updated_at)).toISOString()
     })) as AdminLink[]
+
+    return { total: Number(total), list }
   } catch (e: unknown) {
     const anyError = e as { code?: unknown; message?: unknown }
     if (anyError?.code !== 'ER_BAD_FIELD_ERROR') throw e
     if (String(anyError?.message || '').includes('is_recommended')) {
+      const [[{ total }]] = await pool.execute(
+        `SELECT COUNT(*) as total FROM links WHERE ${whereParts.join(' AND ')}`,
+        params
+      ) as any
+
       const [rows] = await pool.execute(
         `SELECT id, category_id, title, url, description, icon_url, is_active, sort, created_at, updated_at
          FROM links
          WHERE ${whereParts.join(' AND ')}
          ORDER BY sort ASC, id DESC
-         LIMIT ${limit}`,
+         LIMIT ${limit} OFFSET ${offset}`,
         params
       )
 
-      return (rows as Array<Record<string, unknown>>).map((r) => ({
+      const list = (rows as Array<Record<string, unknown>>).map((r) => ({
         id: Number(r.id),
         categoryId: r.category_id == null ? null : Number(r.category_id),
         title: String(r.title || ''),
@@ -86,6 +100,8 @@ export default defineEventHandler(async (event) => {
         createdAt: new Date(String(r.created_at)).toISOString(),
         updatedAt: new Date(String(r.updated_at)).toISOString()
       })) as AdminLink[]
+
+      return { total: Number(total), list }
     }
     throw e
   }
