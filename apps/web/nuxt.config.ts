@@ -59,7 +59,15 @@ export default defineNuxtConfig({
     '/admin/nav': { headers: { 'x-robots-tag': 'noindex, nofollow' } },
     '/admin/include': { headers: { 'x-robots-tag': 'noindex, nofollow' } },
     '/login': { headers: { 'x-robots-tag': 'noindex, nofollow' } },
-    '/openapi': { headers: { 'x-robots-tag': 'noindex, nofollow' } }
+    '/openapi': { headers: { 'x-robots-tag': 'noindex, nofollow' } },
+    '/api/links': { cache: { maxAge: 60 * 5, staleMaxAge: 60 * 60, swr: true } },
+    '/api/categories': { cache: { maxAge: 60 * 5, staleMaxAge: 60 * 60, swr: true } },
+    '/api/ads': { cache: { maxAge: 60, staleMaxAge: 60 * 10, swr: true } },
+    '/api/search-categories': { cache: { maxAge: 60 * 5, staleMaxAge: 60 * 60, swr: true } },
+    '/api/links/recommended': { cache: { maxAge: 60 * 5, staleMaxAge: 60 * 60, swr: true } },
+    '/api/stats/common-links': { cache: { maxAge: 60 * 5, staleMaxAge: 60 * 60, swr: true } },
+    '/api/stats/common-engines': { cache: { maxAge: 60 * 5, staleMaxAge: 60 * 60, swr: true } },
+    '/guestbook': { cache: { maxAge: 10, staleMaxAge: 30, swr: true } }
   },
   typescript: {
     strict: true

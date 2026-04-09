@@ -329,7 +329,9 @@ watch(() => route.query.categoryId, (newId) => {
   activeCategoryId.value = Number(newId) || 0
 })
 
-// If initial category is a parent with children, auto-select the first child
+// If initial category is a parent with children, stay on parent or auto-select first child?
+// User requested "All" data, so we stay on parent and show all its children's links.
+/* 
 watch([categories, activeCategoryId], ([newCats, currentId]) => {
   if (newCats.length > 0 && currentId > 0) {
     const cat = newCats.find(c => c.id === currentId)
@@ -341,6 +343,7 @@ watch([categories, activeCategoryId], ([newCats, currentId]) => {
     }
   }
 }, { immediate: true })
+*/
 
 const activeCategoryName = computed(() => {
   if (activeCategoryId.value === 0) return '全部'
@@ -350,7 +353,7 @@ const activeCategoryName = computed(() => {
   return hit?.name || '分类'
 })
 
-const { data: linksData } = await useFetch<NavLink[]>('/api/links', { params: { limit: 500 }, server: true })
+const { data: linksData } = await useFetch<NavLink[]>('/api/links', { params: { limit: 2000 }, server: true })
 const allLinks = computed(() => linksData.value || [])
 
 // 推荐导航 (含全站排行填充)
@@ -394,18 +397,23 @@ function getCategoryLinks(catId: number) {
   const cat = categories.value.find(c => c.id === catId)
   if (!cat) return []
   
-  if (cat.parentId) {
-    return linksByCategory.value.get(cat.id) || []
-  }
+  // Get direct links of this category
+  const directLinks = linksByCategory.value.get(cat.id) || []
   
-  // It's a top level category, return links of the first child if any
+  // If it's a top level category, aggregate all its children's links
   const children = categories.value.filter(c => c.parentId === cat.id)
   if (children.length > 0) {
-    return linksByCategory.value.get(children[0].id) || []
+    const allChildLinks: NavLink[] = [...directLinks]
+    for (const child of children) {
+      allChildLinks.push(...(linksByCategory.value.get(child.id) || []))
+    }
+    // Return unique links by ID (in case some links are in both parent and child, though unlikely in typical DB structure)
+    const uniqueMap = new Map<number, NavLink>()
+    allChildLinks.forEach(l => uniqueMap.set(l.id, l))
+    return Array.from(uniqueMap.values()).sort((a, b) => (a.sort - b.sort) || (b.id - a.id))
   }
   
-  // No children, return direct links
-  return linksByCategory.value.get(cat.id) || []
+  return directLinks
 }
 
 const { data: adsData } = await useFetch<{ ads: { title: string, imageUrl: string, url: string }[] }>('/api/ads', { server: true })
@@ -415,7 +423,8 @@ function onSelect(index: string) {
   drawerOpen.value = false
   let id = Number(index)
   
-  // If it's a parent category with children, auto-select the first child
+  // Removed auto-select first child to support "All" view for parent category
+  /*
   if (id > 0) {
     const cat = categories.value.find(c => c.id === id)
     if (cat && !cat.parentId) {
@@ -425,6 +434,7 @@ function onSelect(index: string) {
       }
     }
   }
+  */
   
   activeCategoryId.value = id
   
@@ -641,12 +651,12 @@ function submitSearch() {
   padding-top: 20px;
 }
 .mainSidebar{
-    position: sticky;
-    top: 75px;
     align-self: flex-start;
-    z-index: 100;
 
   .aside {
+    position: sticky;
+    top: 75px;
+    z-index: 100;
     background-color: rgba(255, 255, 255, 0.55);
     box-shadow: 0 0 3px 0 #2930421a;
     backdrop-filter: blur(10px);
@@ -1023,7 +1033,6 @@ function submitSearch() {
   backdrop-filter: blur(10px);
   border-radius: 6px;
   padding: 12px;
-;
 }
 
 .categoryHeader {

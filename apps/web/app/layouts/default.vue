@@ -4,7 +4,7 @@
       <div class="container headerContent">
         <NuxtLink class="brand" to="/">
           <el-icon :size="18" class="brandIcon"><StarFilled /></el-icon>
-          <span class="brandText">mini首页</span>
+          <span class="brandText">首页</span>
         </NuxtLink>
 
         <nav class="desktopNav">
