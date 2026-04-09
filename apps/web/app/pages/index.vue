@@ -54,12 +54,12 @@
       <div class="container mainLayout">
         <el-row :gutter="24">
           <!-- Sidebar: Visible on Desktop -->
-          <el-col :xs="24" :sm="6" :md="4" :lg="4" :xl="4" class="mainSidebar">
+          <el-col :xs="24" :sm="4" :md="3" :lg="3" :xl="3" class="mainSidebar">
             <aside class="aside">
               <div class="asideContent">
                 <div class="asideHeader">
                   <el-icon><Grid /></el-icon>
-                  <span>分类导航</span>
+                  <span>分类</span>
                 </div>
                 <el-menu :default-active="String(activeCategoryId)" class="menu" @select="onSelect">
                   <el-menu-item index="0">
@@ -99,8 +99,8 @@
           </el-col>
 
           <!-- Main Content Area -->
-          <el-col :xs="24" :sm="18" :md="20" :lg="20" :xl="20" class="mainContentArea">
-            <section class="block contentArea" v-if="activeCategoryId === 0">
+          <el-col :xs="24" :sm="20" :md="21" :lg="21" :xl="21" class="mainContentArea">
+            <section v-if="activeCategoryId === 0" class="block contentArea">
               <el-row :gutter="20">
                 <!-- <div class="sectionTitle">
                   <el-icon><Promotion /></el-icon>
@@ -110,7 +110,15 @@
                   <a :href="ad.url" target="_blank" class="adLink">
                     <el-card class="adCard modernCard" shadow="hover">
                       <div class="adBody">
-                        <el-image :src="ad.imageUrl" fit="cover" class="adImage" />
+                        <!-- 为首屏广告设置 fetchpriority="high" 优化 LCP -->
+                        <img 
+                          v-if="index === 0" 
+                          :src="ad.imageUrl" 
+                          class="adImage" 
+                          style="object-fit: cover;" 
+                          fetchpriority="high"
+                        />
+                        <el-image v-else :src="ad.imageUrl" fit="cover" class="adImage" loading="lazy" />
                         <div class="adTitleOverlay">{{ ad.title }}</div>
                       </div>
                     </el-card>
@@ -131,7 +139,7 @@
             </section>
 
             <!-- 推荐导航 (选中独立分类时) -->
-            <section class="block contentArea" v-if="activeCategoryId === -1 || activeCategoryId === 0">
+            <section v-if="activeCategoryId === -1 || activeCategoryId === 0" class="block contentArea">
               <div class="sectionTitle">
                 <el-icon><Star /></el-icon>
                 <span>推荐导航</span>
@@ -158,7 +166,7 @@
             </section>
 
             <!-- 常用导航 (选中独立分类时) -->
-            <section class="block contentArea" v-if="(activeCategoryId === -2 || activeCategoryId === 0) && user">
+            <section v-if="(activeCategoryId === -2 || activeCategoryId === 0) && user" class="block contentArea">
               <div class="sectionTitle">
                 <el-icon><StarFilled /></el-icon>
                 <span>常用导航</span>
@@ -190,7 +198,7 @@
                 <section v-for="c in displayCategories" :key="c.id" class="categorySection">
                   <div class="categoryHeader">
                     <span class="categoryTitle">{{ c.name }}</span>
-                    <div class="subCategoryLinks" v-if="categories.some(cat => cat.parentId === c.id)">
+                    <div v-if="categories.some(cat => cat.parentId === c.id)" class="subCategoryLinks">
                       <span 
                         v-for="(sub, sIdx) in categories.filter(cat => cat.parentId === c.id)" 
                         :key="sub.id" 
@@ -281,13 +289,10 @@ import {
   Collection,
   Folder,
   Search,
-  Promotion,
   Picture,
   Star,
   StarFilled,
   Grid,
-  ArrowRight,
-  ArrowLeft
 } from '@element-plus/icons-vue'
 
 type Category = { id: number; parentId: number | null; name: string; slug: string; sort: number }
@@ -317,8 +322,33 @@ useHead(() => ({
   ]
 }))
 
-const { data: categoriesData } = await useFetch<Category[]>('/api/categories', { server: true })
-const categories = computed(() => categoriesData.value || [])
+const { data: initialData } = await useAsyncData('home-initial-data', async () => {
+  const [
+    categories,
+    links,
+    recommended,
+    ads,
+    userRes,
+    searchCategories
+  ] = await Promise.all([
+    $fetch<Category[]>('/api/categories'),
+    $fetch<NavLink[]>('/api/links', { params: { limit: 2000 } }),
+    $fetch<{ links: NavLink[] }>('/api/links/recommended'),
+    $fetch<{ ads: { title: string, imageUrl: string, url: string }[] }>('/api/ads'),
+    $fetch<{ user: { id: number; username: string; role: string } | null }>('/api/auth/me'),
+    $fetch<SearchCategory[]>('/api/search-categories')
+  ])
+  return {
+    categories,
+    links,
+    recommended,
+    ads,
+    user: userRes.user,
+    searchCategories
+  }
+})
+
+const categories = computed(() => initialData.value?.categories || [])
 const topLevelCategories = computed(() => categories.value.filter(c => !c.parentId))
 
 const route = useRoute()
@@ -329,38 +359,8 @@ watch(() => route.query.categoryId, (newId) => {
   activeCategoryId.value = Number(newId) || 0
 })
 
-// If initial category is a parent with children, stay on parent or auto-select first child?
-// User requested "All" data, so we stay on parent and show all its children's links.
-/* 
-watch([categories, activeCategoryId], ([newCats, currentId]) => {
-  if (newCats.length > 0 && currentId > 0) {
-    const cat = newCats.find(c => c.id === currentId)
-    if (cat && !cat.parentId) {
-      const children = newCats.filter(c => c.parentId === cat.id)
-      if (children.length > 0) {
-        activeCategoryId.value = children[0].id
-      }
-    }
-  }
-}, { immediate: true })
-*/
-
-const activeCategoryName = computed(() => {
-  if (activeCategoryId.value === 0) return '全部'
-  if (activeCategoryId.value === -1) return '推荐导航'
-  if (activeCategoryId.value === -2) return '常用导航'
-  const hit = categories.value.find((c) => c.id === activeCategoryId.value)
-  return hit?.name || '分类'
-})
-
-const { data: linksData } = await useFetch<NavLink[]>('/api/links', { params: { limit: 2000 }, server: true })
-const allLinks = computed(() => linksData.value || [])
-
-// 推荐导航 (含全站排行填充)
-const { data: recommendedData } = await useFetch<{ links: NavLink[] }>('/api/links/recommended', {
-  server: true
-})
-const recommendedLinks = computed(() => recommendedData.value?.links || [])
+const allLinks = computed(() => initialData.value?.links || [])
+const recommendedLinks = computed(() => initialData.value?.recommended?.links || [])
 
 const linksByCategory = computed(() => {
   const map = new Map<number, NavLink[]>()
@@ -385,9 +385,6 @@ const displayCategories = computed(() => {
     // Selected a top level category
     return [selected]
   } else {
-    // Selected a sub category, show its parent's section but maybe filtered?
-    // Actually, if a sub category is selected, we usually just show that sub category's links.
-    // But to match the UI, we might want to show the parent header.
     const parent = categories.value.find(c => c.id === selected.parentId)
     return parent ? [parent] : [selected]
   }
@@ -416,29 +413,19 @@ function getCategoryLinks(catId: number) {
   return directLinks
 }
 
-const { data: adsData } = await useFetch<{ ads: { title: string, imageUrl: string, url: string }[] }>('/api/ads', { server: true })
-const ads = computed(() => adsData.value?.ads || [])
+const ads = computed(() => initialData.value?.ads?.ads || [])
 
 function onSelect(index: string) {
   drawerOpen.value = false
-  let id = Number(index)
+  const id = Number(index)
   
-  // Removed auto-select first child to support "All" view for parent category
-  /*
-  if (id > 0) {
-    const cat = categories.value.find(c => c.id === id)
-    if (cat && !cat.parentId) {
-      const children = categories.value.filter(c => c.parentId === id)
-      if (children.length > 0) {
-        id = children[0].id
-      }
-    }
+  const children = categories.value.filter(c => c.parentId === id)
+  if (children.length > 0) {
+    activeCategoryId.value = children[0].id
+  } else {
+    activeCategoryId.value = id
   }
-  */
   
-  activeCategoryId.value = id
-  
-  // Update URL query without full navigation
   const query = activeCategoryId.value !== 0 ? { categoryId: String(activeCategoryId.value) } : {}
   navigateTo({ path: '/', query }, { replace: true })
 }
@@ -459,8 +446,7 @@ async function recordStats(type: 'engine' | 'link', id: number) {
       method: 'POST',
       body: { type, id }
     })
-  } catch (err) {
-    // 接口报错时静默处理，不抛出异常，允许下次尝试
+  } catch {
     lastStatsRecord.delete(key)
   }
 }
@@ -502,22 +488,21 @@ interface SearchCategory {
   engines: SearchEngine[]
 }
 
-const { data: userData } = await useFetch<{ user: { id: number; username: string; role: string } | null }>('/api/auth/me', { server: true })
-const user = computed(() => userData.value?.user)
+const user = computed(() => initialData.value?.user || null)
 
 // 常用导航
-const { data: commonLinksData } = await useFetch<{ links: NavLink[] }>('/api/stats/common-links', { 
+const { data: commonLinksData } = useFetch<{ links: NavLink[] }>('/api/stats/common-links', { 
   server: true,
   watch: [user]
 })
 const commonLinks = computed(() => commonLinksData.value?.links || [])
 
-const { data: commonEnginesData } = await useFetch<{ engines: SearchEngine[] }>('/api/stats/common-engines', { 
+const { data: commonEnginesData } = useFetch<{ engines: SearchEngine[] }>('/api/stats/common-engines', { 
   server: true,
-  watch: [user] // 当用户信息变化时重新获取
+  watch: [user]
 })
 
-const { data: searchCategoriesData } = await useFetch<SearchCategory[]>('/api/search-categories', { server: true })
+const searchCategoriesData = computed(() => initialData.value?.searchCategories || [])
 
 const searchCategories = computed(() => {
   const categories = [...(searchCategoriesData.value || [])]
@@ -544,32 +529,42 @@ const CACHE_KEY_TAB = 'search_tab_id'
 const CACHE_KEY_ENGINE_PREFIX = 'search_engine_id_'
 
 // 初始化默认选中的分类和引擎
-watch(searchCategories, (newVal) => {
+watch(searchCategories, (newVal: SearchCategory[]) => {
   if (newVal && newVal.length > 0) {
     const isValid = activeSearchTabId.value !== null && newVal.some(c => c.id === activeSearchTabId.value)
     
     if (!isValid) {
-      // 1. 优先从本地缓存获取
-      const cachedTabId = localStorage.getItem(CACHE_KEY_TAB)
-      if (cachedTabId && newVal.some(c => c.id === Number(cachedTabId))) {
-        activeSearchTabId.value = Number(cachedTabId)
+      if (import.meta.client) {
+        const cachedTabId = localStorage.getItem(CACHE_KEY_TAB)
+        if (cachedTabId && newVal.some(c => c.id === Number(cachedTabId))) {
+          activeSearchTabId.value = Number(cachedTabId)
+        } else {
+          activeSearchTabId.value = newVal[0]?.id || null
+        }
       } else {
-        // 2. 否则选中第一个
-        activeSearchTabId.value = newVal[0].id
+        activeSearchTabId.value = newVal[0]?.id || null
       }
     }
     
-    // 强制触发一次引擎选中逻辑（针对首个分类）
     const engines = newVal.find(c => c.id === activeSearchTabId.value)?.engines || []
     if (engines.length > 0) {
       const isValidEngine = activeEngineId.value !== null && engines.some(e => e.id === activeEngineId.value)
       if (!isValidEngine) {
-        const cachedEngineId = localStorage.getItem(CACHE_KEY_ENGINE_PREFIX + activeSearchTabId.value)
-        if (cachedEngineId && engines.some(e => e.id === Number(cachedEngineId))) {
-          activeEngineId.value = Number(cachedEngineId)
+        if (import.meta.client) {
+          const cachedEngineId = localStorage.getItem(CACHE_KEY_ENGINE_PREFIX + activeSearchTabId.value)
+          if (cachedEngineId && engines.some(e => e.id === Number(cachedEngineId))) {
+            activeEngineId.value = Number(cachedEngineId)
+          } else {
+            const defaultEngine = engines.find(e => e.isDefault) || engines[0]
+            if (defaultEngine) {
+              activeEngineId.value = defaultEngine.id
+            }
+          }
         } else {
           const defaultEngine = engines.find(e => e.isDefault) || engines[0]
-          activeEngineId.value = defaultEngine.id
+          if (defaultEngine) {
+            activeEngineId.value = defaultEngine.id
+          }
         }
       }
     }
@@ -581,28 +576,24 @@ const currentEngines = computed(() => {
   return cat?.engines || []
 })
 
-// 当切换分类时，记录分类 ID 并决定选中的引擎
 watch(activeSearchTabId, (newTabId) => {
-  if (newTabId !== null) {
+  if (newTabId !== null && import.meta.client) {
     localStorage.setItem(CACHE_KEY_TAB, String(newTabId))
     
-    // 切换分类后，尝试恢复该分类下缓存的引擎
     const cachedEngineId = localStorage.getItem(CACHE_KEY_ENGINE_PREFIX + newTabId)
     const engines = searchCategories.value.find(c => c.id === newTabId)?.engines || []
     
     if (cachedEngineId && engines.some(e => e.id === Number(cachedEngineId))) {
       activeEngineId.value = Number(cachedEngineId)
     } else {
-      // 如果没有缓存，选中该分类下的默认引擎或第一个引擎
       const defaultEngine = engines.find(e => e.isDefault) || engines[0]
       activeEngineId.value = defaultEngine?.id || null
     }
   }
 })
 
-// 监听引擎切换，记录到本地
 watch(activeEngineId, (newEngineId) => {
-  if (newEngineId !== null && activeSearchTabId.value !== null) {
+  if (newEngineId !== null && activeSearchTabId.value !== null && import.meta.client) {
     localStorage.setItem(CACHE_KEY_ENGINE_PREFIX + activeSearchTabId.value, String(newEngineId))
   }
 })
@@ -650,13 +641,14 @@ function submitSearch() {
   margin-bottom: 40px;
   padding-top: 20px;
 }
-.mainSidebar{
-    align-self: flex-start;
+.mainSidebar {
+  align-self: flex-start;
+  position: sticky !important;
+  top: 75px;
+  height: fit-content;
+  z-index: 100;
 
   .aside {
-    position: sticky;
-    top: 75px;
-    z-index: 100;
     background-color: rgba(255, 255, 255, 0.55);
     box-shadow: 0 0 3px 0 #2930421a;
     backdrop-filter: blur(10px);
@@ -684,9 +676,9 @@ function submitSearch() {
   font-size: 16px;
   font-weight: 600;
   color: #24292e;
-  padding: 16px 0 12px;
+  padding: 10px 0 8px;
   border-bottom: 1px solid #f1f2f4;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .menu {
@@ -695,13 +687,18 @@ function submitSearch() {
 }
 
 .menu :deep(.el-menu-item) {
-  height: 40px;
-  line-height: 40px;
+  height: 25px;
+  line-height: 25px;
   border-radius: 8px;
   margin-bottom: 4px;
   color: #57606a;
+  padding: 0 !important;
 }
-
+.menu :deep(.el-menu-item [class^=el-icon]) {
+  font-size: 15px;
+  margin-right: 4px;
+  width: auto;
+}
 .menu :deep(.el-menu-item.is-active) {
   background-color: #eaf2ff;
   color: #0969da;
@@ -1084,7 +1081,7 @@ function submitSearch() {
 
 @media (max-width: 1024px) {
   .aside {
-    width: 200px;
+    // width: 200px;
   }
 }
 

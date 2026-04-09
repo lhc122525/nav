@@ -1,10 +1,8 @@
 import { invalidateCache, invalidateCacheByPrefix } from '../utils/cachedHandler'
 
-export function setupCacheInvalidation() {
-  return defineNitroPlugin((nitroApp) => {
-    console.log('[Cache] Cache invalidation plugin initialized')
-  })
-}
+export default defineNitroPlugin((nitroApp) => {
+  console.log('[Cache] Cache invalidation plugin initialized')
+})
 
 export function useCacheInvalidator() {
   return {
