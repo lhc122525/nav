@@ -100,7 +100,7 @@
 
           <!-- Main Content Area -->
           <el-col :xs="24" :sm="20" :md="21" :lg="21" :xl="21" class="mainContentArea">
-            <section v-if="activeCategoryId === 0" class="block contentArea">
+            <section class="block contentArea">
               <el-row :gutter="20">
                 <!-- <div class="sectionTitle">
                   <el-icon><Promotion /></el-icon>
@@ -139,7 +139,7 @@
             </section>
 
             <!-- 推荐导航 (选中独立分类时) -->
-            <section v-if="activeCategoryId === -1 || activeCategoryId === 0" class="block contentArea">
+            <section class="block contentArea">
               <div class="sectionTitle">
                 <el-icon><Star /></el-icon>
                 <span>推荐导航</span>
@@ -166,7 +166,7 @@
             </section>
 
             <!-- 常用导航 (选中独立分类时) -->
-            <section v-if="(activeCategoryId === -2 || activeCategoryId === 0) && user" class="block contentArea">
+            <section v-if="user" class="block contentArea">
               <div class="sectionTitle">
                 <el-icon><StarFilled /></el-icon>
                 <span>常用导航</span>
@@ -195,16 +195,16 @@
             <section class="block">
              
               <div class="categorySections">
-                <section v-for="c in displayCategories" :key="c.id" class="categorySection">
+                <section v-for="c in displayCategories" :key="c.id" :id="`category-${c.id}`" class="categorySection">
                   <div class="categoryHeader">
                     <span class="categoryTitle">{{ c.name }}</span>
                     <div v-if="categories.some(cat => cat.parentId === c.id)" class="subCategoryLinks">
                       <span 
-                        v-for="(sub, sIdx) in categories.filter(cat => cat.parentId === c.id)" 
+                        v-for="sub in categories.filter(cat => cat.parentId === c.id)" 
                         :key="sub.id" 
                         class="subCategoryLink"
-                        :class="{ active: activeCategoryId === sub.id || (activeCategoryId === 0 && sIdx === 0) || (activeCategoryId === c.id && sIdx === 0) }"
-                        @click="onSelect(String(sub.id))"
+                        :class="{ active: getActiveSubcategory(c.id) === sub.id }"
+                        @click="selectSubcategory(sub.id, c.id)"
                       >
                         {{ sub.name }}
                       </span>
@@ -212,7 +212,7 @@
                   </div>
                   <el-row :gutter="16">
                     <el-col
-                      v-for="item in (activeCategoryId === c.id || !categories.some(cat => cat.id === activeCategoryId && cat.parentId === c.id)) ? getCategoryLinks(c.id) : (linksByCategory.get(activeCategoryId) || [])"
+                      v-for="item in linksByCategory.get(getActiveSubcategory(c.id)) || []"
                       :key="item.id"
                       :xs="12" :sm="8" :md="6"
                       class="col-5"
@@ -233,7 +233,7 @@
                       </div>
                     </el-col>
                   </el-row>
-                  <el-empty v-if="((activeCategoryId === c.id || !categories.some(cat => cat.id === activeCategoryId && cat.parentId === c.id)) ? getCategoryLinks(c.id) : (linksByCategory.get(activeCategoryId) || [])).length === 0" description="暂无数据" />
+                  <el-empty v-if="(linksByCategory.get(getActiveSubcategory(c.id)) || []).length === 0" description="暂无数据" />
                 </section>
               </div>
             </section>
@@ -375,20 +375,36 @@ const linksByCategory = computed(() => {
 })
 
 const displayCategories = computed(() => {
-  if (activeCategoryId.value === 0) {
-    return topLevelCategories.value
-  }
-  const selected = categories.value.find(c => c.id === activeCategoryId.value)
-  if (!selected) return []
-  
-  if (!selected.parentId) {
-    // Selected a top level category
-    return [selected]
-  } else {
-    const parent = categories.value.find(c => c.id === selected.parentId)
-    return parent ? [parent] : [selected]
-  }
+  return topLevelCategories.value
 })
+
+const activeSubcategoryId = ref<Map<number, number>>(new Map())
+
+const categorySubcategoryMap = computed(() => {
+  const map = new Map<number, number>()
+  for (const cat of topLevelCategories.value) {
+    const children = categories.value.filter(c => c.parentId === cat.id)
+    if (children.length > 0) {
+      map.set(cat.id, children[0].id)
+    }
+  }
+  return map
+})
+
+function getActiveSubcategory(catId: number) {
+  const children = categories.value.filter(c => c.parentId === catId)
+  if (children.length > 0) {
+    const saved = activeSubcategoryId.value.get(catId)
+    return saved !== undefined ? saved : children[0].id
+  }
+  return catId
+}
+
+function selectSubcategory(subId: number, parentCatId: number) {
+  const newMap = new Map(activeSubcategoryId.value)
+  newMap.set(parentCatId, subId)
+  activeSubcategoryId.value = newMap
+}
 
 function getCategoryLinks(catId: number) {
   const cat = categories.value.find(c => c.id === catId)
@@ -419,9 +435,28 @@ function onSelect(index: string) {
   drawerOpen.value = false
   const id = Number(index)
   
+  if (id === 0 || id === -1 || id === -2) {
+    activeCategoryId.value = id
+    nextTick(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    })
+    const query = activeCategoryId.value !== 0 ? { categoryId: String(activeCategoryId.value) } : {}
+    navigateTo({ path: '/', query }, { replace: true })
+    return
+  }
+  
   const children = categories.value.filter(c => c.parentId === id)
   if (children.length > 0) {
-    activeCategoryId.value = children[0].id
+    activeCategoryId.value = id
+    const newMap = new Map(activeSubcategoryId.value)
+    newMap.set(id, children[0].id)
+    activeSubcategoryId.value = newMap
+    nextTick(() => {
+      const element = document.getElementById(`category-${id}`)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    })
   } else {
     activeCategoryId.value = id
   }
@@ -463,13 +498,37 @@ function open(url: string, linkId?: number) {
 
 const now = ref(new Date())
 let timer: ReturnType<typeof setInterval> | undefined
+let scrollTimer: ReturnType<typeof setTimeout> | undefined
 onMounted(() => {
   timer = setInterval(() => {
     now.value = new Date()
   }, 1000)
+  
+  const handleScroll = () => {
+    if (scrollTimer) return
+    scrollTimer = setTimeout(() => {
+      scrollTimer = undefined
+      const scrollTop = window.scrollY + 200
+      for (const cat of topLevelCategories.value) {
+        const element = document.getElementById(`category-${cat.id}`)
+        if (element) {
+          const { offsetTop, offsetHeight } = element
+          if (scrollTop >= offsetTop && scrollTop < offsetTop + offsetHeight) {
+            if (activeCategoryId.value !== cat.id && activeCategoryId.value !== 0 && activeCategoryId.value !== -1 && activeCategoryId.value !== -2) {
+              activeCategoryId.value = cat.id
+            }
+            break
+          }
+        }
+      }
+    }, 50)
+  }
+  
+  window.addEventListener('scroll', handleScroll, { passive: true })
 })
 onBeforeUnmount(() => {
   if (timer) clearInterval(timer)
+  if (scrollTimer) clearTimeout(scrollTimer)
 })
 
 // 搜索管理动态数据
