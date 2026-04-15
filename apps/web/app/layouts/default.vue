@@ -1,6 +1,6 @@
 <template>
   <el-container class="layoutContainer">
-    <el-header height="60px" class="mainHeader" :class="{ 'isDark': isHome }">
+    <el-header height="60px" class="mainHeader" :class="{ isDark: isHome }">
       <div class="container headerContent">
         <NuxtLink class="brand" to="/">
           <el-icon :size="18" class="brandIcon"><StarFilled /></el-icon>
@@ -28,12 +28,19 @@
             <el-icon :size="18"><ChatLineRound /></el-icon>
           </el-button>
            -->
-          <el-button v-if="!me?.user" type="success" class="loginBtn" @click="onGuestCommand('login')">
+          <el-button
+            v-if="!me?.user"
+            type="success"
+            class="loginBtn"
+            @click="onGuestCommand('login')"
+          >
             登录
           </el-button>
           <el-dropdown v-else @command="onUserCommand">
             <el-button link class="userProfile">
-              <el-avatar :size="28" class="userAvatar">{{ me.user.username[0] }}</el-avatar>
+              <el-avatar :size="28" class="userAvatar">{{
+                me.user.username[0]
+              }}</el-avatar>
               <span class="username">{{ me.user.username }}</span>
               <el-icon class="el-icon--right"><ArrowDown /></el-icon>
             </el-button>
@@ -59,25 +66,105 @@
       </div>
     </el-main>
 
+    <div class="Links container">
+      <div class="Links_title">友情链接：</div>
+      <a
+        v-for="l in friendLinks"
+        :key="l.url"
+        class="Links_link"
+        :href="l.url"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {{ l.name }}
+      </a>
+    </div>
+
+    <footer class="footer">
+      <div class="container footerInner">
+        <div class="footerGrid">
+          <div class="footerCol">
+            <div class="info">
+              <div class="info-top">
+                <a
+                  data-v-16aa41fb=""
+                  href="/"
+                  class="logo"
+                  title="到迷鹿导航首页"
+                  >
+                  <img
+                    data-v-16aa41fb=""
+                    class="logo-img"
+                    src="@/assets/logo-1.png"
+                    alt="迷鹿导航"
+                  />
+                </a>
+                <div class="keyboard">
+                  按住 <i class="i">Ctrl</i> + <i class="i">D</i> 键，收藏本站！
+                </div>
+              </div>
+              <div class="detail">
+                非乐鱼导航，致力于为用户提供方便快捷实用的网址导航服务，帮助用户快速访问常用网站，满足用户的上网需求！收录的网站涵盖了生活服务、实用工具、资源发现、AI领域、影音娱乐、设计灵感、站长工具、开发资源、探索发现等多个领域，让您的上网体验更加丰富多彩！
+              </div>
+            </div>
+          </div>
+
+          <div class="footerCol">
+            <div class="footerTitle">本网站地图</div>
+            <div class="footerLinks">
+              <NuxtLink
+                v-for="l in siteMapLinks"
+                :key="l.to"
+                class="footerLink"
+                :to="l.to"
+              >
+                {{ l.name }}
+              </NuxtLink>
+            </div>
+          </div>
+
+          <div class="footerCol">
+            <div class="footerTitle">本站声明</div>
+            <div class="footerLinks">
+              <button
+                class="footerLink footerButton"
+                type="button"
+                @click="statementOpen = true"
+              >
+                查看声明
+              </button>
+              <NuxtLink class="footerLink" to="/guestbook">侵权/反馈</NuxtLink>
+            </div>
+          </div>
+        </div>
+
+        <div class="footerBottom">
+          <span class="footerMuted"
+            >© {{ new Date().getFullYear() }} {{ siteName }}</span
+          >
+          <a
+            class="footerLink footerInlineLink"
+            href="https://beian.miit.gov.cn"
+            target="_blank"
+            rel="nofollow noopener noreferrer"
+          >
+            {{ icpText }}
+          </a>
+        </div>
+      </div>
+    </footer>
+
     <el-drawer v-model="mobileMenuOpen" title="菜单" direction="rtl" size="80%">
       <div class="mobileUser">
         <div v-if="me?.user" class="mobileUsername">
           {{ me.user.username }}
         </div>
-        <div v-else class="mobileUsername">
-          未登录
-        </div>
+        <div v-else class="mobileUsername">未登录</div>
       </div>
       <el-menu :default-active="mobileActive" @select="onMobileSelect">
-        <el-menu-item index="route:/">
-          首页
-        </el-menu-item>
-        <el-menu-item index="route:/submit">
-          申请收录
-        </el-menu-item>
-        <el-menu-item index="route:/guestbook">
-          留言板
-        </el-menu-item>
+        <el-menu-item index="route:/"> 首页 </el-menu-item>
+        <el-menu-item index="route:/submit"> 申请收录 </el-menu-item>
+        <el-menu-item index="route:/guestbook"> 留言板 </el-menu-item>
         <!-- <el-menu-item index="route:/admin/nav">
           后台
         </el-menu-item>
@@ -90,39 +177,75 @@
         <el-menu-item v-if="!me?.user" index="action:register">
           注册
         </el-menu-item>
-        <el-menu-item v-else index="action:logout">
-          退出登录
-        </el-menu-item>
+        <el-menu-item v-else index="action:logout"> 退出登录 </el-menu-item>
       </el-menu>
     </el-drawer>
 
-    <el-dialog v-model="loginOpen" title="登录" append-to-body style="max-width: 550px;width: 90vw;">
+    <el-dialog
+      v-model="loginOpen"
+      title="登录"
+      append-to-body
+      style="max-width: 550px; width: 90vw"
+    >
       <el-form label-width="72px" @submit.prevent>
         <el-form-item label="用户名">
           <el-input v-model="loginForm.username" autocomplete="username" />
         </el-form-item>
         <el-form-item label="密码">
-          <el-input v-model="loginForm.password" type="password" autocomplete="current-password" show-password />
+          <el-input
+            v-model="loginForm.password"
+            type="password"
+            autocomplete="current-password"
+            show-password
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="loginOpen = false">取消</el-button>
-        <el-button type="primary" :loading="loginSubmitting" @click="submitLogin">
+        <el-button
+          type="primary"
+          :loading="loginSubmitting"
+          @click="submitLogin"
+        >
           登录
         </el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="registerOpen" title="注册" append-to-body style="max-width: 550px;width: 90vw;">
-      <el-form ref="registerFormRef" :model="registerForm" :rules="registerRules" label-width="100px" @submit.prevent>
+    <el-dialog
+      v-model="registerOpen"
+      title="注册"
+      append-to-body
+      style="max-width: 550px; width: 90vw"
+    >
+      <el-form
+        ref="registerFormRef"
+        :model="registerForm"
+        :rules="registerRules"
+        label-width="100px"
+        @submit.prevent
+      >
         <el-form-item label="用户名" prop="username">
-          <el-input v-model.trim="registerForm.username" autocomplete="username" />
+          <el-input
+            v-model.trim="registerForm.username"
+            autocomplete="username"
+          />
         </el-form-item>
         <el-form-item label="密码" prop="password">
-          <el-input v-model.trim="registerForm.password" type="password" autocomplete="new-password" show-password />
+          <el-input
+            v-model.trim="registerForm.password"
+            type="password"
+            autocomplete="new-password"
+            show-password
+          />
         </el-form-item>
         <el-form-item label="确认密码" prop="passwordConfirm">
-          <el-input v-model.trim="registerForm.passwordConfirm" type="password" autocomplete="new-password" show-password />
+          <el-input
+            v-model.trim="registerForm.passwordConfirm"
+            type="password"
+            autocomplete="new-password"
+            show-password
+          />
         </el-form-item>
         <el-form-item label="验证码" prop="captcha">
           <div class="captchaRow">
@@ -143,9 +266,37 @@
       </el-form>
       <template #footer>
         <el-button @click="registerOpen = false">取消</el-button>
-        <el-button type="primary" :loading="registerSubmitting" @click="submitRegister">
+        <el-button
+          type="primary"
+          :loading="registerSubmitting"
+          @click="submitRegister"
+        >
           注册
         </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="statementOpen"
+      title="本站声明"
+      append-to-body
+      style="max-width: 520px; width: 90vw"
+    >
+      <div class="statementBody">
+        <div class="statementLine">
+          本站内容来自互联网收集与用户提交，仅用于学习交流与信息检索。
+        </div>
+        <div class="statementLine">
+          本站不对外链内容的准确性、合法性、可用性承担责任，访问外链风险自担。
+        </div>
+        <div class="statementLine">
+          如有侵权或不当内容，请通过留言板联系管理员处理。
+        </div>
+      </div>
+      <template #footer>
+        <el-button type="primary" @click="statementOpen = false"
+          >我知道了</el-button
+        >
       </template>
     </el-dialog>
   </el-container>
@@ -160,197 +311,258 @@ import {
   Promotion,
   ChatDotRound,
   ChatLineRound,
-  Menu as MenuIcon
-} from '@element-plus/icons-vue'
-import type { FormInstance, FormRules } from 'element-plus'
-import { ElMessage } from 'element-plus'
+  Menu as MenuIcon,
+} from "@element-plus/icons-vue";
+import type { FormInstance, FormRules } from "element-plus";
+import { ElMessage } from "element-plus";
 
-const { public: publicConfig } = useRuntimeConfig()
-const siteName = computed(() => publicConfig.siteName || '导航站')
-const isHome = computed(() => route.path === '/')
+type PublicConfig = {
+  siteName?: string;
+  siteUrl?: string;
+  icp?: string;
+  icpNumber?: string;
+};
 
-const now = ref(new Date())
-let timer: ReturnType<typeof setInterval> | undefined
+const { public: publicConfig } = useRuntimeConfig() as { public: PublicConfig };
+const siteName = computed(() => publicConfig.siteName || "导航站");
+const isHome = computed(() => route.path === "/");
+
+const statementOpen = ref(false);
+const icpText = computed(() => {
+  const v = publicConfig.icp || publicConfig.icpNumber;
+  return typeof v === "string" && v.trim() ? v.trim() : "备案信息";
+});
+
+type RecommendedLink = { id: number; title: string; url: string };
+const { data: recommendedData } = await useFetch<{ links: RecommendedLink[] }>(
+  "/api/links/recommended",
+  { server: true }
+);
+const friendLinks = computed(() => {
+  const list = recommendedData.value?.links || [];
+  const results: { name: string; url: string }[] = [];
+  const seen = new Set<string>();
+  for (const item of list) {
+    const url = item.url?.trim();
+    if (!url || seen.has(url)) continue;
+    seen.add(url);
+    results.push({ name: item.title, url });
+    if (results.length >= 12) break;
+  }
+  return results;
+});
+
+const siteMapLinks = [
+  { name: "首页", to: "/" },
+  { name: "申请收录", to: "/submit" },
+  { name: "留言板", to: "/guestbook" },
+];
+
+const now = ref(new Date());
+let timer: ReturnType<typeof setInterval> | undefined;
 onMounted(() => {
   timer = setInterval(() => {
-    now.value = new Date()
-  }, 1000)
-})
+    now.value = new Date();
+  }, 1000);
+});
 onBeforeUnmount(() => {
-  if (timer) clearInterval(timer)
-})
+  if (timer) clearInterval(timer);
+});
 
 const nowTimeText = computed(() => {
-  const d = now.value
-  const hh = String(d.getHours()).padStart(2, '0')
-  const mm = String(d.getMinutes()).padStart(2, '0')
-  const ss = String(d.getSeconds()).padStart(2, '0')
-  return `${hh}:${mm}:${ss}`  
-})
+  const d = now.value;
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  const ss = String(d.getSeconds()).padStart(2, "0");
+  return `${hh}:${mm}:${ss}`;
+});
 const nowDateText = computed(() => {
-  const d = now.value
-  const date = new Intl.DateTimeFormat('zh-CN', { month: '2-digit', day: '2-digit' }).format(d)
-  const weekday = new Intl.DateTimeFormat('zh-CN', { weekday: 'short' }).format(d)
-  return `${date} ${weekday}`
-})
+  const d = now.value;
+  const date = new Intl.DateTimeFormat("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+  const weekday = new Intl.DateTimeFormat("zh-CN", { weekday: "short" }).format(
+    d
+  );
+  return `${date} ${weekday}`;
+});
 
-type MeResponse = { user: null | { id: number; username: string; role: 'admin' | 'user' } }
+type MeResponse = {
+  user: null | { id: number; username: string; role: "admin" | "user" };
+};
 
-const { data: meData, refresh: refreshMe } = await useFetch<MeResponse>('/api/auth/me', { server: true })
-const me = computed(() => meData.value)
+const { data: meData, refresh: refreshMe } = await useFetch<MeResponse>(
+  "/api/auth/me",
+  { server: true }
+);
+const me = computed(() => meData.value);
 
-const mobileMenuOpen = ref(false)
-const route = useRoute()
-const mobileActive = computed(() => `route:${route.path}`)
+const mobileMenuOpen = ref(false);
+const route = useRoute();
+const mobileActive = computed(() => `route:${route.path}`);
 
-const loginOpen = ref(false)
-const registerOpen = ref(false)
+const loginOpen = ref(false);
+const registerOpen = ref(false);
 
-const loginForm = reactive({ username: '', password: '' })
-const registerFormRef = ref<FormInstance>()
-const registerForm = reactive({ username: '', password: '', passwordConfirm: '', captcha: '' })
+const loginForm = reactive({ username: "", password: "" });
+const registerFormRef = ref<FormInstance>();
+const registerForm = reactive({
+  username: "",
+  password: "",
+  passwordConfirm: "",
+  captcha: "",
+});
 
 function generateCaptchaText(length: number) {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
-  const digits = '23456789'
-  const chars = alphabet + digits
-  let result = ''
-  for (let i = 0; i < length; i += 1) result += chars[Math.floor(Math.random() * chars.length)]
-  return result
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const digits = "23456789";
+  const chars = alphabet + digits;
+  let result = "";
+  for (let i = 0; i < length; i += 1)
+    result += chars[Math.floor(Math.random() * chars.length)];
+  return result;
 }
 
-const registerCaptchaText = ref(generateCaptchaText(5))
+const registerCaptchaText = ref(generateCaptchaText(5));
 function refreshRegisterCaptcha() {
-  registerCaptchaText.value = generateCaptchaText(5)
-  registerForm.captcha = ''
-  registerFormRef.value?.clearValidate(['captcha'])
+  registerCaptchaText.value = generateCaptchaText(5);
+  registerForm.captcha = "";
+  registerFormRef.value?.clearValidate(["captcha"]);
 }
 
 watch(registerOpen, (open) => {
-  if (!open) return
-  refreshRegisterCaptcha()
-})
+  if (!open) return;
+  refreshRegisterCaptcha();
+});
 
 const registerRules: FormRules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '用户名长度需为 3-20', trigger: 'blur' },
+    { required: true, message: "请输入用户名", trigger: "blur" },
+    { min: 3, max: 20, message: "用户名长度需为 3-20", trigger: "blur" },
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 64, message: '密码长度需为 6-64', trigger: 'blur' },
+    { required: true, message: "请输入密码", trigger: "blur" },
+    { min: 6, max: 64, message: "密码长度需为 6-64", trigger: "blur" },
   ],
   passwordConfirm: [
-    { required: true, message: '请再次输入密码', trigger: 'blur' },
+    { required: true, message: "请再次输入密码", trigger: "blur" },
     {
       validator: (_rule, value: unknown, callback: (error?: Error) => void) => {
-        if (String(value || '') !== registerForm.password) callback(new Error('两次输入的密码不一致'))
-        else callback()
+        if (String(value || "") !== registerForm.password)
+          callback(new Error("两次输入的密码不一致"));
+        else callback();
       },
-      trigger: 'blur',
+      trigger: "blur",
     },
   ],
   captcha: [
-    { required: true, message: '请输入验证码', trigger: 'blur' },
+    { required: true, message: "请输入验证码", trigger: "blur" },
     {
       validator: (_rule, value: unknown, callback: (error?: Error) => void) => {
-        const input = String(value || '').trim().toUpperCase()
-        const expected = String(registerCaptchaText.value || '').trim().toUpperCase()
-        if (!input) callback(new Error('请输入验证码'))
-        else if (input !== expected) callback(new Error('验证码错误，请重试'))
-        else callback()
+        const input = String(value || "")
+          .trim()
+          .toUpperCase();
+        const expected = String(registerCaptchaText.value || "")
+          .trim()
+          .toUpperCase();
+        if (!input) callback(new Error("请输入验证码"));
+        else if (input !== expected) callback(new Error("验证码错误，请重试"));
+        else callback();
       },
-      trigger: ['blur', 'change'],
+      trigger: ["blur", "change"],
     },
   ],
-}
+};
 
-const loginSubmitting = ref(false)
-const registerSubmitting = ref(false)
-
+const loginSubmitting = ref(false);
+const registerSubmitting = ref(false);
 
 function onGuestCommand(command: string) {
-  if (command === 'login') {
-    loginOpen.value = true
-    return
+  if (command === "login") {
+    loginOpen.value = true;
+    return;
   }
-  if (command === 'register') {
-    registerOpen.value = true
+  if (command === "register") {
+    registerOpen.value = true;
   }
 }
 
 async function onUserCommand(command: string) {
-  if (command !== 'logout') return
-  const { $api } = useNuxtApp()
-  await $api('/api/auth/logout', { method: 'POST' })
-  await refreshMe()
+  if (command !== "logout") return;
+  const { $api } = useNuxtApp();
+  await $api("/api/auth/logout", { method: "POST" });
+  await refreshMe();
 }
 
 async function onMobileSelect(index: string) {
-  if (index.startsWith('route:')) {
-    mobileMenuOpen.value = false
-    await navigateTo(index.slice('route:'.length))
-    return
+  if (index.startsWith("route:")) {
+    mobileMenuOpen.value = false;
+    await navigateTo(index.slice("route:".length));
+    return;
   }
 
-  if (index === 'action:login') {
-    mobileMenuOpen.value = false
-    loginOpen.value = true
-    return
+  if (index === "action:login") {
+    mobileMenuOpen.value = false;
+    loginOpen.value = true;
+    return;
   }
-  if (index === 'action:register') {
-    mobileMenuOpen.value = false
-    registerOpen.value = true
-    return
+  if (index === "action:register") {
+    mobileMenuOpen.value = false;
+    registerOpen.value = true;
+    return;
   }
-  if (index === 'action:logout') {
-    mobileMenuOpen.value = false
-    await onUserCommand('logout')
+  if (index === "action:logout") {
+    mobileMenuOpen.value = false;
+    await onUserCommand("logout");
   }
 }
 
 async function submitLogin() {
-  const { $api } = useNuxtApp()
-  loginSubmitting.value = true
+  const { $api } = useNuxtApp();
+  loginSubmitting.value = true;
   try {
-    await $api('/api/auth/login', { method: 'POST', body: loginForm })
-    loginOpen.value = false
-    loginForm.password = ''
+    await $api("/api/auth/login", { method: "POST", body: loginForm });
+    loginOpen.value = false;
+    loginForm.password = "";
 
-    await refreshMe()
+    await refreshMe();
   } catch {
     // const msg = typeof (e as { msg?: unknown } | null)?.msg === 'string' ? String((e as { msg?: unknown }).msg) : undefined
     // ElMessage.error("登录失败，请重试")
   } finally {
-    loginSubmitting.value = false
+    loginSubmitting.value = false;
   }
 }
 
 async function submitRegister() {
-  const { $api } = useNuxtApp()
-  const valid = await registerFormRef.value?.validate().catch(() => false)
-  if (!valid) return
+  const { $api } = useNuxtApp();
+  const valid = await registerFormRef.value?.validate().catch(() => false);
+  if (!valid) return;
 
-  registerSubmitting.value = true
+  registerSubmitting.value = true;
   try {
-    await $api('/api/auth/register', {
-      method: 'POST',
-      body: { username: registerForm.username, password: registerForm.password },
-    })
-    registerOpen.value = false
-    registerForm.password = ''
-    registerForm.passwordConfirm = ''
-    registerForm.captcha = ''
-    loginForm.username = registerForm.username
-    loginForm.password = ''
-    loginOpen.value = true
+    await $api("/api/auth/register", {
+      method: "POST",
+      body: {
+        username: registerForm.username,
+        password: registerForm.password,
+      },
+    });
+    registerOpen.value = false;
+    registerForm.password = "";
+    registerForm.passwordConfirm = "";
+    registerForm.captcha = "";
+    loginForm.username = registerForm.username;
+    loginForm.password = "";
+    loginOpen.value = true;
     ElMessage({
-      message: '注册成功，请登录',
-      type: 'success',
+      message: "注册成功，请登录",
+      type: "success",
       plain: true,
-    })
+    });
   } catch {
-    refreshRegisterCaptcha()
+    refreshRegisterCaptcha();
     // const msg = typeof (e as { msg?: unknown } | null)?.msg === 'string' ? String((e as { msg?: unknown }).msg) : undefined
     // ElMessage({
     //   message: msg || (e instanceof Error ? e.message : '注册失败，请重试'),
@@ -359,12 +571,12 @@ async function submitRegister() {
     //   duration: 3000000,
     // })
   } finally {
-    registerSubmitting.value = false
+    registerSubmitting.value = false;
   }
 }
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .layoutContainer {
   min-height: 100vh;
   background-color: #f6f8fa;
@@ -497,7 +709,8 @@ async function submitRegister() {
   margin-right: 16px;
   color: rgba(255, 255, 255, 0.75);
   font-size: 14px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
 }
 
 .headerTime .time {
@@ -579,6 +792,156 @@ async function submitRegister() {
   overflow: visible;
 }
 
+.Links {
+  font-size: 11px;
+  margin-top: 30px;
+  padding: 14px;
+  width: calc(100% - 32px);
+  color: #898989;
+  .Links_title {
+    display: inline-block;
+  }
+  .Links_link {
+    color: currentColor;
+    text-decoration: none;
+    padding: 4px 8px;
+    &:hover {
+      color: #0969da;
+    }
+  }
+}
+
+.footer {
+  background: #ffffff;
+  padding: 12px 0;
+}
+
+.footerInner {
+  padding: 12px 16px 0;
+}
+
+.footerGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 0px;
+  border-radius: 10px;
+}
+
+.footerCol{
+  &:nth-child(1){
+    width: 60%;
+  }
+  &:nth-child(2){
+    width: calc(20% - 20px);
+  }
+  &:nth-child(3){
+    width: calc(20% - 20px);
+  }
+}
+
+.footerTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #24292e;
+  margin-bottom: 10px;
+}
+.info {
+    flex: 1;
+    font-size: 11px;
+    color: #696969;
+    .info-top {
+        align-items: center;
+        display: flex;
+        .logo {
+          text-decoration: none;
+          .logo-img{
+              height: 40px;
+              display: block;
+          }
+        }
+        .keyboard {
+            margin-left: 10px;
+            line-height: 22px;
+            i {
+                color: #000000e0;
+                border: 1px solid #f0f0f0;
+                border-radius: 4px;
+                margin: 0 6px;
+                padding: 2px 6px;
+                font-style: normal;
+            }
+
+        }
+    }
+    .detail {
+        color: #696969;
+        margin-top: 10px;
+        line-height: 21px;
+    }
+}
+
+.footerLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footerLink {
+  font-size: 13px;
+  color: #57606a;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footerLink:hover {
+  color: #0969da;
+}
+
+.footerButton {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.footerMeta {
+  font-size: 12px;
+  color: #6e7781;
+}
+
+.footerBottom {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 0 6px;
+}
+
+.footerMuted {
+  font-size: 12px;
+  color: #6e7781;
+}
+
+.footerInlineLink {
+  font-size: 12px;
+}
+
+.statementBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #24292e;
+}
+
+.statementLine {
+  font-size: 14px;
+  line-height: 1.7;
+}
+
 @media (max-width: 768px) {
   .desktopNav {
     display: none;
@@ -588,6 +951,19 @@ async function submitRegister() {
   }
   .brand {
     margin-right: 0;
+  }
+  .footerGrid {
+    .footerCol{
+      &:nth-child(1){
+        width: 100%;
+      }
+      &:nth-child(2){
+        width: calc(50% - 20px);
+      }
+      &:nth-child(3){
+        width: calc(50% - 20px);
+      }
+    }
   }
 }
 

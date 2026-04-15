@@ -64,7 +64,7 @@
                 <el-menu :default-active="String(activeCategoryId)" class="menu" @select="onSelect">
                   <el-menu-item index="0">
                     <el-icon><Collection /></el-icon>
-                    <span>全部</span>
+                    <span>全部分类</span>
                   </el-menu-item>
                   <el-menu-item index="-1">
                     <el-icon><Star /></el-icon>
@@ -118,7 +118,7 @@
                           style="object-fit: cover;" 
                           fetchpriority="high"
                         />
-                        <el-image v-else :src="ad.imageUrl" fit="cover" class="adImage" loading="lazy" />
+                        <el-image v-else :src="ad.imageUrl || defaultIcon" fit="cover" class="adImage" loading="lazy" />
                         <div class="adTitleOverlay">{{ ad.title }}</div>
                       </div>
                     </el-card>
@@ -150,8 +150,8 @@
                     <div class="linkCard modernCard" shadow="hover">
                       <div class="linkContent">
                         <div class="linkIcon">
-                          <img v-if="item.iconUrl" :src="item.iconUrl" :alt="item.title">
-                          <div v-else class="iconPlaceholder">{{ item.title[0] }}</div>
+                          <img :src="item.iconUrl || defaultIcon" :alt="item.title">
+                          <!-- <div v-else class="iconPlaceholder">{{ item.title[0] }}</div> -->
                         </div>
                         <div class="linkInfo">
                           <div class="title">{{ item.title }}</div>
@@ -177,8 +177,8 @@
                     <div class="linkCard modernCard" shadow="hover">
                       <div class="linkContent">
                         <div class="linkIcon">
-                          <img v-if="item.iconUrl" :src="item.iconUrl" :alt="item.title">
-                          <div v-else class="iconPlaceholder">{{ item.title[0] }}</div>
+                          <img :src="item.iconUrl || defaultIcon" :alt="item.title">
+                          <!-- <div v-else class="iconPlaceholder">{{ item.title[0] }}</div> -->
                         </div>
                         <div class="linkInfo">
                           <div class="title">{{ item.title }}</div>
@@ -221,8 +221,7 @@
                         <div class="linkCard modernCard" shadow="hover">
                           <div class="linkContent">
                             <div class="linkIcon">
-                              <img v-if="item.iconUrl" :src="item.iconUrl" :alt="item.title">
-                              <div v-else class="iconPlaceholder">{{ item.title[0] }}</div>
+                              <img :src="item.iconUrl || defaultIcon" :alt="item.title">
                             </div>
                             <div class="linkInfo">
                               <div class="title">{{ item.title }}</div>
@@ -243,7 +242,6 @@
     </div>
 
 
-    
     <el-drawer v-model="drawerOpen" title="选择分类" size="280px" direction="ltr">
       <el-menu :default-active="String(activeCategoryId)" class="menu" @select="onSelect">
         <el-menu-item index="0">
@@ -294,6 +292,7 @@ import {
   StarFilled,
   Grid,
 } from '@element-plus/icons-vue'
+import defaultIcon from '@/assets/svg/icon/nothing1.svg'
 
 type Category = { id: number; parentId: number | null; name: string; slug: string; sort: number }
 type NavLink = {
@@ -308,7 +307,14 @@ type NavLink = {
   sort: number
 }
 
-const { public: publicConfig } = useRuntimeConfig()
+type PublicConfig = {
+  siteName?: string
+  siteUrl?: string
+  icp?: string
+  icpNumber?: string
+}
+
+const { public: publicConfig } = useRuntimeConfig() as { public: PublicConfig }
 
 const drawerOpen = ref(false)
 
@@ -380,24 +386,12 @@ const displayCategories = computed(() => {
 
 const activeSubcategoryId = ref<Map<number, number>>(new Map())
 
-const categorySubcategoryMap = computed(() => {
-  const map = new Map<number, number>()
-  for (const cat of topLevelCategories.value) {
-    const children = categories.value.filter(c => c.parentId === cat.id)
-    if (children.length > 0) {
-      map.set(cat.id, children[0].id)
-    }
-  }
-  return map
-})
-
 function getActiveSubcategory(catId: number) {
   const children = categories.value.filter(c => c.parentId === catId)
-  if (children.length > 0) {
-    const saved = activeSubcategoryId.value.get(catId)
-    return saved !== undefined ? saved : children[0].id
-  }
-  return catId
+  const firstChild = children[0]
+  if (!firstChild) return catId
+  const saved = activeSubcategoryId.value.get(catId)
+  return saved !== undefined ? saved : firstChild.id
 }
 
 function selectSubcategory(subId: number, parentCatId: number) {
@@ -406,30 +400,16 @@ function selectSubcategory(subId: number, parentCatId: number) {
   activeSubcategoryId.value = newMap
 }
 
-function getCategoryLinks(catId: number) {
-  const cat = categories.value.find(c => c.id === catId)
-  if (!cat) return []
-  
-  // Get direct links of this category
-  const directLinks = linksByCategory.value.get(cat.id) || []
-  
-  // If it's a top level category, aggregate all its children's links
-  const children = categories.value.filter(c => c.parentId === cat.id)
-  if (children.length > 0) {
-    const allChildLinks: NavLink[] = [...directLinks]
-    for (const child of children) {
-      allChildLinks.push(...(linksByCategory.value.get(child.id) || []))
-    }
-    // Return unique links by ID (in case some links are in both parent and child, though unlikely in typical DB structure)
-    const uniqueMap = new Map<number, NavLink>()
-    allChildLinks.forEach(l => uniqueMap.set(l.id, l))
-    return Array.from(uniqueMap.values()).sort((a, b) => (a.sort - b.sort) || (b.id - a.id))
-  }
-  
-  return directLinks
-}
-
 const ads = computed(() => initialData.value?.ads?.ads || [])
+
+function scrollToAnchor(anchorId: string) {
+  const element = document.getElementById(anchorId)
+  const layoutElement = document.querySelector('.mainLayout')
+  if (element && layoutElement) {
+    const offset = layoutElement.getBoundingClientRect().top + window.scrollY - 55
+    window.scrollTo({ top: element.offsetTop + offset, behavior: 'smooth' })
+  }
+}
 
 function onSelect(index: string) {
   drawerOpen.value = false
@@ -441,13 +421,7 @@ function onSelect(index: string) {
       let anchorId = 'anchor-top'
       if (id === -1) anchorId = 'anchor-recommended'
       else if (id === -2) anchorId = 'anchor-common'
-      const element = document.getElementById(anchorId)
-      if (element) {
-        const top = element.offsetTop - 60
-        window.scrollTo({ top, behavior: 'smooth' })
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-      }
+      scrollToAnchor(anchorId)
     })
     const query = activeCategoryId.value !== 0 ? { categoryId: String(activeCategoryId.value) } : {}
     navigateTo({ path: '/', query }, { replace: true })
@@ -455,17 +429,15 @@ function onSelect(index: string) {
   }
   
   const children = categories.value.filter(c => c.parentId === id)
-  if (children.length > 0) {
+  const firstChild = children[0]
+  if (firstChild) {
     activeCategoryId.value = id
     const newMap = new Map(activeSubcategoryId.value)
-    newMap.set(id, children[0].id)
+    newMap.set(id, firstChild.id)
     activeSubcategoryId.value = newMap
+    
     nextTick(() => {
-      const element = document.getElementById(`category-${id}`)
-      if (element) {
-        const top = element.offsetTop - 60
-        window.scrollTo({ top, behavior: 'smooth' })
-      }
+      scrollToAnchor(`category-${id}`)
     })
   } else {
     activeCategoryId.value = id
@@ -514,52 +486,52 @@ onMounted(() => {
     now.value = new Date()
   }, 1000)
   
-  const handleScroll = () => {
-    if (scrollTimer) return
-    scrollTimer = setTimeout(() => {
-      scrollTimer = undefined
-      const scrollTop = window.scrollY + 200
+  // const handleScroll = () => {
+  //   if (scrollTimer) return
+  //   scrollTimer = setTimeout(() => {
+  //     scrollTimer = undefined
+  //     const scrollTop = window.scrollY + 200
       
-      if (user.value) {
-        const commonElement = document.getElementById('anchor-common')
-        if (commonElement) {
-          const { offsetTop, offsetHeight } = commonElement
-          if (scrollTop >= offsetTop && scrollTop < offsetTop + offsetHeight) {
-            if (activeCategoryId.value !== -2) {
-              activeCategoryId.value = -2
-            }
-            return
-          }
-        }
-      }
+  //     if (user.value) {
+  //       const commonElement = document.getElementById('anchor-common')
+  //       if (commonElement) {
+  //         const { offsetTop, offsetHeight } = commonElement
+  //         if (scrollTop >= offsetTop && scrollTop < offsetTop + offsetHeight) {
+  //           if (activeCategoryId.value !== -2) {
+  //             activeCategoryId.value = -2
+  //           }
+  //           return
+  //         }
+  //       }
+  //     }
       
-      const recommendedElement = document.getElementById('anchor-recommended')
-      if (recommendedElement) {
-        const { offsetTop, offsetHeight } = recommendedElement
-        if (scrollTop >= offsetTop && scrollTop < offsetTop + offsetHeight) {
-          if (activeCategoryId.value !== -1) {
-            activeCategoryId.value = -1
-          }
-          return
-        }
-      }
+  //     const recommendedElement = document.getElementById('anchor-recommended')
+  //     if (recommendedElement) {
+  //       const { offsetTop, offsetHeight } = recommendedElement
+  //       if (scrollTop >= offsetTop && scrollTop < offsetTop + offsetHeight) {
+  //         if (activeCategoryId.value !== -1) {
+  //           activeCategoryId.value = -1
+  //         }
+  //         return
+  //       }
+  //     }
       
-      for (const cat of topLevelCategories.value) {
-        const element = document.getElementById(`category-${cat.id}`)
-        if (element) {
-          const { offsetTop, offsetHeight } = element
-          if (scrollTop >= offsetTop && scrollTop < offsetTop + offsetHeight) {
-            if (activeCategoryId.value !== cat.id) {
-              activeCategoryId.value = cat.id
-            }
-            break
-          }
-        }
-      }
-    }, 50)
-  }
+  //     for (const cat of topLevelCategories.value) {
+  //       const element = document.getElementById(`category-${cat.id}`)
+  //       if (element) {
+  //         const { offsetTop, offsetHeight } = element
+  //         if (scrollTop >= offsetTop && scrollTop < offsetTop + offsetHeight) {
+  //           if (activeCategoryId.value !== cat.id) {
+  //             activeCategoryId.value = cat.id
+  //           }
+  //           break
+  //         }
+  //       }
+  //     }
+  //   }, 50)
+  // }
   
-  window.addEventListener('scroll', handleScroll, { passive: true })
+  // window.addEventListener('scroll', handleScroll, { passive: true })
 })
 onBeforeUnmount(() => {
   if (timer) clearInterval(timer)
@@ -760,7 +732,7 @@ function submitSearch() {
 }
 
 .asideContent {
-  padding: 0 16px 16px;
+  padding: 0 10px 16px;
 }
 
 .asideHeader {
@@ -786,7 +758,7 @@ function submitSearch() {
   border-radius: 8px;
   margin-bottom: 4px;
   color: #57606a;
-  padding: 0 !important;
+  padding: 0 12px !important;
 }
 .menu :deep(.el-menu-item [class^=el-icon]) {
   font-size: 15px;
