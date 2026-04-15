@@ -100,7 +100,7 @@
 
           <!-- Main Content Area -->
           <el-col :xs="24" :sm="20" :md="21" :lg="21" :xl="21" class="mainContentArea">
-            <section class="block contentArea">
+            <section id="anchor-top" class="block contentArea">
               <el-row :gutter="20">
                 <!-- <div class="sectionTitle">
                   <el-icon><Promotion /></el-icon>
@@ -139,7 +139,7 @@
             </section>
 
             <!-- 推荐导航 (选中独立分类时) -->
-            <section class="block contentArea">
+            <section id="anchor-recommended" class="block contentArea">
               <div class="sectionTitle">
                 <el-icon><Star /></el-icon>
                 <span>推荐导航</span>
@@ -166,7 +166,7 @@
             </section>
 
             <!-- 常用导航 (选中独立分类时) -->
-            <section v-if="user" class="block contentArea">
+            <section v-if="user" id="anchor-common" class="block contentArea">
               <div class="sectionTitle">
                 <el-icon><StarFilled /></el-icon>
                 <span>常用导航</span>
@@ -438,7 +438,16 @@ function onSelect(index: string) {
   if (id === 0 || id === -1 || id === -2) {
     activeCategoryId.value = id
     nextTick(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      let anchorId = 'anchor-top'
+      if (id === -1) anchorId = 'anchor-recommended'
+      else if (id === -2) anchorId = 'anchor-common'
+      const element = document.getElementById(anchorId)
+      if (element) {
+        const top = element.offsetTop - 60
+        window.scrollTo({ top, behavior: 'smooth' })
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
     })
     const query = activeCategoryId.value !== 0 ? { categoryId: String(activeCategoryId.value) } : {}
     navigateTo({ path: '/', query }, { replace: true })
@@ -454,7 +463,8 @@ function onSelect(index: string) {
     nextTick(() => {
       const element = document.getElementById(`category-${id}`)
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        const top = element.offsetTop - 60
+        window.scrollTo({ top, behavior: 'smooth' })
       }
     })
   } else {
@@ -509,12 +519,37 @@ onMounted(() => {
     scrollTimer = setTimeout(() => {
       scrollTimer = undefined
       const scrollTop = window.scrollY + 200
+      
+      if (user.value) {
+        const commonElement = document.getElementById('anchor-common')
+        if (commonElement) {
+          const { offsetTop, offsetHeight } = commonElement
+          if (scrollTop >= offsetTop && scrollTop < offsetTop + offsetHeight) {
+            if (activeCategoryId.value !== -2) {
+              activeCategoryId.value = -2
+            }
+            return
+          }
+        }
+      }
+      
+      const recommendedElement = document.getElementById('anchor-recommended')
+      if (recommendedElement) {
+        const { offsetTop, offsetHeight } = recommendedElement
+        if (scrollTop >= offsetTop && scrollTop < offsetTop + offsetHeight) {
+          if (activeCategoryId.value !== -1) {
+            activeCategoryId.value = -1
+          }
+          return
+        }
+      }
+      
       for (const cat of topLevelCategories.value) {
         const element = document.getElementById(`category-${cat.id}`)
         if (element) {
           const { offsetTop, offsetHeight } = element
           if (scrollTop >= offsetTop && scrollTop < offsetTop + offsetHeight) {
-            if (activeCategoryId.value !== cat.id && activeCategoryId.value !== 0 && activeCategoryId.value !== -1 && activeCategoryId.value !== -2) {
+            if (activeCategoryId.value !== cat.id) {
               activeCategoryId.value = cat.id
             }
             break
