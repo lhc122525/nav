@@ -85,9 +85,7 @@ const rowKeyField = computed(() => props.rowKey)
 watch(
   () => props.expandRowKeys,
   (newKeys) => {
-    if (newKeys && newKeys.length > 0) {
-      expandedKeys.value = new Set(newKeys)
-    }
+    expandedKeys.value = new Set(newKeys || [])
   },
   { immediate: true, deep: true }
 )

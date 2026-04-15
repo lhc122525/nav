@@ -250,6 +250,7 @@
       width="100%" 
       style="max-width: 1200px;"
       @closed="onCategoryMaintenanceClosed"
+      top="5vh"
     >
       <template #header>
         <div style="display: flex; gap: 8px;">
@@ -266,7 +267,8 @@
         v-model:expand-row-keys="expandedRowKeys"
         :data="maintenanceCategories"
         :columns="maintenanceColumns"
-        :height="500"
+        :default-expand-all="false"
+        :height="getHeight()"
         :row-height="52"
         :indent-size="12"
         row-key="id"
@@ -344,7 +346,7 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowRight, CaretRight, CaretBottom, Plus, Refresh } from '@element-plus/icons-vue'
+import { ArrowRight, CaretRight, CaretBottom, Plus, Refresh, Document } from '@element-plus/icons-vue'
 import type { Column } from '~/components/VirtualTreeTable.vue'
 
 type Category = { id: number; parentId: number | null; name: string; slug: string; sort: number }
@@ -438,6 +440,12 @@ const form = reactive<LinkForm>({
   isRecommended: false,
   sort: 0
 })
+
+function getHeight() {
+  return ( (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight) - 300 ) || 500
+}
+
+
 
 function categoryName(id: number | null) {
   if (id == null) return '-'
@@ -731,25 +739,13 @@ function _buildTreeData(data: Category[]): (Category & { _children?: Category[] 
 
 function loadMaintenanceCategories() {
   maintenanceCategories.value = _buildTreeData(categories.value)
-  expandedRowKeys.value = categories.value
-    .filter(c => !c.parentId)
-    .map(c => c.id)
+  expandedRowKeys.value = []
 }
 
 function openCategoryMaintenance() {
   loadMaintenanceCategories()
   categoryMaintenanceVisible.value = true
 }
-
-function editCategoryInMaintenance(row: Category) {
-  categoryForm.id = row.id
-  categoryForm.parentId = row.parentId
-  categoryForm.name = row.name
-  categoryForm.slug = row.slug
-  categoryForm.sort = row.sort
-  categoryCreateVisible.value = true
-}
-
 async function deleteCategoryInMaintenance(row: Category) {
   try {
     await $api(`/api/admin/categories/${row.id}`, { method: 'DELETE' })
