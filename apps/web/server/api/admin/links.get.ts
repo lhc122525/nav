@@ -24,6 +24,7 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event) as Record<string, unknown>
   const q = getQueryString(query, 'q')
   const categoryId = getQueryInt(query, 'categoryId', 0)
+  const recommended = getQueryInt(query, 'recommended', 0)
   const page = Math.max(getQueryInt(query, 'page', 1), 1)
   const limit = Math.min(Math.max(getQueryInt(query, 'limit', 20), 1), 500)
   const offset = (page - 1) * limit
@@ -33,6 +34,9 @@ export default defineEventHandler(async (event) => {
   if (categoryId > 0) {
     whereParts.push('category_id = ?')
     params.push(categoryId)
+  }
+  if (recommended > 0) {
+    whereParts.push('is_recommended = 1')
   }
   if (q) {
     whereParts.push('(title LIKE ? OR url LIKE ? OR description LIKE ?)')
@@ -45,11 +49,12 @@ export default defineEventHandler(async (event) => {
       params
     ) as any
 
+    const orderBy = recommended > 0 ? 'updated_at DESC, id DESC' : 'sort ASC, id DESC'
     const [rows] = await pool.execute(
       `SELECT id, category_id, title, url, description, icon_url, is_active, is_recommended, sort, created_at, updated_at
        FROM links
        WHERE ${whereParts.join(' AND ')}
-       ORDER BY sort ASC, id DESC
+       ORDER BY ${orderBy}
        LIMIT ${limit} OFFSET ${offset}`,
       params
     )
@@ -73,6 +78,9 @@ export default defineEventHandler(async (event) => {
     const anyError = e as { code?: unknown; message?: unknown }
     if (anyError?.code !== 'ER_BAD_FIELD_ERROR') throw e
     if (String(anyError?.message || '').includes('is_recommended')) {
+      if (recommended > 0) {
+        return { total: 0, list: [] }
+      }
       const [[{ total }]] = await pool.execute(
         `SELECT COUNT(*) as total FROM links WHERE ${whereParts.join(' AND ')}`,
         params

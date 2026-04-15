@@ -20,10 +20,17 @@
           <div class="categoryList">
             <div
               class="categoryItem"
-              :class="{ active: categoryId === undefined }"
+              :class="{ active: categoryId === undefined && !recommendedMode }"
               @click="selectCategory(undefined)"
             >
               全部
+            </div>
+            <div
+              class="categoryItem"
+              :class="{ active: recommendedMode }"
+              @click="selectRecommended"
+            >
+              推荐管理
             </div>
             <template v-for="pc in topLevelCategories" :key="pc.id">
               <div
@@ -308,13 +315,31 @@
         </template>
         
         <template #cell-sort="{ row }">
-          <el-input-number 
-            v-model="row.sort" 
-            :min="0" 
-            size="small" 
-            controls-position="right"
-            style="width: 80px"
-          />
+          <div class="sortCell">
+            <el-input-number 
+              v-model="row.sort" 
+              :min="0" 
+              size="small" 
+              controls-position="right"
+              style="width: 80px"
+            />
+            <div class="sortMove">
+              <el-button
+                text
+                :disabled="isMoveUpDisabled(row.id)"
+                @click.stop="moveCategory(row.id, 'up')"
+              >
+                <el-icon><CaretTop /></el-icon>
+              </el-button>
+              <el-button
+                text
+                :disabled="isMoveDownDisabled(row.id)"
+                @click.stop="moveCategory(row.id, 'down')"
+              >
+                <el-icon><CaretBottom /></el-icon>
+              </el-button>
+            </div>
+          </div>
         </template>
         
         <template #cell-actions="{ row }">
@@ -346,10 +371,11 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowRight, CaretRight, CaretBottom, Plus, Refresh, Document } from '@element-plus/icons-vue'
+import { ArrowRight, CaretRight, CaretBottom, CaretTop, Plus, Refresh } from '@element-plus/icons-vue'
 import type { Column } from '~/components/VirtualTreeTable.vue'
 
 type Category = { id: number; parentId: number | null; name: string; slug: string; sort: number }
+type MaintenanceNode = Category & { _children?: MaintenanceNode[] }
 
 type AdminLink = {
   id: number
@@ -384,9 +410,10 @@ const { $api } = useNuxtApp()
 
 const query = ref('')
 const categoryId = ref<number | undefined>(undefined)
+const recommendedMode = ref(false)
 
 const categories = ref<Category[]>([])
-const maintenanceCategories = ref<(Category & { _children?: Category[] })[]>([])
+const maintenanceCategories = ref<MaintenanceNode[]>([])
 const categoryMaintenanceVisible = ref(false)
 const editingRowId = ref<number | null>(null)
 const expandedRowKeys = ref<number[]>([])
@@ -406,6 +433,49 @@ function handleToggleExpand(key: number) {
   } else {
     expandedRowKeys.value.push(key)
   }
+}
+
+function findSiblingsById(nodes: MaintenanceNode[], id: number): { siblings: MaintenanceNode[]; index: number } | null {
+  for (let i = 0; i < nodes.length; i += 1) {
+    const node = nodes[i]
+    if (node.id === id) return { siblings: nodes, index: i }
+    if (node._children && node._children.length) {
+      const hit = findSiblingsById(node._children, id)
+      if (hit) return hit
+    }
+  }
+  return null
+}
+
+function isMoveUpDisabled(id: number) {
+  const hit = findSiblingsById(maintenanceCategories.value, id)
+  if (!hit) return true
+  return hit.index <= 0
+}
+
+function isMoveDownDisabled(id: number) {
+  const hit = findSiblingsById(maintenanceCategories.value, id)
+  if (!hit) return true
+  return hit.index >= hit.siblings.length - 1
+}
+
+function moveCategory(id: number, dir: 'up' | 'down') {
+  const hit = findSiblingsById(maintenanceCategories.value, id)
+  if (!hit) return
+  const delta = dir === 'up' ? -1 : 1
+  const otherIndex = hit.index + delta
+  if (otherIndex < 0 || otherIndex >= hit.siblings.length) return
+
+  const siblings = hit.siblings
+  const a = siblings[hit.index]
+  const b = siblings[otherIndex]
+
+  const aSort = a.sort
+  a.sort = b.sort
+  b.sort = aSort
+
+  siblings[hit.index] = b
+  siblings[otherIndex] = a
 }
 
 const categoryCreateVisible = ref(false)
@@ -483,6 +553,7 @@ async function reloadLinks() {
   }
   if (query.value.trim()) params.q = query.value.trim()
   if (categoryId.value !== undefined) params.categoryId = categoryId.value
+  if (recommendedMode.value) params.recommended = 1
 
   const data = await $api<{ total: number; list: AdminLink[] }>('/api/admin/links', { params, headers: requestHeaders })
   rows.value = data.list
@@ -517,7 +588,15 @@ function toggleExpand(id: number, event?: Event) {
 }
 
 function selectCategory(id: number | undefined) {
+  recommendedMode.value = false
   categoryId.value = id
+  page.value = 1
+  reloadLinks()
+}
+
+function selectRecommended() {
+  recommendedMode.value = true
+  categoryId.value = undefined
   page.value = 1
   reloadLinks()
 }
@@ -718,23 +797,31 @@ async function saveCategory() {
   }
 }
 
-function _buildTreeData(data: Category[]): (Category & { _children?: Category[] })[] {
-  const map = new Map<number, Category & { _children?: Category[] }>()
-  const roots: (Category & { _children?: Category[] })[] = []
+function _buildTreeData(data: Category[]): MaintenanceNode[] {
+  const map = new Map<number, MaintenanceNode>()
+  const roots: MaintenanceNode[] = []
   
-  data.forEach(item => {
+  data.forEach((item) => {
     map.set(item.id, { ...item, _children: [] })
   })
   
-  map.forEach(item => {
+  map.forEach((item) => {
     if (item.parentId && map.has(item.parentId)) {
       map.get(item.parentId)!._children!.push(item)
     } else {
       roots.push(item)
     }
   })
-  
-  return roots.sort((a, b) => (a.sort || 0) - (b.sort || 0))
+
+  function sortTree(nodes: MaintenanceNode[]) {
+    nodes.sort((a, b) => (a.sort || 0) - (b.sort || 0))
+    for (const node of nodes) {
+      if (node._children && node._children.length) sortTree(node._children)
+    }
+  }
+  sortTree(roots)
+
+  return roots
 }
 
 function loadMaintenanceCategories() {
@@ -927,5 +1014,24 @@ try {
 
 :deep(.cell) {
   display: flex;
+}
+
+.sortCell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sortMove {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.sortMove :deep(.el-button) {
+  padding: 0;
+  height: 18px;
+  line-height: 18px;
 }
 </style>
