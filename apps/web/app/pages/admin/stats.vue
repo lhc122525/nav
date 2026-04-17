@@ -1,5 +1,14 @@
 <template>
   <div class="statsPage">
+      <el-card shadow="never" style="margin-bottom: 20px">
+        <el-radio-group v-model="timeRange" @change="handleTimeRangeChange">
+          <el-radio-button value="today">今日</el-radio-button>
+          <el-radio-button value="month">本月</el-radio-button>
+          <el-radio-button value="year">本年</el-radio-button>
+          <el-radio-button value="all">全部</el-radio-button>
+        </el-radio-group>
+      </el-card>
+
       <el-row :gutter="20">
         <el-col :span="6" v-for="item in summaryCards" :key="item.label">
           <el-card shadow="never" class="summaryCard">
@@ -119,7 +128,6 @@
 
 <script setup lang="ts">
 definePageMeta({ middleware: ['admin-auth'], layout: 'admin' })
-import { useFetch } from '#app'
 
 interface TrendItem {
   date: string
@@ -144,7 +152,21 @@ interface StatsResponse {
   }
 }
 
-const { data: statsData } = await useFetch<StatsResponse>('/api/admin/stats')
+const timeRange = ref<'today' | 'month' | 'year' | 'all'>('month')
+const statsData = ref<StatsResponse | null>(null)
+
+async function loadStats() {
+  const data = await $fetch<StatsResponse>('/api/admin/stats', {
+    params: { range: timeRange.value }
+  })
+  statsData.value = data
+}
+
+function handleTimeRangeChange() {
+  loadStats()
+}
+
+await loadStats()
 
 const totalSearchCount = computed(() => {
   return statsData.value?.topEngines.reduce((sum, item) => sum + Number(item.total_count), 0) || 0

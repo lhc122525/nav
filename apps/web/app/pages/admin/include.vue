@@ -2,12 +2,11 @@
   <div>
     <el-card shadow="never" style="margin-bottom: 12px">
       <el-form :inline="true" @submit.prevent>
-        <el-form-item label="状态">
-          <el-select v-model="status" style="width: 160px">
+        <el-form-item label="收录状态">
+          <el-select v-model="isIncluded" style="width: 160px">
             <el-option label="全部" value="all" />
-            <el-option label="待处理" value="pending" />
-            <el-option label="已通过" value="approved" />
-            <el-option label="已拒绝" value="rejected" />
+            <el-option label="未收录" value="false" />
+            <el-option label="已收录" value="true" />
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
@@ -28,22 +27,14 @@
         <el-table-column prop="url" label="URL" min-width="240" />
         <el-table-column prop="description" label="描述" min-width="240" />
         <el-table-column prop="contact" label="联系方式" min-width="160" />
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag v-if="row.status === 'pending'" type="warning">待处理</el-tag>
-            <el-tag v-else-if="row.status === 'approved'" type="success">已通过</el-tag>
-            <el-tag v-else-if="row.status === 'rejected'" type="danger">已拒绝</el-tag>
-            <el-tag v-else>{{ row.status }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="isIncluded" label="收录" width="80">
+        <el-table-column prop="isIncluded" label="收录状态" width="100">
           <template #default="{ row }">
             <el-tag v-if="row.isIncluded" type="success" size="small">已收录</el-tag>
             <el-tag v-else type="info" size="small">未收录</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="提交时间" width="180" />
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column label="操作" width="80" fixed="right">
           <template #default="{ row }">
             <el-button
               v-if="!row.isIncluded"
@@ -52,22 +43,6 @@
               @click="openIncludeDialog(row)"
             >
               收录
-            </el-button>
-            <el-button
-              v-if="row.status === 'pending'"
-              type="success"
-              size="small"
-              @click="updateStatus(row, 'approved')"
-            >
-              通过
-            </el-button>
-            <el-button
-              v-if="row.status === 'pending'"
-              type="danger"
-              size="small"
-              @click="updateStatus(row, 'rejected')"
-            >
-              拒绝
             </el-button>
           </template>
         </el-table-column>
@@ -86,7 +61,10 @@
           <el-input v-model="includeForm.title" />
         </el-form-item>
         <el-form-item label="URL">
-          <el-input v-model="includeForm.url" />
+          <div style="display: flex; gap: 8px; width: 100%">
+            <el-input v-model="includeForm.url" />
+            <el-button type="primary" :loading="crawling" @click="crawlUrl">获取信息</el-button>
+          </div>
         </el-form-item>
         <el-form-item label="描述">
           <el-input v-model="includeForm.description" type="textarea" :rows="3" />
@@ -163,7 +141,7 @@ useHead(() => ({ title: '收录管理 - 后台' }))
 
 const { $api } = useNuxtApp()
 
-const status = ref<'all' | 'pending' | 'approved' | 'rejected'>('pending')
+const isIncluded = ref<'all' | 'true' | 'false'>('false')
 const query = ref('')
 const rows = ref<Submission[]>([])
 
@@ -174,6 +152,7 @@ const topLevelCategories = computed(() => categories.value.filter(c => !c.parent
 // 收录弹窗
 const includeDialogVisible = ref(false)
 const includeSubmitting = ref(false)
+const crawling = ref(false)
 const currentSubmission = ref<Submission | null>(null)
 const includeForm = reactive({
   categoryId: null as number | null,
@@ -202,7 +181,8 @@ async function reloadCategories() {
 }
 
 async function reload() {
-  const params: Record<string, string | number> = { limit: 500, status: status.value }
+  const params: Record<string, string | number> = { limit: 500 }
+  if (isIncluded.value !== 'all') params.isIncluded = isIncluded.value
   if (query.value.trim()) params.q = query.value.trim()
   const data = await $fetch<Submission[]>('/api/admin/submissions', { params, headers: requestHeaders })
   rows.value = data
@@ -221,16 +201,31 @@ function openIncludeDialog(row: Submission) {
   includeDialogVisible.value = true
 }
 
-async function updateStatus(row: Submission, newStatus: 'approved' | 'rejected') {
+async function crawlUrl() {
+  const url = includeForm.url?.trim()
+  if (!url || !url.startsWith('http')) {
+    ElMessage.warning('请输入有效的 HTTP(S) 地址')
+    return
+  }
+
+  crawling.value = true
   try {
-    await $api(`/api/admin/submissions/${row.id}`, {
-      method: 'PUT',
-      body: { status: newStatus }
+    const data = await $api<{ title: string; description: string; iconUrl: string; url: string }>('/api/admin/links/crawl', {
+      method: 'POST',
+      body: { url }
     })
-    ElMessage.success('状态更新成功')
-    await reload()
-  } catch {
-    ElMessage.error('状态更新失败')
+
+    if (data.title) includeForm.title = data.title
+    if (data.description) includeForm.description = data.description
+    if (data.iconUrl) includeForm.iconUrl = data.iconUrl
+    if (data.url) includeForm.url = data.url
+
+    ElMessage.success('获取成功')
+  } catch (e: unknown) {
+    const error = e as { statusMessage?: string }
+    ElMessage.error(error.statusMessage || '获取失败')
+  } finally {
+    crawling.value = false
   }
 }
 
@@ -261,7 +256,7 @@ async function submitInclude() {
     // 更新收录状态
     await $api(`/api/admin/submissions/${currentSubmission.value.id}`, {
       method: 'PUT',
-      body: { isIncluded: true, status: 'approved' }
+      body: { isIncluded: true }
     })
 
     ElMessage.success('收录成功')

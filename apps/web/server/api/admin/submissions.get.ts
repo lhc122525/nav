@@ -9,15 +9,15 @@ export default defineEventHandler(async (event) => {
 
   const query = getQuery(event) as Record<string, unknown>
   const q = getQueryString(query, 'q')
-  const status = getQueryString(query, 'status')
+  const isIncluded = getQueryString(query, 'isIncluded')
   const limit = Math.min(Math.max(getQueryInt(query, 'limit', 200), 1), 500)
 
   const whereParts: string[] = ['1=1']
   const params: Array<string | number> = []
 
-  if (status && status !== 'all') {
-    whereParts.push('status = ?')
-    params.push(status)
+  if (isIncluded && isIncluded !== 'all') {
+    whereParts.push('is_included = ?')
+    params.push(isIncluded === 'true' ? 1 : 0)
   }
   if (q) {
     whereParts.push('(title LIKE ? OR url LIKE ? OR description LIKE ?)')
