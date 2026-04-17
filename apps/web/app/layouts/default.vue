@@ -200,6 +200,7 @@
           />
         </el-form-item>
       </el-form>
+      <div class="registerLink" @click="goRegister()">还没有账号？去注册</div>
       <template #footer>
         <el-button @click="loginOpen = false">取消</el-button>
         <el-button
@@ -299,6 +300,63 @@
         >
       </template>
     </el-dialog>
+
+    <div class="floatActions">
+      <el-tooltip content="投喂站长" placement="left">
+        <el-button class="floatBtn" @click="donateOpen = true">
+          <el-icon><StarFilled /></el-icon>
+        </el-button>
+      </el-tooltip>
+      <el-tooltip content="强制刷新" placement="left">
+        <el-button class="floatBtn" @click="forceReload">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
+      </el-tooltip>
+      <el-tooltip :content="scrollTip" placement="left">
+        <el-button class="floatBtn" @click="scrollToggle">
+          <el-icon>
+            <CaretTop v-if="scrollMode === 'top'" />
+            <CaretBottom v-else />
+          </el-icon>
+        </el-button>
+      </el-tooltip>
+    </div>
+
+    <el-dialog
+      v-model="donateOpen"
+      title="投喂本站"
+      append-to-body
+      style="max-width: 760px; width: 95vw"
+    >
+      <div class="donatePanel" v-loading="donateLoading">
+        <div class="donateCol donateAlipay">
+          <div class="donateQr">
+            <el-image
+              v-if="donateConfig.alipayQrUrl"
+              :src="donateConfig.alipayQrUrl"
+              fit="contain"
+              style="width: 100%; height: 360px"
+              :preview-src-list="[donateConfig.alipayQrUrl]"
+              preview-teleported
+            />
+            <el-empty v-else description="未配置" />
+          </div>
+        </div>
+        <div class="donateCol donateWechat">
+          <div class="donateQr">
+            <el-image
+              v-if="donateConfig.wechatQrUrl"
+              :src="donateConfig.wechatQrUrl"
+              fit="contain"
+              style="width: 100%; height: 360px"
+              :preview-src-list="[donateConfig.wechatQrUrl]"
+              preview-teleported
+            />
+            <el-empty v-else description="未配置" />
+          </div>
+        </div>
+      </div>
+    </el-dialog>
   </el-container>
 </template>
 
@@ -308,10 +366,11 @@ import {
   Star,
   ArrowDown,
   SwitchButton,
-  Promotion,
   ChatDotRound,
-  ChatLineRound,
   Menu as MenuIcon,
+  Refresh,
+  CaretTop,
+  CaretBottom,
 } from "@element-plus/icons-vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { ElMessage } from "element-plus";
@@ -358,6 +417,40 @@ const siteMapLinks = [
   { name: "留言板", to: "/guestbook" },
 ];
 
+type DonateConfig = { alipayQrUrl: string; wechatQrUrl: string };
+
+const donateOpen = ref(false);
+const donateLoading = ref(false);
+const donateConfig = reactive<DonateConfig>({ alipayQrUrl: "", wechatQrUrl: "" });
+
+const scrollMode = ref<"top" | "bottom">("bottom");
+const scrollTip = computed(() =>
+  scrollMode.value === "top" ? "回到顶部" : "回到底部"
+);
+
+// 去注册
+function goRegister() {
+  loginOpen.value = false;
+  onGuestCommand('register')
+}
+
+
+
+function forceReload() {
+  const url = new URL(window.location.href);
+  url.searchParams.set("_r", String(Date.now()));
+  window.location.replace(url.toString());
+}
+
+function scrollToggle() {
+  if (scrollMode.value === "top") {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+  const doc = document.documentElement;
+  window.scrollTo({ top: doc.scrollHeight, behavior: "smooth" });
+}
+
 const now = ref(new Date());
 let timer: ReturnType<typeof setInterval> | undefined;
 onMounted(() => {
@@ -367,6 +460,34 @@ onMounted(() => {
 });
 onBeforeUnmount(() => {
   if (timer) clearInterval(timer);
+});
+
+function updateScrollMode() {
+  const doc = document.documentElement;
+  const max = Math.max(0, doc.scrollHeight - window.innerHeight);
+  const half = max / 2;
+  scrollMode.value = window.scrollY >= half ? "top" : "bottom";
+}
+
+onMounted(() => {
+  updateScrollMode();
+  window.addEventListener("scroll", updateScrollMode, { passive: true });
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("scroll", updateScrollMode);
+});
+
+watch(donateOpen, async (open) => {
+  if (!open) return;
+  donateLoading.value = true;
+  try {
+    const res = await $fetch<DonateConfig>("/api/donate/config");
+    donateConfig.alipayQrUrl = res.alipayQrUrl || "";
+    donateConfig.wechatQrUrl = res.wechatQrUrl || "";
+  } finally {
+    donateLoading.value = false;
+  }
 });
 
 const nowTimeText = computed(() => {
@@ -1002,5 +1123,84 @@ async function submitRegister() {
 
 .captchaRefresh {
   white-space: nowrap;
+}
+
+.floatActions {
+  position: fixed;
+  right: 10px;
+  bottom: 110px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 2000;
+}
+
+.floatBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 0;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  margin: 0;
+}
+
+.donatePanel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.donateCol {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 420px;
+}
+
+.donateAlipay {
+  background: #1677ff;
+}
+
+.donateWechat {
+  background: #16a34a;
+}
+
+.donateTitle {
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.donateQr {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.registerLink{
+  font-size: 12px;
+  color: #409eff;
+  text-align: right;
+  cursor: pointer;
+  &:hover {
+    color: #0969da;
+  }
+}
+
+@media (max-width: 768px) {
+  .floatActions {
+    right: 12px;
+    bottom: 90px;
+  }
+  .donatePanel {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

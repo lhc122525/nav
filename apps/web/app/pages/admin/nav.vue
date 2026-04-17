@@ -436,9 +436,8 @@ function handleToggleExpand(key: number) {
 }
 
 function findSiblingsById(nodes: MaintenanceNode[], id: number): { siblings: MaintenanceNode[]; index: number } | null {
-  for (let i = 0; i < nodes.length; i += 1) {
-    const node = nodes[i]
-    if (node.id === id) return { siblings: nodes, index: i }
+  for (const [index, node] of nodes.entries()) {
+    if (node.id === id) return { siblings: nodes, index }
     if (node._children && node._children.length) {
       const hit = findSiblingsById(node._children, id)
       if (hit) return hit
@@ -469,6 +468,7 @@ function moveCategory(id: number, dir: 'up' | 'down') {
   const siblings = hit.siblings
   const a = siblings[hit.index]
   const b = siblings[otherIndex]
+  if (!a || !b) return
 
   const aSort = a.sort
   a.sort = b.sort

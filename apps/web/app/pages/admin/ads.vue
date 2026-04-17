@@ -26,6 +26,53 @@
         </el-form>
       </el-card>
 
+      <el-card class="configCard mt20" shadow="never">
+        <template #header>
+          <div class="cardHeader">
+            <span>打赏二维码配置</span>
+            <el-button type="primary" link :loading="donateSaving" @click="saveDonateConfig">保存配置</el-button>
+          </div>
+        </template>
+        <el-form :model="donateConfig" label-width="100px" class="donateForm">
+          <el-row :gutter="20">
+            <el-col :xs="24" :sm="12">
+              <el-form-item label="支付宝二维码">
+                <div class="donateUploadRow">
+                  <el-upload
+                    :show-file-list="false"
+                    :http-request="(o: any) => uploadDonateQr(o, 'alipay')"
+                    accept="image/*"
+                  >
+                    <el-button>上传</el-button>
+                  </el-upload>
+                  <el-input v-model="donateConfig.alipayQrUrl" placeholder="或粘贴图片 URL" />
+                </div>
+              </el-form-item>
+              <div v-if="donateConfig.alipayQrUrl" class="donatePreview">
+                <el-image :src="donateConfig.alipayQrUrl" fit="contain" style="width: 100%; height: 240px" :preview-src-list="[donateConfig.alipayQrUrl]" preview-teleported />
+              </div>
+            </el-col>
+            <el-col :xs="24" :sm="12">
+              <el-form-item label="微信二维码">
+                <div class="donateUploadRow">
+                  <el-upload
+                    :show-file-list="false"
+                    :http-request="(o: any) => uploadDonateQr(o, 'wechat')"
+                    accept="image/*"
+                  >
+                    <el-button>上传</el-button>
+                  </el-upload>
+                  <el-input v-model="donateConfig.wechatQrUrl" placeholder="或粘贴图片 URL" />
+                </div>
+              </el-form-item>
+              <div v-if="donateConfig.wechatQrUrl" class="donatePreview">
+                <el-image :src="donateConfig.wechatQrUrl" fit="contain" style="width: 100%; height: 240px" :preview-src-list="[donateConfig.wechatQrUrl]" preview-teleported />
+              </div>
+            </el-col>
+          </el-row>
+        </el-form>
+      </el-card>
+
       <!-- 列表部分 -->
       <el-table :data="ads" border style="width: 100%" class="mt20" v-loading="loading">
         <el-table-column label="序号" width="80" align="center">
@@ -99,10 +146,15 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 
 const loading = ref(false)
 const submitting = ref(false)
+const donateSaving = ref(false)
 const ads = ref([])
 const config = ref({
   displayCount: 2,
   isRandom: false
+})
+const donateConfig = ref({
+  alipayQrUrl: '',
+  wechatQrUrl: ''
 })
 
 const dialogVisible = ref(false)
@@ -119,14 +171,19 @@ const form = ref({
 const fetchData = async () => {
   loading.value = true
   try {
-    const [adsRes, configRes] = await Promise.all([
+    const [adsRes, configRes, donateRes] = await Promise.all([
       $fetch('/api/admin/ads'),
-      $fetch('/api/admin/ad-config')
+      $fetch('/api/admin/ad-config'),
+      $fetch('/api/admin/donate-config')
     ])
     ads.value = adsRes
     config.value = {
       displayCount: configRes.display_count || 2,
       isRandom: !!configRes.is_random
+    }
+    donateConfig.value = {
+      alipayQrUrl: donateRes.alipayQrUrl || '',
+      wechatQrUrl: donateRes.wechatQrUrl || ''
     }
   } catch (error: any) {
     ElMessage.error('加载失败: ' + error.message)
@@ -148,6 +205,41 @@ const saveConfig = async () => {
     ElMessage.success('配置已保存')
   } catch (error: any) {
     ElMessage.error('保存失败: ' + error.message)
+  }
+}
+
+const uploadDonateQr = async (o: any, type: 'alipay' | 'wechat') => {
+  const file: File = o.file
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('scope', 'donate')
+  try {
+    const res = await $fetch<{ url: string }>('/api/admin/upload', { method: 'POST', body: formData })
+    if (type === 'alipay') donateConfig.value.alipayQrUrl = res.url
+    else donateConfig.value.wechatQrUrl = res.url
+    ElMessage.success('上传成功')
+    o.onSuccess?.(res)
+  } catch (e: any) {
+    ElMessage.error('上传失败: ' + (e?.message || ''))
+    o.onError?.(e)
+  }
+}
+
+const saveDonateConfig = async () => {
+  donateSaving.value = true
+  try {
+    await $fetch('/api/admin/donate-config', {
+      method: 'POST',
+      body: {
+        alipayQrUrl: donateConfig.value.alipayQrUrl,
+        wechatQrUrl: donateConfig.value.wechatQrUrl
+      }
+    })
+    ElMessage.success('配置已保存')
+  } catch (error: any) {
+    ElMessage.error('保存失败: ' + error.message)
+  } finally {
+    donateSaving.value = false
   }
 }
 
@@ -258,5 +350,22 @@ onMounted(fetchData)
 
 .mt20 {
   margin-top: 20px;
+}
+
+.donateForm {
+  width: 100%;
+}
+
+.donateUploadRow {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.donatePreview {
+  margin-top: 10px;
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+  padding: 10px;
 }
 </style>
