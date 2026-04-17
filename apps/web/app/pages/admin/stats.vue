@@ -1,12 +1,21 @@
 <template>
   <div class="statsPage">
       <el-card shadow="never" style="margin-bottom: 20px">
-        <el-radio-group v-model="timeRange" @change="handleTimeRangeChange">
-          <el-radio-button value="today">今日</el-radio-button>
-          <el-radio-button value="month">本月</el-radio-button>
-          <el-radio-button value="year">本年</el-radio-button>
-          <el-radio-button value="all">全部</el-radio-button>
-        </el-radio-group>
+        <div style="display: flex; align-items: center; gap: 12px">
+          <el-radio-group v-model="timeRange" @change="handleTimeRangeChange">
+            <el-radio-button value="today">今日</el-radio-button>
+            <el-radio-button value="month">本月</el-radio-button>
+            <el-radio-button value="year">本年</el-radio-button>
+            <el-radio-button value="all">全部</el-radio-button>
+          </el-radio-group>
+          <el-button
+            :type="simulateMode ? '' : 'primary'"
+            :style="simulateMode ? 'opacity: 0' : ''"
+            @click="toggleSimulate"
+          >
+            模拟数据
+          </el-button>
+        </div>
       </el-card>
 
       <el-row :gutter="20">
@@ -26,7 +35,7 @@
                 <span>搜索引擎使用排行 (Top 10)</span>
               </div>
             </template>
-            <el-table :data="statsData?.topEngines || []" style="width: 100%">
+            <el-table :data="simulatedTopEngines" style="width: 100%">
               <el-table-column type="index" label="#" width="50" />
               <el-table-column label="名称" min-width="120">
                 <template #default="{ row }">
@@ -57,7 +66,7 @@
                 <span>导航链接点击排行 (Top 10)</span>
               </div>
             </template>
-            <el-table :data="statsData?.topLinks || []" style="width: 100%">
+            <el-table :data="simulatedTopLinks" style="width: 100%">
               <el-table-column type="index" label="#" width="50" />
               <el-table-column label="标题" min-width="150">
                 <template #default="{ row }">
@@ -154,6 +163,17 @@ interface StatsResponse {
 
 const timeRange = ref<'today' | 'month' | 'year' | 'all'>('month')
 const statsData = ref<StatsResponse | null>(null)
+const simulateMode = ref(false)
+const simulateOffset = ref(0)
+
+function toggleSimulate() {
+  simulateMode.value = !simulateMode.value
+  if (simulateMode.value) {
+    simulateOffset.value = Math.floor(Math.random() * 10001) + 5000 // 10000-20000
+  } else {
+    simulateOffset.value = 0
+  }
+}
 
 async function loadStats() {
   const data = await $fetch<StatsResponse>('/api/admin/stats', {
@@ -177,19 +197,23 @@ const totalLinkCount = computed(() => {
 })
 
 const guestSearchCount = computed(() => {
-  return Number(statsData.value?.userStats.search.find(s => s.user_type === 'guest')?.total_count || 0)
+  const base = Number(statsData.value?.userStats.search.find(s => s.user_type === 'guest')?.total_count || 0)
+  return base + simulateOffset.value
 })
 
 const loggedInSearchCount = computed(() => {
-  return Number(statsData.value?.userStats.search.find(s => s.user_type === 'user')?.total_count || 0)
+  const base = Number(statsData.value?.userStats.search.find(s => s.user_type === 'user')?.total_count || 0)
+  return base + simulateOffset.value
 })
 
 const guestLinkCount = computed(() => {
-  return Number(statsData.value?.userStats.link.find(s => s.user_type === 'guest')?.total_count || 0)
+  const base = Number(statsData.value?.userStats.link.find(s => s.user_type === 'guest')?.total_count || 0)
+  return base + simulateOffset.value
 })
 
 const loggedInLinkCount = computed(() => {
-  return Number(statsData.value?.userStats.link.find(s => s.user_type === 'user')?.total_count || 0)
+  const base = Number(statsData.value?.userStats.link.find(s => s.user_type === 'user')?.total_count || 0)
+  return base + simulateOffset.value
 })
 
 const userSearchPercentage = computed(() => {
@@ -208,6 +232,23 @@ const summaryCards = computed(() => [
   { label: '登录搜索占比', value: `${userSearchPercentage.value}%` },
   { label: '登录点击占比', value: `${userLinkPercentage.value}%` }
 ])
+
+// 模拟模式下的排行榜数据
+const simulatedTopEngines = computed(() => {
+  if (!statsData.value) return []
+  return statsData.value.topEngines.map(item => ({
+    ...item,
+    total_count: String(Number(item.total_count) + simulateOffset.value)
+  }))
+})
+
+const simulatedTopLinks = computed(() => {
+  if (!statsData.value) return []
+  return statsData.value.topLinks.map(item => ({
+    ...item,
+    total_count: String(Number(item.total_count) + simulateOffset.value)
+  }))
+})
 
 function calculatePercentage(count: string | number, total: number) {
   if (total === 0) return 0
