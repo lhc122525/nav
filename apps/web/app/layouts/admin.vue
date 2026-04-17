@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { Menu, Document, Expand, Fold, Search, PieChart } from '@element-plus/icons-vue'
+import { Menu, Document, Expand, Fold, Search, PieChart, Picture } from '@element-plus/icons-vue'
 const collapsed = ref(false)
 const route = useRoute()
 const router = useRouter()

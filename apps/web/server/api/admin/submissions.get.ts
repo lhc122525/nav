@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const [rows] = await pool.execute(
-    `SELECT id, title, url, description, contact, status, created_at, handled_by, handled_at
+    `SELECT id, title, url, description, contact, status, is_included, created_at, handled_by, handled_at
      FROM submissions
      WHERE ${whereParts.join(' AND ')}
      ORDER BY created_at DESC
@@ -40,6 +40,7 @@ export default defineEventHandler(async (event) => {
     description: String(r.description || ''),
     contact: String(r.contact || ''),
     status: String(r.status || ''),
+    isIncluded: Boolean(r.is_included),
     handledBy: r.handled_by == null ? null : Number(r.handled_by),
     handledAt: r.handled_at ? new Date(String(r.handled_at)).toISOString() : null,
     createdAt: new Date(String(r.created_at)).toISOString()

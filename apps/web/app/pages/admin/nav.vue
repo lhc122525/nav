@@ -7,7 +7,7 @@
             <div class="cardHeader">
               <span>分类</span>
               <div class="headerActions">
-                <el-button size="small" @click="openCategoryCreate">
+                <el-button size="small" @click="() => openCategoryCreate()">
                   新增
                 </el-button>
                 <el-button size="small" type="primary" plain @click="openCategoryMaintenance">
@@ -119,7 +119,7 @@
                     v-model="row.isRecommended"
                     size="small"
                     :loading="updatingRows.has(row.id)"
-                    @change="(val: boolean) => toggleLinkStatus(row, 'isRecommended', val)"
+                    @change="(val) => toggleLinkStatus(row, 'isRecommended', val as boolean)"
                   />
                 </template>
               </el-table-column>
@@ -129,7 +129,7 @@
                     v-model="row.isActive"
                     size="small"
                     :loading="updatingRows.has(row.id)"
-                    @change="(val: boolean) => toggleLinkStatus(row, 'isActive', val)"
+                    @change="(val) => toggleLinkStatus(row, 'isActive', val as boolean)"
                   />
                 </template>
               </el-table-column>

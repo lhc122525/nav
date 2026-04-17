@@ -1,6 +1,7 @@
 import {
   bigint,
   boolean,
+  foreignKey,
   index,
   int,
   mysqlTable,
@@ -13,8 +14,7 @@ export const categories = mysqlTable(
   'categories',
   {
     id: bigint('id', { mode: 'number', unsigned: true }).autoincrement().notNull().primaryKey(),
-    parentId: bigint('parent_id', { mode: 'number', unsigned: true })
-      .references(() => categories.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    parentId: bigint('parent_id', { mode: 'number', unsigned: true }),
     name: varchar('name', { length: 50 }).notNull(),
     slug: varchar('slug', { length: 80 }).notNull(),
     sort: int('sort').notNull().default(0),
@@ -22,6 +22,12 @@ export const categories = mysqlTable(
     updatedAt: timestamp('updated_at').notNull().defaultNow().onUpdateNow()
   },
   (table) => ({
+    fkCategoriesParent: foreignKey({
+      columns: [table.parentId],
+      foreignColumns: [table.id]
+    })
+      .onDelete('cascade')
+      .onUpdate('cascade'),
     ukCategoriesSlug: uniqueIndex('uk_categories_slug').on(table.slug)
   })
 )
@@ -127,6 +133,7 @@ export const submissions = mysqlTable(
     description: varchar('description', { length: 255 }).notNull().default(''),
     contact: varchar('contact', { length: 120 }).notNull().default(''),
     status: varchar('status', { length: 20 }).notNull().default('pending'),
+    isIncluded: boolean('is_included').notNull().default(false),
     handledBy: bigint('handled_by', { mode: 'number', unsigned: true })
       .references(() => adminUsers.id, { onDelete: 'set null', onUpdate: 'cascade' }),
     handledAt: timestamp('handled_at'),
@@ -135,6 +142,7 @@ export const submissions = mysqlTable(
   (table) => ({
     idxSubmissionsUrl: index('idx_submissions_url').on(table.url),
     idxSubmissionsStatus: index('idx_submissions_status').on(table.status),
+    idxSubmissionsIncluded: index('idx_submissions_included').on(table.isIncluded),
     idxSubmissionsCreated: index('idx_submissions_created').on(table.createdAt)
   })
 )

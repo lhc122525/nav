@@ -10,7 +10,7 @@
       :row-key="rowKey"
       :header-height="showHeader ? 48 : 0"
       fixed
-      :class="{ 'hide-header': !showHeader }"
+      :class="showHeader ? '' : 'hide-header'"
       @scroll="handleScroll"
     />
   </div>
@@ -19,6 +19,8 @@
 <script setup lang="ts">
 import { ref, computed, useSlots, watch, h, type VNode, onMounted, onBeforeUnmount } from 'vue'
 import type { TableV2Instance } from 'element-plus'
+import { FixedDir } from 'element-plus/es/components/table-v2/src/constants'
+import type { Column as TableV2Column } from 'element-plus/es/components/table-v2/src/types'
 
 export interface TreeNode {
   id: number | string
@@ -39,7 +41,7 @@ export interface Column {
   width: number
   label?: string
   align?: 'left' | 'center' | 'right'
-  fixed?: 'left' | 'right' | boolean
+  fixed?: 'left' | 'right' | true
   cellRenderer?: (params: { rowData: FlattenNode; rowIndex: number }) => VNode | string | number
 }
 
@@ -105,7 +107,7 @@ watch(
 function collectAllKeys(nodes: TreeNode[], keys: (number | string)[]) {
   if (!nodes) return
   nodes.forEach((node) => {
-    const key = node[rowKeyField.value]
+    const key = node[rowKeyField.value] as number | string
     keys.push(key)
     const children = node[props.childrenKey] as TreeNode[] | undefined
     if (children && children.length > 0) {
@@ -124,7 +126,7 @@ const flattenData = computed<FlattenNode[]>(() => {
     if (!nodes || !Array.isArray(nodes)) return
 
     nodes.forEach((node) => {
-      const key = node[rowKey]
+      const key = node[rowKey] as number | string
       const children = node[childrenKey] as TreeNode[] | undefined
       const hasChildren = !!(children && children.length > 0)
       const isExpanded = expanded.has(key)
@@ -156,25 +158,27 @@ function isSlotUsed(key: string): boolean {
   return !!slots[getSlotName(key)]
 }
 
-const processedColumns = computed(() => {
-  const result: Array<Column & { 
-    cellRenderer: (params: { rowData: FlattenNode; rowIndex: number }) => VNode
-    headerCellRenderer?: () => VNode
-  }> = []
+function toTableV2Fixed(fixed: Column['fixed']): true | FixedDir | undefined {
+  if (fixed === 'left') return FixedDir.LEFT
+  if (fixed === 'right') return FixedDir.RIGHT
+  if (fixed === true) return true
+  return undefined
+}
+
+const processedColumns = computed<TableV2Column[]>(() => {
+  const result: TableV2Column[] = []
 
   const hasTreeExpandSlot = isSlotUsed('tree-expand')
 
   if (hasTreeExpandSlot) {
-    const treeExpandColumn: Column & { 
-      cellRenderer: (params: { rowData: FlattenNode; rowIndex: number }) => VNode
-      headerCellRenderer?: () => VNode
-    } = {
+    const treeExpandColumn = {
       key: '__tree-expand__',
       dataKey: '__tree-expand__',
       width: 40,
-      align: 'center',
-      cellRenderer: ({ rowData }) => {
-        const row = rowData as FlattenNode
+      align: 'center' as const,
+      cellRenderer: (params: unknown) => {
+        const { rowData } = params as { rowData: FlattenNode }
+        const row = rowData
         const level = row.__level || 0
         const expandable = row.__expandable
         const expanded = row.__expanded
@@ -191,7 +195,7 @@ const processedColumns = computed(() => {
         return h('div', {
           class: 'tree-expand-cell',
           style: { paddingLeft: `${level * props.indentSize}px` }
-        }, [slotContent])
+        }, slotContent)
       },
       headerCellRenderer: () => {
         return h('span', {}, '')
@@ -201,7 +205,7 @@ const processedColumns = computed(() => {
   }
 
   const columns = props.columns
-  const containerW = typeof containerWidth.value === 'number' ? containerWidth.value : 800
+  const containerW = containerWidth.value
 
   const treeExpandWidth = hasTreeExpandSlot ? 40 : 0
 
@@ -239,24 +243,26 @@ const processedColumns = computed(() => {
       }
     }
 
-    const columnConfig: typeof col & {
-      cellRenderer: (params: { rowData: FlattenNode; rowIndex: number }) => VNode
-      headerCellRenderer?: () => VNode
-    } = {
-      ...col,
+    const { fixed, ...rest } = col
+    const columnConfig: TableV2Column = {
+      ...rest,
       width: Math.floor(width),
-      cellRenderer: ({ rowData, rowIndex }: { rowData: FlattenNode; rowIndex: number }) => {
+      fixed: toTableV2Fixed(fixed),
+      cellRenderer: (params: unknown) => {
+        const { rowData, rowIndex } = params as { rowData: FlattenNode; rowIndex: number }
         const row = rowData
 
         if (slots[slotName]) {
-          return h('div', {
-            class: 'tree-cell-content',
-            style: { width: '100%', display:'flex' }
-          }, [slots[slotName]!({
+          const slotContent = slots[slotName]!({
             row,
             rowIndex,
             column: col
-          }) as VNode])
+          })
+
+          return h('div', {
+            class: 'tree-cell-content',
+            style: { width: '100%', display:'flex' }
+          }, slotContent)
         } else {
           return h('div', {
             class: 'tree-cell-content',
@@ -288,7 +294,7 @@ const tableHeight = computed(() => {
 })
 
 const containerRef = ref<HTMLDivElement>()
-const containerWidth = ref<number | '100%'>(1000)
+const containerWidth = ref<number>(1000)
 
 const containerStyle = computed(() => {
   if (typeof props.height === 'number') {

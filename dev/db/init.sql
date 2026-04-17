@@ -89,12 +89,14 @@ CREATE TABLE IF NOT EXISTS submissions (
   description VARCHAR(255) NOT NULL DEFAULT '',
   contact VARCHAR(120) NOT NULL DEFAULT '',
   status VARCHAR(20) NOT NULL DEFAULT 'pending',
+  is_included TINYINT(1) NOT NULL DEFAULT 0,
   handled_by BIGINT UNSIGNED NULL,
   handled_at TIMESTAMP NULL DEFAULT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_submissions_url (url),
   KEY idx_submissions_status (status),
+  KEY idx_submissions_included (is_included),
   KEY idx_submissions_created (created_at),
   CONSTRAINT fk_submissions_handler FOREIGN KEY (handled_by) REFERENCES admin_users(id)
     ON DELETE SET NULL ON UPDATE CASCADE

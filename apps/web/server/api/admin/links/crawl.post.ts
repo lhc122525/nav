@@ -23,20 +23,20 @@ export default defineEventHandler(async (event) => {
 
     // 1. 获取标题
     const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)
-    const title = titleMatch ? titleMatch[1].trim() : ''
+    const title = titleMatch?.[1]?.trim() ?? ''
 
     // 2. 获取描述
     const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([\s\S]*?)["'][^>]*>/i) ||
                      html.match(/<meta[^>]*content=["']([\s\S]*?)["'][^>]*name=["']description["'][^>]*>/i)
-    const description = descMatch ? descMatch[1].trim() : ''
+    const description = descMatch?.[1]?.trim() ?? ''
 
     // 3. 获取 Logo (Favicon)
     let iconUrl = ''
     const iconMatch = html.match(/<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["']([\s\S]*?)["'][^>]*>/i) ||
                      html.match(/<link[^>]*href=["']([\s\S]*?)["'][^>]*rel=["'](?:shortcut )?icon["'][^>]*>/i)
     
-    if (iconMatch) {
-      const href = iconMatch[1]
+    const href = iconMatch?.[1]
+    if (href) {
       if (href.startsWith('http')) {
         iconUrl = href
       } else if (href.startsWith('//')) {

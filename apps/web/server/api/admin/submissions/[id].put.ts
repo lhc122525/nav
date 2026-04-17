@@ -2,6 +2,8 @@ import { getMySqlPool } from '../../../utils/mysql'
 
 type HandleSubmissionBody = {
   action?: 'approve' | 'reject'
+  status?: 'approved' | 'rejected'
+  isIncluded?: boolean
   categoryId?: number | null
   title?: string
   description?: string
@@ -26,6 +28,35 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = (await readBody(event)) as HandleSubmissionBody
+
+  // 简单更新状态或收录状态
+  if (body.status !== undefined || body.isIncluded !== undefined) {
+    const setParts: string[] = []
+    const params: (string | number)[] = []
+
+    if (body.status !== undefined) {
+      setParts.push('status = ?')
+      params.push(body.status)
+    }
+    if (body.isIncluded !== undefined) {
+      setParts.push('is_included = ?')
+      params.push(body.isIncluded ? 1 : 0)
+    }
+    if (setParts.length === 0) {
+      throw createError({ statusCode: 400, statusMessage: '无更新内容' })
+    }
+
+    setParts.push('handled_by = ?', 'handled_at = NOW()')
+    params.push(u.id, id)
+
+    await pool.execute(
+      `UPDATE submissions SET ${setParts.join(', ')} WHERE id = ?`,
+      params
+    )
+    return { ok: true }
+  }
+
+  // 原有的 action 逻辑
   const action = body?.action
   if (action !== 'approve' && action !== 'reject') {
     throw createError({ statusCode: 400, statusMessage: '无效的操作' })
@@ -84,7 +115,7 @@ export default defineEventHandler(async (event) => {
   }
 
   await pool.execute(
-    "UPDATE submissions SET status = 'approved', handled_by = ?, handled_at = NOW() WHERE id = ?",
+    "UPDATE submissions SET status = 'approved', is_included = 1, handled_by = ?, handled_at = NOW() WHERE id = ?",
     [u.id, id]
   )
 

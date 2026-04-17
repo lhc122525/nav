@@ -1,15 +1,16 @@
-interface UseFetchOptions<T> {
+interface UseFetchOptions {
   key?: string
   cache?: boolean
   cacheMaxAge?: number
   deduplicate?: boolean
+  lazy?: boolean
 }
 
 const pendingRequests = new Map<string, Promise<unknown>>()
 
 export function useFetchWithCache<T>(
   url: string | (() => string),
-  options: UseFetchOptions<T> = {}
+  options: UseFetchOptions = {}
 ) {
   const { key, cache = true, cacheMaxAge = 300, deduplicate = true } = options
 
@@ -66,10 +67,14 @@ export function useFetchWithCache<T>(
 
   const invalidate = () => cacheStore.invalidate()
 
+  const data = ref<T | null>(null) as Ref<T | null>
+  const pending = ref(false)
+  const error = ref<Error | null>(null)
+
   return {
-    data: ref<T | null>(null) as Ref<T | null>,
-    pending: ref(false),
-    error: ref<Error | null>(null),
+    data,
+    pending,
+    error,
     execute: async (forceRefresh = false) => {
       pending.value = true
       error.value = null
@@ -91,7 +96,7 @@ export function useFetchWithCache<T>(
 
 export function useLazyFetchWithCache<T>(
   url: string | (() => string),
-  options: UseFetchOptions<T> = {}
+  options: UseFetchOptions = {}
 ) {
   return useFetchWithCache<T>(url, {
     ...options,

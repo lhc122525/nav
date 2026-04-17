@@ -38,11 +38,7 @@
             <el-col :xs="24" :sm="12">
               <el-form-item label="支付宝二维码">
                 <div class="donateUploadRow">
-                  <el-upload
-                    :show-file-list="false"
-                    :http-request="(o: any) => uploadDonateQr(o, 'alipay')"
-                    accept="image/*"
-                  >
+                  <el-upload :show-file-list="false" :http-request="(o) => uploadDonateQr(o, 'alipay')" accept="image/*">
                     <el-button>上传</el-button>
                   </el-upload>
                   <el-input v-model="donateConfig.alipayQrUrl" placeholder="或粘贴图片 URL" />
@@ -55,11 +51,7 @@
             <el-col :xs="24" :sm="12">
               <el-form-item label="微信二维码">
                 <div class="donateUploadRow">
-                  <el-upload
-                    :show-file-list="false"
-                    :http-request="(o: any) => uploadDonateQr(o, 'wechat')"
-                    accept="image/*"
-                  >
+                  <el-upload :show-file-list="false" :http-request="(o) => uploadDonateQr(o, 'wechat')" accept="image/*">
                     <el-button>上传</el-button>
                   </el-upload>
                   <el-input v-model="donateConfig.wechatQrUrl" placeholder="或粘贴图片 URL" />
@@ -141,13 +133,28 @@
 </template>
 
 <script setup lang="ts">
+import { ElMessage, ElMessageBox, type UploadRequestOptions } from 'element-plus'
+import type { UploadAjaxError } from 'element-plus/es/components/upload/src/ajax'
+
 definePageMeta({ middleware: ['admin-auth'], layout: 'admin' })
-import { ElMessage, ElMessageBox } from 'element-plus'
+
+type AdRow = {
+  id: number
+  title: string
+  image_url: string
+  url: string
+  sort: number
+  is_active: boolean | number
+}
+
+type AdConfigRow = { display_count?: number; is_random?: boolean | number }
+
+type DonateConfigRow = { alipayQrUrl?: string; wechatQrUrl?: string }
 
 const loading = ref(false)
 const submitting = ref(false)
 const donateSaving = ref(false)
-const ads = ref([])
+const ads = ref<AdRow[]>([])
 const config = ref({
   displayCount: 2,
   isRandom: false
@@ -158,7 +165,16 @@ const donateConfig = ref({
 })
 
 const dialogVisible = ref(false)
-const form = ref({
+type AdForm = {
+  id: number | null
+  title: string
+  imageUrl: string
+  url: string
+  sort: number
+  isActive: boolean
+}
+
+const form = ref<AdForm>({
   id: null,
   title: '',
   imageUrl: '',
@@ -172,9 +188,9 @@ const fetchData = async () => {
   loading.value = true
   try {
     const [adsRes, configRes, donateRes] = await Promise.all([
-      $fetch('/api/admin/ads'),
-      $fetch('/api/admin/ad-config'),
-      $fetch('/api/admin/donate-config')
+      $fetch<AdRow[]>('/api/admin/ads'),
+      $fetch<AdConfigRow>('/api/admin/ad-config'),
+      $fetch<DonateConfigRow>('/api/admin/donate-config')
     ])
     ads.value = adsRes
     config.value = {
@@ -185,8 +201,9 @@ const fetchData = async () => {
       alipayQrUrl: donateRes.alipayQrUrl || '',
       wechatQrUrl: donateRes.wechatQrUrl || ''
     }
-  } catch (error: any) {
-    ElMessage.error('加载失败: ' + error.message)
+  } catch (error) {
+    const e = error as { message?: string }
+    ElMessage.error('加载失败: ' + (e.message || ''))
   } finally {
     loading.value = false
   }
@@ -203,12 +220,13 @@ const saveConfig = async () => {
       }
     })
     ElMessage.success('配置已保存')
-  } catch (error: any) {
-    ElMessage.error('保存失败: ' + error.message)
+  } catch (error) {
+    const e = error as { message?: string }
+    ElMessage.error('保存失败: ' + (e.message || ''))
   }
 }
 
-const uploadDonateQr = async (o: any, type: 'alipay' | 'wechat') => {
+const uploadDonateQr = async (o: UploadRequestOptions, type: 'alipay' | 'wechat') => {
   const file: File = o.file
   const formData = new FormData()
   formData.append('file', file)
@@ -219,9 +237,10 @@ const uploadDonateQr = async (o: any, type: 'alipay' | 'wechat') => {
     else donateConfig.value.wechatQrUrl = res.url
     ElMessage.success('上传成功')
     o.onSuccess?.(res)
-  } catch (e: any) {
-    ElMessage.error('上传失败: ' + (e?.message || ''))
-    o.onError?.(e)
+  } catch (e) {
+    const err = e as { message?: string }
+    ElMessage.error('上传失败: ' + (err.message || ''))
+    o.onError?.(e as UploadAjaxError)
   }
 }
 
@@ -236,8 +255,9 @@ const saveDonateConfig = async () => {
       }
     })
     ElMessage.success('配置已保存')
-  } catch (error: any) {
-    ElMessage.error('保存失败: ' + error.message)
+  } catch (error) {
+    const e = error as { message?: string }
+    ElMessage.error('保存失败: ' + (e.message || ''))
   } finally {
     donateSaving.value = false
   }
@@ -255,7 +275,7 @@ const handleAdd = () => {
   dialogVisible.value = true
 }
 
-const handleEdit = (row: any) => {
+const handleEdit = (row: AdRow) => {
   form.value = {
     id: row.id,
     title: row.title,
@@ -282,14 +302,15 @@ const submitForm = async () => {
     ElMessage.success('操作成功')
     dialogVisible.value = false
     fetchData()
-  } catch (error: any) {
-    ElMessage.error('操作失败: ' + error.message)
+  } catch (error) {
+    const e = error as { message?: string }
+    ElMessage.error('操作失败: ' + (e.message || ''))
   } finally {
     submitting.value = false
   }
 }
 
-const handleDelete = (row: any) => {
+const handleDelete = (row: AdRow) => {
   ElMessageBox.confirm('确定删除该广告吗？', '提示', {
     type: 'warning'
   }).then(async () => {
@@ -300,8 +321,9 @@ const handleDelete = (row: any) => {
       })
       ElMessage.success('已删除')
       fetchData()
-    } catch (error: any) {
-      ElMessage.error('删除失败: ' + error.message)
+    } catch (error) {
+      const e = error as { message?: string }
+      ElMessage.error('删除失败: ' + (e.message || ''))
     }
   })
 }

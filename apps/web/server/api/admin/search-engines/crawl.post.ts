@@ -35,15 +35,15 @@ export default defineEventHandler(async (event) => {
 
     // 1. Get title
     const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)
-    const title = titleMatch ? titleMatch[1].trim() : ''
+    const title = titleMatch?.[1]?.trim() ?? ''
 
     // 2. Get Logo (Favicon)
     let iconUrl = ''
     const iconMatch = html.match(/<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["']([\s\S]*?)["'][^>]*>/i) ||
                      html.match(/<link[^>]*href=["']([\s\S]*?)["'][^>]*rel=["'](?:shortcut )?icon["'][^>]*>/i)
     
-    if (iconMatch) {
-      const href = iconMatch[1]
+    const href = iconMatch?.[1]
+    if (href) {
       if (href.startsWith('http')) {
         iconUrl = href
       } else if (href.startsWith('//')) {
