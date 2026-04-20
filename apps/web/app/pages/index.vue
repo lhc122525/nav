@@ -100,43 +100,46 @@
 
           <!-- Main Content Area -->
           <el-col :xs="24" :sm="20" :md="21" :lg="21" :xl="21" class="mainContentArea">
-            <section id="anchor-top" class="block contentArea">
-              <el-row :gutter="20">
-                <!-- <div class="sectionTitle">
-                  <el-icon><Promotion /></el-icon>
-                  <span>公告/广告</span>
-                </div> -->
-                <el-col v-for="(ad, index) in ads" :key="index" :xs="12" :xl="24 / (ads.length || 1)" :lg="24 / (ads.length || 1)" :md="24 / (ads.length || 1)">
-                  <a :href="ad.url" target="_blank" class="adLink">
+            <div id="anchor-top">
+
+              <section v-if="adsEnabled" class="block contentArea">
+                <el-row :gutter="20">
+                  <!-- <div class="sectionTitle">
+                    <el-icon><Promotion /></el-icon>
+                    <span>公告/广告</span>
+                  </div> -->
+                  <el-col v-for="(ad, index) in ads" :key="index" :xs="12" :xl="24 / (ads.length || 1)" :lg="24 / (ads.length || 1)" :md="24 / (ads.length || 1)">
+                    <a :href="ad.url" target="_blank" class="adLink">
+                      <el-card class="adCard modernCard" shadow="hover">
+                        <div class="adBody">
+                          <!-- 为首屏广告设置 fetchpriority="high" 优化 LCP -->
+                          <img
+                            v-if="index === 0"
+                            :src="ad.imageUrl"
+                            class="adImage"
+                            style="object-fit: cover;"
+                            fetchpriority="high"
+                          />
+                          <el-image v-else :src="ad.imageUrl || defaultIcon" fit="cover" class="adImage" loading="lazy" />
+                          <div class="adTitleOverlay">{{ ad.title }}</div>
+                        </div>
+                      </el-card>
+                    </a>
+                  </el-col>
+                  <el-col v-if="ads.length === 0" :xs="24" :xl="24" :lg="24" :md="24">
                     <el-card class="adCard modernCard" shadow="hover">
                       <div class="adBody">
-                        <!-- 为首屏广告设置 fetchpriority="high" 优化 LCP -->
-                        <img 
-                          v-if="index === 0" 
-                          :src="ad.imageUrl" 
-                          class="adImage" 
-                          style="object-fit: cover;" 
-                          fetchpriority="high"
-                        />
-                        <el-image v-else :src="ad.imageUrl || defaultIcon" fit="cover" class="adImage" loading="lazy" />
-                        <div class="adTitleOverlay">{{ ad.title }}</div>
+                        <div class="adPlaceholder">
+                          <el-icon :size="40"><Picture /></el-icon>
+                          <p>广告位招租</p>
+                        </div>
                       </div>
                     </el-card>
-                  </a>
-                </el-col>
-                <el-col v-if="ads.length === 0" :xs="24" :xl="24" :lg="24" :md="24">
-                  <el-card class="adCard modernCard" shadow="hover">
-                    <div class="adBody">
-                      <div class="adPlaceholder">
-                        <el-icon :size="40"><Picture /></el-icon>
-                        <p>广告位招租</p>
-                      </div>
-                    </div>
-                  </el-card>
-                </el-col>
-              </el-row>
-              
-            </section>
+                  </el-col>
+                </el-row>
+  
+              </section>
+            </div>
 
             <!-- 推荐导航 (选中独立分类时) -->
             <section id="anchor-recommended" class="block contentArea">
@@ -340,7 +343,7 @@ const { data: initialData } = await useAsyncData('home-initial-data', async () =
     $fetch<Category[]>('/api/categories'),
     $fetch<NavLink[]>('/api/links', { params: { limit: 2000 } }),
     $fetch<{ links: NavLink[] }>('/api/links/recommended'),
-    $fetch<{ ads: { title: string, imageUrl: string, url: string }[] }>('/api/ads'),
+    $fetch<{ ads: { title: string, imageUrl: string, url: string }[], enabled: boolean }>('/api/ads'),
     $fetch<{ user: { id: number; username: string; role: string } | null }>('/api/auth/me'),
     $fetch<SearchCategory[]>('/api/search-categories')
   ])
@@ -401,6 +404,7 @@ function selectSubcategory(subId: number, parentCatId: number) {
 }
 
 const ads = computed(() => initialData.value?.ads?.ads || [])
+const adsEnabled = computed(() => initialData.value?.ads?.enabled !== false)
 
 function scrollToAnchor(anchorId: string) {
   const element = document.getElementById(anchorId)
@@ -1106,6 +1110,7 @@ function submitSearch() {
   margin-bottom: 20px;
   border-bottom: 1px solid #f1f2f4;
   padding-bottom: 12px;
+  white-space: nowrap;
 }
 
 .categoryTitle {
@@ -1119,6 +1124,7 @@ function submitSearch() {
   display: flex;
   gap: 16px;
   align-items: center;
+  overflow-x: auto;
 }
 
 .subCategoryLink {

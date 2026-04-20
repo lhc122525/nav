@@ -27,6 +27,7 @@ export default defineEventHandler(async (event) => {
     await pool.execute(`
       CREATE TABLE IF NOT EXISTS ad_configs (
         id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        enabled BOOLEAN NOT NULL DEFAULT TRUE,
         display_count INT NOT NULL DEFAULT 2,
         is_random BOOLEAN NOT NULL DEFAULT FALSE,
         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -36,7 +37,7 @@ export default defineEventHandler(async (event) => {
     // 初始化配置 (如果不存在)
     const [rows]: any = await pool.execute('SELECT COUNT(*) as count FROM ad_configs')
     if (rows[0].count === 0) {
-      await pool.execute('INSERT INTO ad_configs (display_count, is_random) VALUES (2, FALSE)')
+      await pool.execute('INSERT INTO ad_configs (enabled, display_count, is_random) VALUES (TRUE, 2, FALSE)')
     }
 
     return { success: true, message: '广告模块表已就绪' }

@@ -16,6 +16,9 @@
           </div>
         </template>
         <el-form :inline="true" :model="config" class="configForm">
+          <el-form-item label="开启广告位">
+            <el-switch v-model="config.enabled" />
+          </el-form-item>
           <el-form-item label="展示数量">
             <el-input-number v-model="config.displayCount" :min="1" :max="10" />
           </el-form-item>
@@ -147,7 +150,7 @@ type AdRow = {
   is_active: boolean | number
 }
 
-type AdConfigRow = { display_count?: number; is_random?: boolean | number }
+type AdConfigRow = { display_count?: number; is_random?: boolean | number; enabled?: boolean | number }
 
 type DonateConfigRow = { alipayQrUrl?: string; wechatQrUrl?: string }
 
@@ -156,6 +159,7 @@ const submitting = ref(false)
 const donateSaving = ref(false)
 const ads = ref<AdRow[]>([])
 const config = ref({
+  enabled: true,
   displayCount: 2,
   isRandom: false
 })
@@ -194,6 +198,7 @@ const fetchData = async () => {
     ])
     ads.value = adsRes
     config.value = {
+      enabled: !!configRes.enabled,
       displayCount: configRes.display_count || 2,
       isRandom: !!configRes.is_random
     }
@@ -215,6 +220,7 @@ const saveConfig = async () => {
     await $fetch('/api/admin/ad-config', {
       method: 'POST',
       body: {
+        enabled: config.value.enabled,
         displayCount: config.value.displayCount,
         isRandom: config.value.isRandom
       }
