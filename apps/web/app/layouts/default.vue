@@ -18,8 +18,8 @@
 
         <div class="spacer" />
 
-        <div class="headerActions desktopNav">
-          <div v-if="isHome" class="headerTime">
+        <div class="headerActions">
+          <div v-if="isHome" class="headerTime pc">
             <span class="time">{{ nowTimeText }}</span>
             <span class="date">{{ nowDateText }}</span>
           </div>
@@ -155,13 +155,7 @@
     </footer>
 
     <el-drawer v-model="mobileMenuOpen" title="菜单" direction="rtl" size="80%">
-      <div class="mobileUser">
-        <div v-if="me?.user" class="mobileUsername">
-          {{ me.user.username }}
-        </div>
-        <div v-else class="mobileUsername">未登录</div>
-      </div>
-      <el-menu :default-active="mobileActive" @select="onMobileSelect">
+      <el-menu :default-active="mobileActive" @select="onMobileSelect" style="margin-top: -30px;border:none;">
         <el-menu-item index="route:/"> 首页 </el-menu-item>
         <el-menu-item index="route:/submit"> 申请收录 </el-menu-item>
         <el-menu-item index="route:/guestbook"> 留言板 </el-menu-item>
@@ -781,6 +775,12 @@ async function submitRegister() {
   gap: 4px;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .navLink {
   text-decoration: none;
   color: #57606a;
@@ -1064,7 +1064,7 @@ async function submitRegister() {
 }
 
 @media (max-width: 768px) {
-  .desktopNav {
+  .desktopNav, .pc {
     display: none;
   }
   .mobileMenuBtn {
@@ -1201,6 +1201,9 @@ async function submitRegister() {
   }
   .donatePanel {
     grid-template-columns: 1fr;
+  }
+  .headerContent {
+    padding: 0;
   }
 }
 </style>

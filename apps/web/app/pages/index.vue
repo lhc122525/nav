@@ -3,7 +3,6 @@
     <div class="mobileBar">
       <el-button type="primary" plain @click="drawerOpen = true">
         <el-icon><MenuIcon /></el-icon>
-        选择分类
       </el-button>
     </div>
 
@@ -266,10 +265,10 @@
               <el-icon><Folder /></el-icon>
               <span>{{ pc.name }}</span>
             </template>
-            <el-menu-item :index="String(pc.id)">
+            <!-- <el-menu-item :index="String(pc.id)">
               <span>全部 {{ pc.name }}</span>
-            </el-menu-item>
-            <el-menu-item v-for="c in categories.filter(cat => cat.parentId === pc.id)" :key="c.id" :index="String(c.id)">
+            </el-menu-item> -->
+            <el-menu-item v-for="c in categories.filter(cat => cat.parentId === pc.id)" :key="c.id" :index="String(c.id)" style="padding-left: 50px !important;">
               <span>{{ c.name }}</span>
             </el-menu-item>
           </el-sub-menu>
@@ -785,7 +784,6 @@ function submitSearch() {
 
 .mobileBar {
   display: none;
-  padding: 16px 16px 0;
 }
 
 .heroSearchArea {
@@ -1166,6 +1164,10 @@ function submitSearch() {
   }
   .mobileBar {
     display: block;
+    position: fixed;
+    top: 100px;
+    right: 15px;
+    z-index: 1;
   }
   .heroSearchArea {
     padding: 30px 16px 40px;
