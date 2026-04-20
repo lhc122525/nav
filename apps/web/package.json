@@ -4,14 +4,14 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
-    "dev": "node -e \"const net=require('net');const port=8991;const host='127.0.0.1';const s=net.createServer();s.once('error',()=>{console.error('端口 '+port+' 已被占用，请释放后再启动');process.exit(1)});s.once('listening',()=>s.close(()=>process.exit(0)));s.listen(port,host);\" && nuxt dev --host 127.0.0.1 --port 8991",
+    "dev": "nuxt dev",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "generate": "nuxt generate",
     "lint": "eslint .",
     "check-types": "nuxi typecheck",
-    "preview": "node -e \"const net=require('net');const port=8991;const host='127.0.0.1';const s=net.createServer();s.once('error',()=>{console.error('端口 '+port+' 已被占用，请释放后再启动');process.exit(1)});s.once('listening',()=>s.close(()=>process.exit(0)));s.listen(port,host);\" && nuxt preview --host 127.0.0.1 --port 8991",
+    "preview": "nuxt preview",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {

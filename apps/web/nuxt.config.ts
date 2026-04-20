@@ -12,7 +12,10 @@ export default defineNuxtConfig({
     compressPublicAssets: true
   },
   devtools: { enabled: true },
-  devServer: { host: '127.0.0.1', port: 8991 },
+  devServer: {
+    host: process.env.NUXT_DEV_HOST || '127.0.0.1',
+    port: parseInt(process.env.NUXT_DEV_PORT || '8991')
+  },
   modules: ['@element-plus/nuxt', '@nuxt/eslint'],
   css: ['~/assets/styles/main.css'],
   vite: {
