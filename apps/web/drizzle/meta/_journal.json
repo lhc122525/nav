@@ -15,6 +15,13 @@
       "when": 1773978920136,
       "tag": "0001_red_carmella_unuscione",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1776652265540,
+      "tag": "0002_flashy_killer_shrike",
+      "breakpoints": true
     }
   ]
 }
