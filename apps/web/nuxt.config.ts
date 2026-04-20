@@ -45,17 +45,18 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     mysql: {
-      host: '127.0.0.1', 
-      port: 8999,
-      user: 'nszm',
-      password: 'nszm123..',
-      database: 'nav'
+      host: process.env.NUXT_MYSQL_HOST || '127.0.0.1',
+      port: parseInt(process.env.NUXT_MYSQL_PORT || '8999'),
+      user: process.env.NUXT_MYSQL_USER || 'nszm',
+      password: process.env.NUXT_MYSQL_PASSWORD || 'nszm123..',
+      database: process.env.NUXT_MYSQL_DATABASE || 'nav'
     },
     public: {
-      siteName: '导航站',
-      siteUrl: ''
+      siteName: process.env.NUXT_PUBLIC_SITE_NAME || '导航站',
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || ''
     }
   },
+
   routeRules: {
     '/admin': { headers: { 'x-robots-tag': 'noindex, nofollow' } },
     '/admin/login': { headers: { 'x-robots-tag': 'noindex, nofollow' } },
