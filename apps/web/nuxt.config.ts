@@ -9,7 +9,12 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-04-01',
   ssr: true,
   nitro: {
-    compressPublicAssets: true
+    compressPublicAssets: true,
+    output: {
+      dir: '../../../dist',
+      serverDir: '../../../dist/server',
+      publicDir: '../../../dist/public'
+    }
   },
   devtools: { enabled: true },
   devServer: {
