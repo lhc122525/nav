@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
+    "build:prod": "nuxt build --dotenv .env.prod",
     "dev": "nuxt dev",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",

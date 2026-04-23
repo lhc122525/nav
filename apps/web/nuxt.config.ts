@@ -11,9 +11,9 @@ export default defineNuxtConfig({
   nitro: {
     compressPublicAssets: true,
     output: {
-      dir: '../../dist',
-      serverDir: '../../dist/server',
-      publicDir: '../../dist/public'
+      dir: '../../nav',
+      serverDir: '../../nav/server',
+      publicDir: '../../nav/public'
     }
   },
   devtools: { enabled: true },
