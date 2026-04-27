@@ -76,7 +76,9 @@ type MeResponse = { user: null | { id: number; username: string; role: 'admin' |
 
 useHead(() => ({ title: '留言板 - 导航站' }))
 
-const { data: meData } = await useFetch<MeResponse>('/api/auth/me')
+const { data: meData } = await useFetch<MeResponse>('/api/auth/me', {
+  headers: import.meta.server ? useRequestHeaders(['cookie']) : undefined
+})
 const me = computed(() => meData.value)
 
 const form = reactive({ content: '' })

@@ -509,7 +509,10 @@ type MeResponse = {
 
 const { data: meData, refresh: refreshMe } = await useFetch<MeResponse>(
   "/api/auth/me",
-  { server: true }
+  {
+    server: true,
+    headers: import.meta.server ? useRequestHeaders(["cookie"]) : undefined
+  }
 );
 const me = computed(() => meData.value);
 

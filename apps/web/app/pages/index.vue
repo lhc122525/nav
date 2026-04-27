@@ -331,6 +331,7 @@ useHead(() => ({
 }))
 
 const { data: initialData } = await useAsyncData('home-initial-data', async () => {
+  const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
   const [
     categories,
     links,
@@ -343,7 +344,7 @@ const { data: initialData } = await useAsyncData('home-initial-data', async () =
     $fetch<NavLink[]>('/api/links', { params: { limit: 2000 } }),
     $fetch<{ links: NavLink[] }>('/api/links/recommended'),
     $fetch<{ ads: { title: string, imageUrl: string, url: string }[], enabled: boolean }>('/api/ads'),
-    $fetch<{ user: { id: number; username: string; role: string } | null }>('/api/auth/me'),
+    $fetch<{ user: { id: number; username: string; role: string } | null }>('/api/auth/me', { headers }),
     $fetch<SearchCategory[]>('/api/search-categories')
   ])
   return {
