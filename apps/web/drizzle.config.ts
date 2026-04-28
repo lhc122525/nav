@@ -8,10 +8,10 @@ function pickEnv(...keys: string[]) {
   return ''
 }
 
-function pickEnvNumber(defaultValue: number, ...keys: string[]) {
+function pickEnvNumber(...keys: string[]) {
   const raw = pickEnv(...keys)
   const n = Number(raw)
-  return Number.isFinite(n) ? n : defaultValue
+  return n
 }
 
 export default defineConfig({
@@ -19,11 +19,11 @@ export default defineConfig({
   schema: './server/db/schema.ts',
   out: './drizzle',
   dbCredentials: {
-    host: pickEnv('NUXT_MYSQL_HOST') || '127.0.0.1',
-    port: pickEnvNumber(8999, 'NUXT_MYSQL_PORT'),
-    user: pickEnv('NUXT_MYSQL_USER') || 'nszm',
-    password: pickEnv('NUXT_MYSQL_PASSWORD') || 'nszm123..',
-    database: pickEnv('NUXT_MYSQL_DATABASE') || 'nav'
+    host: pickEnv('NUXT_MYSQL_HOST'),
+    port: pickEnvNumber('NUXT_MYSQL_PORT'),
+    user: pickEnv('NUXT_MYSQL_USER'),
+    password: pickEnv('NUXT_MYSQL_PASSWORD'),
+    database: pickEnv('NUXT_MYSQL_DATABASE')
   }
 })
 

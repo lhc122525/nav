@@ -18,8 +18,8 @@ export default defineNuxtConfig({
   },
   devtools: { enabled: true },
   devServer: {
-    host: process.env.NUXT_DEV_HOST || '127.0.0.1',
-    port: parseInt(process.env.NUXT_DEV_PORT || '8991')
+    host: process.env.NUXT_DEV_HOST,
+    port: Number(process.env.NUXT_DEV_PORT)
   },
   modules: ['@element-plus/nuxt', '@nuxt/eslint'],
   css: ['~/assets/styles/main.css'],
@@ -53,11 +53,11 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     mysql: {
-      host: process.env.NUXT_MYSQL_HOST || '127.0.0.1',
-      port: parseInt(process.env.NUXT_MYSQL_PORT || '8999'),
-      user: process.env.NUXT_MYSQL_USER || 'nszm',
-      password: process.env.NUXT_MYSQL_PASSWORD || 'nszm123..',
-      database: process.env.NUXT_MYSQL_DATABASE || 'nav'
+      host: process.env.NUXT_MYSQL_HOST,
+      port: parseInt(process.env.NUXT_MYSQL_PORT),
+      user: process.env.NUXT_MYSQL_USER,
+      password: process.env.NUXT_MYSQL_PASSWORD,
+      database: process.env.NUXT_MYSQL_DATABASE
     },
     public: {
       siteName: process.env.NUXT_PUBLIC_SITE_NAME || '导航站',

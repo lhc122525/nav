@@ -32,11 +32,11 @@ function getMySqlConfig(): MySqlConfig {
   const isDev = process.env.NODE_ENV !== 'production'
   if (!host && isDev) {
     return {
-      host: '127.0.0.1',
-      port: 8999,
-      user: user || 'nszm',
-      password: password || 'nszm123..',
-      database: database || 'nav'
+      host: env.NUXT_DEV_HOST,
+      port: Number(env.NUXT_DEV_PORT),
+      user: env.NUXT_DEV_USER || user,
+      password: env.NUXT_DEV_PASSWORD || password,
+      database: env.NUXT_DEV_DATABASE || database
     }
   }
 
