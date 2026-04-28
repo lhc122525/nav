@@ -7,6 +7,7 @@ export default defineEventHandler(async (event) => {
   if (!pool) return { user: null }
 
   const token = getCookie(event, USER_SESSION_COOKIE)
+  console.log('[/api/auth/me] token:', token, 'cookies:', getCookie(event, 'ns_user_session'), getCookie(event, 'ns_admin_session'))
   if (!token) return { user: null }
 
   const [rows] = await pool.execute(

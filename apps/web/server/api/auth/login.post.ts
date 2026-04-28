@@ -46,6 +46,7 @@ export default defineEventHandler(async (event) => {
     token,
     expires
   ])
+  console.log('[/api/auth/login] Setting cookie, token:', token, 'expires:', expires)
   setUserSessionCookie(event, token, expires)
 
   return { ok: true, id: Number(row.id), username: String(row.username || '') }

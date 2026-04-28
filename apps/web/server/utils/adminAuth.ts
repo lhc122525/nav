@@ -32,10 +32,11 @@ export function verifyPassword(password: string, saltHex: string, hashHex: strin
 
 export function setAdminSessionCookie(event: H3Event, token: string, expires: Date) {
   const isProd = process.env.NODE_ENV === 'production'
+  const isHttps = process.env.NUXT_PUBLIC_SITE_URL?.startsWith('https://') ?? false
   setCookie(event, ADMIN_SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: isProd,
+    secure: isProd && isHttps,
     path: '/',
     expires
   })

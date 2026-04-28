@@ -42,8 +42,6 @@ type MeResponse = { user: null | { id: number; username: string; role: 'admin' |
 
 useHead(() => ({ title: '申请收录 - 导航站' }))
 
-console.log(2222222222222,import.meta.server,useRequestHeaders(['cookie']))
-
 const { data: meData } = await useFetch<MeResponse>('/api/auth/me', {
   headers: import.meta.server ? useRequestHeaders(['cookie']) : undefined
 })
