@@ -1,0 +1,9 @@
+2026-04-28 15:25:26 +08:00: [Cache] Cache invalidation plugin initialized
+2026-04-28 15:25:26 +08:00: Listening on http://[::]:3000
+2026-04-28 15:32:34 +08:00: [Cache] Cache invalidation plugin initialized
+2026-04-28 15:32:34 +08:00: Listening on http://[::]:3000
+2026-04-28 15:32:59 +08:00: [/api/auth/me] token: undefined cookies: undefined a29fcb3f9b2ae4a46251e8d617f909483fb2ef2a38994aea5fb8bf923a94d731
+2026-04-28 15:32:59 +08:00: [/api/auth/me] token: undefined cookies: undefined undefined
+2026-04-28 15:32:59 +08:00: [/api/auth/me] token: undefined cookies: undefined undefined
+2026-04-28 15:34:36 +08:00: [/api/auth/me] token: undefined cookies: undefined a29fcb3f9b2ae4a46251e8d617f909483fb2ef2a38994aea5fb8bf923a94d731
+2026-04-28 15:34:36 +08:00: [/api/auth/me] token: undefined cookies: undefined a29fcb3f9b2ae4a46251e8d617f909483fb2ef2a38994aea5fb8bf923a94d731

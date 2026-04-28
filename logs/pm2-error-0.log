@@ -1,0 +1,18 @@
+2026-04-28 15:25:42 +08:00: [h3] Please prefer using `message` for longer error messages instead of `statusMessage`. In the future, `statusMessage` will be sanitized by default.
+2026-04-28 15:34:36 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2002:43
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:20
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3972:23)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4000:7)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19)
+    at toNodeHandle (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2350:7) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}

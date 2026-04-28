@@ -2,7 +2,7 @@
   "apps": [
     {
       "name": "navigation-site",
-      "script": "./nav/server/node_modules/nuxt/bin/nuxt.mjs",
+      "script": "./nav/server/index.mjs",
       "args": "start",
       "cwd": "./",
       "instances": 1,
