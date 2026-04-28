@@ -5,11 +5,11 @@ import { sql } from 'drizzle-orm'
 
 // 数据库配置
 const dbConfig = {
-  host: '127.0.0.1',
-  port: 8999,
-  user: 'nszm',
-  password: 'nszm123..',
-  database: 'nav'
+  host: process.env.NUXT_MYSQL_HOST ?? '127.0.0.1',
+  port: Number(process.env.NUXT_MYSQL_PORT) || 8999,
+  user: process.env.NUXT_MYSQL_USER ?? 'nszm',
+  password: process.env.NUXT_MYSQL_PASSWORD ?? 'nszm123..',
+  database: process.env.NUXT_MYSQL_DATABASE ?? 'nav'
 }
 
 async function main() {
