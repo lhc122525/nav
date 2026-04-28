@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { getHeader, setHeader, createError } from 'h3'
 
-export interface CacheOptions {
+export interface CachedHandlerOptions {
   maxAge?: number
   staleMaxAge?: number
   varies?: string[]
@@ -15,7 +15,7 @@ export async function useCachedEventHandler(
   event: H3Event,
   cacheKey: string,
   fetchFn: () => Promise<unknown>,
-  options: CacheOptions = {}
+  options: CachedHandlerOptions = {}
 ) {
   const { maxAge = 300, staleMaxAge = 600, etag = true, forceRefresh = false } = options
 
