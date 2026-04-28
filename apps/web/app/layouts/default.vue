@@ -322,7 +322,7 @@
       append-to-body
       style="max-width: 760px; width: 95vw"
     >
-      <div class="donatePanel" v-loading="donateLoading">
+      <div class="donatePanel" :loading="donateLoading">
         <div class="donateCol donateAlipay">
           <div class="donateQr">
             <el-image
@@ -1204,7 +1204,22 @@ async function submitRegister() {
   }
   .donatePanel {
     grid-template-columns: 1fr;
+    .donateCol {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 220px;
+      height: 265px;
+      .donateQr{
+        height: 100%;
+        .el-empty{
+          padding: 0;
+        }
+      }
+    }
   }
+
   .headerContent {
     padding: 0;
   }
