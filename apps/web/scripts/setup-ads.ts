@@ -42,12 +42,19 @@ async function main() {
       await connection.execute(`
         CREATE TABLE ad_configs (
           id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          enabled BOOLEAN NOT NULL DEFAULT TRUE,
           display_count INT NOT NULL DEFAULT 2,
           is_random BOOLEAN NOT NULL DEFAULT FALSE,
           updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `)
-      await connection.execute('INSERT INTO ad_configs (display_count, is_random) VALUES (2, FALSE)')
+      await connection.execute('INSERT INTO ad_configs (enabled, display_count, is_random) VALUES (TRUE, 2, FALSE)')
+    } else {
+      const [enabledCol] = await connection.execute('SHOW COLUMNS FROM ad_configs LIKE "enabled"')
+      if ((enabledCol as any[]).length === 0) {
+        console.log('Adding enabled column to ad_configs...')
+        await connection.execute('ALTER TABLE ad_configs ADD COLUMN enabled BOOLEAN NOT NULL DEFAULT TRUE AFTER id')
+      }
     }
     
     console.log('Database setup complete.')

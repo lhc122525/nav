@@ -1166,7 +1166,7 @@ function submitSearch() {
   .mobileBar {
     display: block;
     position: fixed;
-    top: 100px;
+    top: 70px;
     right: 15px;
     z-index: 1;
   }

@@ -34,9 +34,22 @@ export default defineEventHandler(async (event) => {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `)
 
+    const [enabledColumnRows] = await pool.execute(`
+      SELECT COUNT(*) as count
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'ad_configs'
+        AND COLUMN_NAME = 'enabled'
+    `)
+    const enabledColumnCountRow = (enabledColumnRows as Array<Record<string, unknown>>)[0]
+    if (Number(enabledColumnCountRow?.count || 0) === 0) {
+      await pool.execute(`ALTER TABLE ad_configs ADD COLUMN enabled BOOLEAN NOT NULL DEFAULT TRUE AFTER id`)
+    }
+
     // 初始化配置 (如果不存在)
-    const [rows]: any = await pool.execute('SELECT COUNT(*) as count FROM ad_configs')
-    if (rows[0].count === 0) {
+    const [countRows] = await pool.execute('SELECT COUNT(*) as count FROM ad_configs')
+    const countRow = (countRows as Array<Record<string, unknown>>)[0]
+    if (Number(countRow?.count || 0) === 0) {
       await pool.execute('INSERT INTO ad_configs (enabled, display_count, is_random) VALUES (TRUE, 2, FALSE)')
     }
 

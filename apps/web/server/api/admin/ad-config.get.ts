@@ -15,7 +15,12 @@ export default defineEventHandler(async (event) => {
       return { enabled: 1, display_count: 2, is_random: 0 }
     }
 
-    return config
+    return {
+      ...config,
+      enabled: config.enabled == null ? 1 : Number(config.enabled),
+      display_count: config.display_count == null ? 2 : Number(config.display_count),
+      is_random: config.is_random == null ? 0 : Number(config.is_random)
+    }
   } catch (error: any) {
     throw createError({ statusCode: 500, statusMessage: error.message })
   }

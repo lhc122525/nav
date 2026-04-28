@@ -54,7 +54,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     mysql: {
       host: process.env.NUXT_MYSQL_HOST,
-      port: parseInt(process.env.NUXT_MYSQL_PORT),
+      port: process.env.NUXT_MYSQL_PORT ? parseInt(process.env.NUXT_MYSQL_PORT, 10) : 3306,
       user: process.env.NUXT_MYSQL_USER,
       password: process.env.NUXT_MYSQL_PASSWORD,
       database: process.env.NUXT_MYSQL_DATABASE
