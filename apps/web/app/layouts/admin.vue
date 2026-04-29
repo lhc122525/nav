@@ -53,10 +53,11 @@
           <el-icon v-if="collapsed"><Expand /></el-icon>
           <el-icon v-else><Fold /></el-icon>
         </el-button>
-        <div class="spacer" />
         <NuxtLink class="homeLink" to="/">
           <el-button link>返回首页</el-button>
         </NuxtLink>
+        <div class="spacer" />
+        <el-button link class="logoutBtn" @click="logout">退出登录</el-button>
       </el-header>
       <el-main class="main">
         <div class="container">
@@ -74,6 +75,7 @@ const route = useRoute()
 const router = useRouter()
 const { public: publicConfig } = useRuntimeConfig()
 const siteName = computed(() => publicConfig.siteName || '非乐鱼导航')
+
 const active = computed(() => {
   if (route.path.startsWith('/admin/include')) return '/admin/include'
   if (route.path.startsWith('/admin/search')) return '/admin/search'
@@ -81,6 +83,14 @@ const active = computed(() => {
   if (route.path.startsWith('/admin/ads')) return '/admin/ads'
   return '/admin/nav'
 })
+
+// 退出登录
+const logout = async () => {
+  await $fetch('/api/admin/auth/logout', { method: 'POST' })
+  router.push('/admin/login')
+}
+
+
 
 function onSelect(index: string) {
   router.push(index)
