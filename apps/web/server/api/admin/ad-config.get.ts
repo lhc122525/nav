@@ -12,14 +12,13 @@ export default defineEventHandler(async (event) => {
 
     if (!config) {
       // 默认配置
-      return { enabled: 1, display_count: 2, is_random: 0 }
+      return { enabled: true, displayCount: 2, isRandom: false }
     }
 
     return {
-      ...config,
-      enabled: config.enabled == null ? 1 : Number(config.enabled),
-      display_count: config.display_count == null ? 2 : Number(config.display_count),
-      is_random: config.is_random == null ? 0 : Number(config.is_random)
+      enabled: config.enabled == null ? true : Boolean(config.enabled),
+      displayCount: config.display_count == null ? 2 : Number(config.display_count),
+      isRandom: config.is_random == null ? false : Boolean(config.is_random)
     }
   } catch (error: any) {
     throw createError({ statusCode: 500, statusMessage: error.message })

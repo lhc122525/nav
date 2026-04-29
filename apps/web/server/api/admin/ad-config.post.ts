@@ -9,6 +9,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: '数据库未启用' })
   }
 
+  // 正确处理布尔值转换
+  const enabledValue = enabled === true || enabled === 1 || enabled === 'true' ? 1 : 0
+  const isRandomValue = isRandom === true || isRandom === 1 || isRandom === 'true' ? 1 : 0
+  const displayCountValue = Number(displayCount) || 2
+
   const isUnknownColumn = (error: unknown, column: string) => {
     const e = error as { code?: unknown; message?: unknown; sqlMessage?: unknown }
     if (e?.code === 'ER_BAD_FIELD_ERROR') {
@@ -26,13 +31,13 @@ export default defineEventHandler(async (event) => {
       try {
         await pool.execute(
           'UPDATE ad_configs SET enabled = ?, display_count = ?, is_random = ? WHERE id = ?',
-          [enabled !== false ? 1 : 0, displayCount || 2, isRandom ? 1 : 0, config.id]
+          [enabledValue, displayCountValue, isRandomValue, config.id]
         )
       } catch (e: unknown) {
         if (!isUnknownColumn(e, 'enabled')) throw e
         await pool.execute('UPDATE ad_configs SET display_count = ?, is_random = ? WHERE id = ?', [
-          displayCount || 2,
-          isRandom ? 1 : 0,
+          displayCountValue,
+          isRandomValue,
           config.id
         ])
       }
@@ -40,13 +45,13 @@ export default defineEventHandler(async (event) => {
       try {
         await pool.execute(
           'INSERT INTO ad_configs (enabled, display_count, is_random) VALUES (?, ?, ?)',
-          [enabled !== false ? 1 : 0, displayCount || 2, isRandom ? 1 : 0]
+          [enabledValue, displayCountValue, isRandomValue]
         )
       } catch (e: unknown) {
         if (!isUnknownColumn(e, 'enabled')) throw e
         await pool.execute('INSERT INTO ad_configs (display_count, is_random) VALUES (?, ?)', [
-          displayCount || 2,
-          isRandom ? 1 : 0
+          displayCountValue,
+          isRandomValue
         ])
       }
     }

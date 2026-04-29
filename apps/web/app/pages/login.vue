@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-useHead(() => ({ title: '登录 - 导航站' }))
+useHead(() => ({ title: '登录 - 非乐鱼导航' }))
 
 const username = ref('')
 const password = ref('')

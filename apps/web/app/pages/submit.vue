@@ -40,7 +40,7 @@
 <script setup lang="ts">
 type MeResponse = { user: null | { id: number; username: string; role: 'admin' | 'user' } }
 
-useHead(() => ({ title: '申请收录 - 导航站' }))
+useHead(() => ({ title: '申请收录 - 非乐鱼导航' }))
 
 const { data: meData } = await useFetch<MeResponse>('/api/auth/me', {
   headers: import.meta.server ? useRequestHeaders(['cookie']) : undefined

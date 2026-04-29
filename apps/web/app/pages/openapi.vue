@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 useHead(() => ({
-  title: 'OpenAPI - 导航站'
+  title: 'OpenAPI - 非乐鱼导航'
 }))
 
 onMounted(async () => {

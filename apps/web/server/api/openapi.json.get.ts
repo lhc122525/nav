@@ -8,7 +8,7 @@ export default defineEventHandler((event) => {
   const spec: OpenAPI3 = {
     openapi: '3.0.3',
     info: {
-      title: publicConfig.siteName || '导航站 API',
+      title: publicConfig.siteName || '非乐鱼导航 API',
       version: '0.1.0'
     },
     servers: publicConfig.siteUrl ? [{ url: publicConfig.siteUrl }] : [{ url: 'http://localhost:8998' }],

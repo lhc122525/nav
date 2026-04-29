@@ -296,6 +296,11 @@
     </el-dialog>
 
     <div class="floatActions">
+      <el-tooltip content="设置" placement="left">
+        <el-button class="floatBtn" @click="settingsOpen = true">
+          <el-icon><Setting /></el-icon>
+        </el-button>
+      </el-tooltip>
       <el-tooltip content="投喂站长" placement="left">
         <el-button class="floatBtn" @click="donateOpen = true">
           <el-icon><StarFilled /></el-icon>
@@ -351,6 +356,41 @@
         </div>
       </div>
     </el-dialog>
+
+    <el-dialog
+      v-model="settingsOpen"
+      title="设置"
+      append-to-body
+      style="max-width: 420px; width: 90vw"
+    >
+      <div class="settingsPanel">
+        <div class="settingsSection">
+          <div class="settingsLabel">模式切换</div>
+          <div class="modeOptions">
+            <div
+              v-for="mode in displayModes"
+              :key="mode.value"
+              class="modeOption"
+              :class="{ active: displayModeCookie === mode.value }"
+              @click="setDisplayMode(mode.value)"
+            >
+              <div class="modeIcon">
+                <el-icon v-if="mode.value === 'minimal'"><Minus /></el-icon>
+                <el-icon v-else-if="mode.value === 'simple'"><Grid /></el-icon>
+                <el-icon v-else><Grid /></el-icon>
+              </div>
+              <div class="modeInfo">
+                <div class="modeName">{{ mode.label }}</div>
+                <div class="modeDesc">{{ mode.desc }}</div>
+              </div>
+              <div v-if="displayModeCookie === mode.value" class="modeCheck">
+                <el-icon><Check /></el-icon>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
   </el-container>
 </template>
 
@@ -365,6 +405,10 @@ import {
   Refresh,
   CaretTop,
   CaretBottom,
+  Setting,
+  Minus,
+  Grid,
+  Check,
 } from "@element-plus/icons-vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { ElMessage } from "element-plus";
@@ -377,7 +421,7 @@ type PublicConfig = {
 };
 
 const { public: publicConfig } = useRuntimeConfig() as { public: PublicConfig };
-const siteName = computed(() => publicConfig.siteName || "导航站");
+const siteName = computed(() => publicConfig.siteName || "非乐鱼导航");
 const isHome = computed(() => route.path === "/");
 
 const statementOpen = ref(false);
@@ -416,6 +460,38 @@ type DonateConfig = { alipayQrUrl: string; wechatQrUrl: string };
 const donateOpen = ref(false);
 const donateLoading = ref(false);
 const donateConfig = reactive<DonateConfig>({ alipayQrUrl: "", wechatQrUrl: "" });
+
+// 设置相关
+const settingsOpen = ref(false);
+
+type DisplayMode = 'minimal' | 'simple' | 'normal';
+const DISPLAY_MODE_KEY = 'display_mode';
+
+const displayModes = [
+  { value: 'minimal' as DisplayMode, label: '极简', desc: '隐藏分类列表，只保留搜索区域' },
+  { value: 'simple' as DisplayMode, label: '简约', desc: '站点只显示图标，隐藏名称和描述' },
+  { value: 'normal' as DisplayMode, label: '常规', desc: '显示完整站点信息' },
+];
+
+// 使用 useCookie 实现 SSR 友好的持久化
+const displayModeCookie = useCookie<DisplayMode>(DISPLAY_MODE_KEY, {
+  default: () => 'normal',
+  watch: true,
+  maxAge: 60 * 60 * 24 * 365, // 1年有效期
+  path: '/',
+});
+
+const displayMode = computed({
+  get: () => displayModeCookie.value,
+  set: (val) => { displayModeCookie.value = val; },
+});
+
+function setDisplayMode(mode: DisplayMode) {
+  displayModeCookie.value = mode;
+}
+
+// 提供给子组件使用的composable
+provide('displayMode', displayMode);
 
 const scrollMode = ref<"top" | "bottom">("bottom");
 const scrollTip = computed(() =>
@@ -1195,6 +1271,94 @@ async function submitRegister() {
   &:hover {
     color: #0969da;
   }
+}
+
+.settingsPanel {
+  padding: 8px 0;
+}
+
+.settingsSection {
+  margin-bottom: 20px;
+}
+
+.settingsLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #24292e;
+  margin-bottom: 12px;
+}
+
+.modeOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modeOption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e1e4e8;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fff;
+}
+
+.modeOption:hover {
+  border-color: #0969da;
+  background: #f6f8fa;
+}
+
+.modeOption.active {
+  border-color: #0969da;
+  background: #eaf2ff;
+}
+
+.modeIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #57606a;
+  font-size: 18px;
+}
+
+.modeOption.active .modeIcon {
+  background: #0969da;
+  color: #fff;
+}
+
+.modeInfo {
+  flex: 1;
+}
+
+.modeName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #24292e;
+  margin-bottom: 2px;
+}
+
+.modeDesc {
+  font-size: 12px;
+  color: #57606a;
+}
+
+.modeCheck {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #0969da;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
 }
 
 @media (max-width: 768px) {

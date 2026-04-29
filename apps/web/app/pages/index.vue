@@ -1,5 +1,5 @@
 <template>
-  <div class="page">
+  <div class="page" :class="{ 'minimal-mode': displayMode === 'minimal' }">
     <div class="mobileBar">
       <el-button type="primary" plain @click="drawerOpen = true">
         <el-icon><MenuIcon /></el-icon>
@@ -7,13 +7,13 @@
     </div>
 
     <div>
-      <section class="heroSearchArea">
+      <section class="heroSearchArea" :class="{ 'minimal-hero': displayMode === 'minimal' }">
         <div class="searchContent">
           <div class="searchTabs">
-            <span 
-              v-for="cat in searchCategories" 
+            <span
+              v-for="cat in searchCategories"
               :key="cat.id"
-              class="tabItem" 
+              class="tabItem"
               :class="{ active: activeSearchTabId === cat.id }"
               @click="activeSearchTabId = cat.id"
             >
@@ -50,7 +50,7 @@
       </section>
 
       <!-- Main Layout -->
-      <div class="container mainLayout">
+      <div v-show="displayMode !== 'minimal'" class="container mainLayout">
         <el-row :gutter="24">
           <!-- Sidebar: Visible on Desktop -->
           <el-col :xs="24" :sm="4" :md="3" :lg="3" :xl="3" class="mainSidebar">
@@ -147,15 +147,21 @@
                 <span>推荐导航</span>
               </div>
               <el-row :gutter="16">
-                <el-col v-for="item in recommendedLinks" :key="item.id" :xs="12" :sm="8" :md="6" class="col-5">
-                  <div class="linkCardWrapper" @click="open(item.url, item.id)">
+                <el-col
+                  v-for="item in recommendedLinks"
+                  :key="item.id"
+                  :xs="displayMode === 'simple' ? 6 : 12"
+                  :sm="displayMode === 'simple' ? 4 : 8"
+                  :md="displayMode === 'simple' ? 2 : 6"
+                  :class="displayMode === 'simple' ? 'col-simple' : 'col-5'"
+                >
+                  <div class="linkCardWrapper" :class="{ 'simple-mode': displayMode === 'simple' }" @click="open(item.url, item.id)">
                     <div class="linkCard modernCard" shadow="hover">
-                      <div class="linkContent">
-                        <div class="linkIcon">
+                      <div class="linkContent" :class="{ 'simple-content': displayMode === 'simple' }">
+                        <div class="linkIcon" :class="{ 'simple-icon': displayMode === 'simple' }">
                           <img :src="item.iconUrl || defaultIcon" :alt="item.title">
-                          <!-- <div v-else class="iconPlaceholder">{{ item.title[0] }}</div> -->
                         </div>
-                        <div class="linkInfo">
+                        <div v-show="displayMode !== 'simple'" class="linkInfo">
                           <div class="title">{{ item.title }}</div>
                           <div class="desc" :title="item.description">{{ item.description }}</div>
                         </div>
@@ -174,15 +180,21 @@
                 <span>常用导航</span>
               </div>
               <el-row :gutter="16">
-                <el-col v-for="item in commonLinks" :key="item.id" :xs="12" :sm="8" :md="6" class="col-5">
-                  <div class="linkCardWrapper" @click="open(item.url, item.id)">
+                <el-col
+                  v-for="item in commonLinks"
+                  :key="item.id"
+                  :xs="displayMode === 'simple' ? 6 : 12"
+                  :sm="displayMode === 'simple' ? 4 : 8"
+                  :md="displayMode === 'simple' ? 2 : 6"
+                  :class="displayMode === 'simple' ? 'col-simple' : 'col-5'"
+                >
+                  <div class="linkCardWrapper" :class="{ 'simple-mode': displayMode === 'simple' }" @click="open(item.url, item.id)">
                     <div class="linkCard modernCard" shadow="hover">
-                      <div class="linkContent">
-                        <div class="linkIcon">
+                      <div class="linkContent" :class="{ 'simple-content': displayMode === 'simple' }">
+                        <div class="linkIcon" :class="{ 'simple-icon': displayMode === 'simple' }">
                           <img :src="item.iconUrl || defaultIcon" :alt="item.title">
-                          <!-- <div v-else class="iconPlaceholder">{{ item.title[0] }}</div> -->
                         </div>
-                        <div class="linkInfo">
+                        <div v-show="displayMode !== 'simple'" class="linkInfo">
                           <div class="title">{{ item.title }}</div>
                           <div class="desc" :title="item.description">{{ item.description }}</div>
                         </div>
@@ -216,16 +228,18 @@
                     <el-col
                       v-for="item in linksByCategory.get(getActiveSubcategory(c.id)) || []"
                       :key="item.id"
-                      :xs="12" :sm="8" :md="6"
-                      class="col-5"
+                      :xs="displayMode === 'simple' ? 6 : 12"
+                      :sm="displayMode === 'simple' ? 4 : 8"
+                      :md="displayMode === 'simple' ? 2 : 6"
+                      :class="displayMode === 'simple' ? 'col-simple' : 'col-5'"
                     >
-                      <div class="linkCardWrapper" @click="open(item.url, item.id)">
+                      <div class="linkCardWrapper" :class="{ 'simple-mode': displayMode === 'simple' }" @click="open(item.url, item.id)">
                         <div class="linkCard modernCard" shadow="hover">
-                          <div class="linkContent">
-                            <div class="linkIcon">
+                          <div class="linkContent" :class="{ 'simple-content': displayMode === 'simple' }">
+                            <div class="linkIcon" :class="{ 'simple-icon': displayMode === 'simple' }">
                               <img :src="item.iconUrl || defaultIcon" :alt="item.title">
                             </div>
-                            <div class="linkInfo">
+                            <div v-show="displayMode !== 'simple'" class="linkInfo">
                               <div class="title">{{ item.title }}</div>
                               <div class="desc" :title="item.description">{{ item.description }}</div>
                             </div>
@@ -295,6 +309,7 @@ import {
   Grid,
 } from '@element-plus/icons-vue'
 import defaultIcon from '@/assets/svg/icon/nothing1.svg'
+import type { ComputedRef } from 'vue'
 
 type Category = { id: number; parentId: number | null; name: string; slug: string; sort: number }
 type NavLink = {
@@ -320,8 +335,12 @@ const { public: publicConfig } = useRuntimeConfig() as { public: PublicConfig }
 
 const drawerOpen = ref(false)
 
+// 从layout注入显示模式
+type DisplayMode = 'minimal' | 'simple' | 'normal'
+const displayMode = inject<ComputedRef<DisplayMode>>('displayMode', computed(() => 'normal'))
+
 useHead(() => ({
-  title: `${publicConfig.siteName || '导航站'} - 首页`,
+  title: `${publicConfig.siteName || '非乐鱼导航'} - 馆页`,
   meta: [
     {
       name: 'description',
@@ -346,7 +365,8 @@ const { data: initialData } = await useAsyncData('home-initial-data', async () =
     $fetch<{ ads: { title: string, imageUrl: string, url: string }[], enabled: boolean }>('/api/ads'),
     $fetch<{ user: { id: number; username: string; role: string } | null }>('/api/auth/me', { headers }),
     $fetch<SearchCategory[]>('/api/search-categories')
-  ])
+  ]);
+  console.log(123456,ads)
   return {
     categories,
     links,
@@ -931,6 +951,10 @@ function submitSearch() {
     flex: 0 0 20%;
     max-width: 20%;
   }
+  .col-simple {
+    // flex: 0 0 16.666%;
+    max-width: 9.666%;
+  }
 }
 
 .block {
@@ -1148,6 +1172,34 @@ function submitSearch() {
 .activeCategoryTitle {
   font-size: 18px;
   color: #57606a;
+}
+
+/* 极简模式 */
+.page.minimal-mode {
+  min-height: calc(100vh - 60px);
+  background-color: #000;
+}
+
+.minimal-hero {
+  min-height: calc(100vh - 120px);
+  display: flex;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+/* 简约模式 */
+.linkCardWrapper.simple-mode {
+  margin-bottom: 12px;
+}
+
+.simple-content {
+  justify-content: center;
+  padding: 12px;
+}
+
+.simple-icon {
+  width: 38px;
+  height: 38px;
 }
 
 @media (max-width: 1024px) {

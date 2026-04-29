@@ -60,8 +60,9 @@ export default defineNuxtConfig({
       database: process.env.NUXT_MYSQL_DATABASE
     },
     public: {
-      siteName: process.env.NUXT_PUBLIC_SITE_NAME || '导航站',
-      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || ''
+      siteName: process.env.NUXT_PUBLIC_SITE_NAME || '非乐鱼导航',
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || '',
+      icp: process.env.NUXT_PUBLIC_ICP || '闽ICP备2026014482号'
     }
   },
 

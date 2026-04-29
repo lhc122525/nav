@@ -74,7 +74,7 @@ type Message = { id: number; nickname: string; content: string; createdAt: strin
 type GuestbookResponse = { list: Message[]; total: number }
 type MeResponse = { user: null | { id: number; username: string; role: 'admin' | 'user' } }
 
-useHead(() => ({ title: '留言板 - 导航站' }))
+useHead(() => ({ title: '留言板 - 非乐鱼导航' }))
 
 const { data: meData } = await useFetch<MeResponse>('/api/auth/me', {
   headers: import.meta.server ? useRequestHeaders(['cookie']) : undefined

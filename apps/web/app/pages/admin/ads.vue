@@ -150,7 +150,7 @@ type AdRow = {
   is_active: boolean | number
 }
 
-type AdConfigRow = { display_count?: number; is_random?: boolean | number; enabled?: boolean | number }
+type AdConfigRow = { displayCount?: number; isRandom?: boolean; enabled?: boolean }
 
 type DonateConfigRow = { alipayQrUrl?: string; wechatQrUrl?: string }
 
@@ -198,9 +198,9 @@ const fetchData = async () => {
     ])
     ads.value = adsRes
     config.value = {
-      enabled: !!configRes.enabled,
-      displayCount: configRes.display_count || 2,
-      isRandom: !!configRes.is_random
+      enabled: configRes.enabled ?? true,
+      displayCount: configRes.displayCount ?? 2,
+      isRandom: configRes.isRandom ?? false
     }
     donateConfig.value = {
       alipayQrUrl: donateRes.alipayQrUrl || '',

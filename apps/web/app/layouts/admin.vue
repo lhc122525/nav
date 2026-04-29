@@ -73,7 +73,7 @@ const collapsed = ref(false)
 const route = useRoute()
 const router = useRouter()
 const { public: publicConfig } = useRuntimeConfig()
-const siteName = computed(() => publicConfig.siteName || '导航站')
+const siteName = computed(() => publicConfig.siteName || '非乐鱼导航')
 const active = computed(() => {
   if (route.path.startsWith('/admin/include')) return '/admin/include'
   if (route.path.startsWith('/admin/search')) return '/admin/search'

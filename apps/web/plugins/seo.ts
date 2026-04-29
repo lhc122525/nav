@@ -1,7 +1,7 @@
 export default defineNuxtPlugin(() => {
   const { public: publicConfig } = useRuntimeConfig()
   const siteUrl = (publicConfig.siteUrl || '').replace(/\/+$/, '')
-  const siteName = publicConfig.siteName || '导航站'
+  const siteName = publicConfig.siteName || '非乐鱼导航'
 
   useHead(() => ({
     titleTemplate: (titleChunk) => (titleChunk ? `${titleChunk} - ${siteName}` : siteName),
