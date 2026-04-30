@@ -14,6 +14,28 @@
           <NuxtLink class="navLink" to="/guestbook" active-class="active">
             <el-icon class="navIcon red"><ChatDotRound /></el-icon> 留言板
           </NuxtLink>
+          <el-dropdown trigger="hover" @command="onToolsCommand">
+            <span class="navLink toolsLink" :class="{ active: isToolsActive }">
+              <el-icon class="navIcon blue"><Tools /></el-icon> 站点工具
+              <el-icon class="dropdownArrow"><ArrowDown /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item
+                  v-for="app in microApps"
+                  :key="app.name"
+                  :command="app.activeRule"
+                >
+                  <el-icon><component :is="getToolIcon(app.icon)" /></el-icon>
+                  {{ app.title }}
+                </el-dropdown-item>
+                <el-dropdown-item divided command="/tools">
+                  <el-icon><Grid /></el-icon>
+                  全部工具
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </nav>
 
         <div class="spacer" />
@@ -90,13 +112,13 @@
                   data-v-16aa41fb=""
                   href="/"
                   class="logo"
-                  title="到迷鹿导航首页"
+                  title="到非乐鱼导航首页"
                   >
                   <img
                     data-v-16aa41fb=""
                     class="logo-img"
                     src="@/assets/logo-1.png"
-                    alt="迷鹿导航"
+                    alt="非乐鱼导航"
                   />
                 </a>
                 <div class="keyboard">
@@ -414,9 +436,15 @@ import {
   Minus,
   Grid,
   Check,
+  Tools,
+  Location,
+  Document,
+  Picture,
+  Connection,
 } from "@element-plus/icons-vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { ElMessage } from "element-plus";
+import { microApps } from "~/config/micro-apps";
 
 type PublicConfig = {
   siteName?: string;
@@ -426,6 +454,7 @@ type PublicConfig = {
 };
 
 const { public: publicConfig } = useRuntimeConfig() as { public: PublicConfig };
+const route = useRoute();
 const siteName = computed(() => publicConfig.siteName || "非乐鱼导航");
 const isHome = computed(() => route.path === "/");
 
@@ -599,8 +628,20 @@ if (import.meta.server) {
 
 const me = userMe
 
+// 站点工具相关
+const isToolsActive = computed(() => route.path.startsWith('/tools'))
+
+// 工具图标映射
+const toolIconComponents: Record<string, Component> = { Location, Document, Picture, Grid, Tools, Connection }
+function getToolIcon(iconName: string) {
+  return toolIconComponents[iconName] || Grid
+}
+
+function onToolsCommand(path: string) {
+  navigateTo(path)
+}
+
 const mobileMenuOpen = ref(false);
-const route = useRoute();
 const mobileActive = computed(() => `route:${route.path}`);
 
 // 使用 useState 共享登录弹窗状态
@@ -962,6 +1003,24 @@ async function submitRegister() {
 .isDark .navLink.active {
   color: #fff;
   background-color: rgba(255, 255, 255, 0.15);
+}
+
+.toolsLink {
+  cursor: pointer;
+}
+
+.dropdownArrow {
+  margin-left: 4px;
+  font-size: 12px;
+  transition: transform 0.2s;
+}
+
+.toolsLink:hover .dropdownArrow {
+  transform: rotate(180deg);
+}
+
+.navIcon.blue {
+  color: #409eff;
 }
 
 .spacer {

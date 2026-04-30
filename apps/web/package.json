@@ -23,6 +23,7 @@
     "element-plus": "^2.11.4",
     "mysql2": "^3.15.1",
     "nuxt": "^4.4.2",
+    "qiankun": "^2.10.16",
     "swagger-ui-dist": "^5.28.1",
     "vue": "^3.5.30",
     "vue-router": "^5.0.3"
