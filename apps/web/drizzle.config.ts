@@ -1,4 +1,8 @@
 import { defineConfig } from 'drizzle-kit'
+import { config } from 'dotenv'
+import { resolve } from 'path'
+
+config({ path: resolve(__dirname, '.env') })
 
 function pickEnv(...keys: string[]) {
   for (const key of keys) {
@@ -26,4 +30,3 @@ export default defineConfig({
     database: pickEnv('NUXT_MYSQL_DATABASE')
   }
 })
-

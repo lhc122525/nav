@@ -16,3 +16,429 @@
   sqlState: '42S22',
   sqlMessage: "Unknown column 'enabled' in 'field list'"
 }
+2026-04-28 16:00:45 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-28 16:01:48 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-28 19:21:33 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-28 21:16:26 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 01:38:46 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 02:52:02 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 02:57:08 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 03:05:05 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 05:03:02 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 06:48:57 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 07:22:07 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 07:57:07 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 09:02:05 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 09:52:32 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 10:36:53 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 11:44:18 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 12:10:16 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 12:12:45 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 12:43:28 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 12:45:40 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 13:08:57 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 15:12:55 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 15:31:25 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 15:39:19 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 15:51:39 +08:00: Fetch homepage ads error: Error: Unknown column 'enabled' in 'field list'
+    at PromisePool.execute (C:\SourceCode\nav\nav\server\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at Object.handler (file:///C:/SourceCode/nav/apps/web/server/api/ads.get.ts:11:1)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2000:24
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4174:26
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4022:13
+    at _resolve (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3969:40)
+    at get (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:3998:39)
+    at file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4020:19
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:4214:22)
+    at Object.handler (file:///C:/SourceCode/nav/nav/server/chunks/_/nitro.mjs:2072:19) {
+  code: 'ER_BAD_FIELD_ERROR',
+  errno: 1054,
+  sql: 'SELECT enabled, display_count as displayCount, is_random as isRandom FROM ad_configs LIMIT 1',
+  sqlState: '42S22',
+  sqlMessage: "Unknown column 'enabled' in 'field list'"
+}
+2026-04-29 22:46:38 +08:00: [h3] Please prefer using `message` for longer error messages instead of `statusMessage`. In the future, `statusMessage` will be sanitized by default.
