@@ -493,6 +493,11 @@ function setDisplayMode(mode: DisplayMode) {
 // 提供给子组件使用的composable
 provide('displayMode', displayMode);
 
+// 提供打开登录弹窗的方法
+provide('openLoginDialog', () => {
+  loginOpen.value = true;
+});
+
 const scrollMode = ref<"top" | "bottom">("bottom");
 const scrollTip = computed(() =>
   scrollMode.value === "top" ? "回到顶部" : "回到底部"
@@ -579,24 +584,22 @@ const nowDateText = computed(() => {
   return `${date} ${weekday}`;
 });
 
-type MeResponse = {
-  user: null | { id: number; username: string; role: "admin" | "user" };
-};
+// 使用全局用户状态
+const { userMe, refreshUserMe, clearUserMe } = useUserMe()
 
-const { data: meData, refresh: refreshMe } = await useFetch<MeResponse>(
-  "/api/auth/me",
-  {
-    server: true,
-    headers: import.meta.server ? useRequestHeaders(["cookie"]) : undefined
-  }
-);
-const me = computed(() => meData.value);
+// SSR 时获取用户信息（客户端由 plugin 处理）
+if (import.meta.server) {
+  await refreshUserMe()
+}
+
+const me = computed(() => userMe.value)
 
 const mobileMenuOpen = ref(false);
 const route = useRoute();
 const mobileActive = computed(() => `route:${route.path}`);
 
-const loginOpen = ref(false);
+// 使用 useState 共享登录弹窗状态
+const loginOpen = useState('loginOpen', () => false);
 const registerOpen = ref(false);
 
 const loginForm = reactive({ username: "", password: "" });
@@ -686,7 +689,7 @@ async function onUserCommand(command: string) {
   if (command !== "logout") return;
   const { $api } = useNuxtApp();
   await $api("/api/auth/logout", { method: "POST" });
-  await refreshMe();
+  clearUserMe();
 }
 
 async function onMobileSelect(index: string) {
@@ -720,7 +723,7 @@ async function submitLogin() {
     loginOpen.value = false;
     loginForm.password = "";
 
-    await refreshMe();
+    await refreshUserMe();
   } catch {
     // const msg = typeof (e as { msg?: unknown } | null)?.msg === 'string' ? String((e as { msg?: unknown }).msg) : undefined
     // ElMessage.error("登录失败，请重试")

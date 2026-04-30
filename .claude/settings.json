@@ -1,7 +1,13 @@
 {
   "permissions": {
+    "allow": [
+      "mcp__MiniMax__understand_image",
+      "Read(//c/Users/69464/.claude/**)",
+      "Read(//c/Users/69464/**)"
+    ],
     "additionalDirectories": [
-      "d:\\work\\2099\\me\\navigationSite"
+      "d:\\work\\2099\\me\\navigationSite",
+      "C:\\Users\\69464\\.claude"
     ]
   }
 }

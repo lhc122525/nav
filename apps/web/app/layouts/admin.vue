@@ -57,7 +57,7 @@
           <el-button link>返回首页</el-button>
         </NuxtLink>
         <div class="spacer" />
-        <el-button link class="logoutBtn" @click="logout">退出登录</el-button>
+        <el-button link class="logoutBtn" @click="logout">退出</el-button>
       </el-header>
       <el-main class="main">
         <div class="container">
