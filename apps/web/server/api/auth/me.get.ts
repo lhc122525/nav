@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   if (!token) return { user: null }
 
   const [rows] = await pool.execute(
-    `SELECT s.expires_at, u.id, u.username, u.role, u.is_active
+    `SELECT s.expires_at, u.id, u.username, u.user_alias, u.role, u.is_active
      FROM user_sessions s
      JOIN users u ON u.id = s.user_id
      WHERE s.token = ?
@@ -34,8 +34,8 @@ export default defineEventHandler(async (event) => {
     user: {
       id: Number(row.id),
       username: String(row.username || ''),
+      userAlias: String(row.user_alias || ''),
       role
     }
   }
 })
-

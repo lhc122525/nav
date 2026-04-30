@@ -94,6 +94,7 @@ export const users = mysqlTable(
   {
     id: bigint('id', { mode: 'number', unsigned: true }).autoincrement().notNull().primaryKey(),
     username: varchar('username', { length: 50 }).notNull(),
+    userAlias: varchar('user_alias', { length: 40 }).notNull(),
     passwordSalt: varchar('password_salt', { length: 64 }).notNull(),
     passwordHash: varchar('password_hash', { length: 128 }).notNull(),
     role: varchar('role', { length: 20 }).notNull().default('user'),

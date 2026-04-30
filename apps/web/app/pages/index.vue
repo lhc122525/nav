@@ -350,20 +350,17 @@ useHead(() => ({
 }))
 
 const { data: initialData } = await useAsyncData('home-initial-data', async () => {
-  const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
   const [
     categories,
     links,
     recommended,
     ads,
-    userRes,
     searchCategories
   ] = await Promise.all([
     $fetch<Category[]>('/api/categories'),
     $fetch<NavLink[]>('/api/links', { params: { limit: 2000 } }),
     $fetch<{ links: NavLink[] }>('/api/links/recommended'),
     $fetch<{ ads: { title: string, imageUrl: string, url: string }[], enabled: boolean }>('/api/ads'),
-    $fetch<{ user: { id: number; username: string; role: string } | null }>('/api/auth/me', { headers }),
     $fetch<SearchCategory[]>('/api/search-categories')
   ]);
   console.log(123456,ads)
@@ -372,7 +369,6 @@ const { data: initialData } = await useAsyncData('home-initial-data', async () =
     links,
     recommended,
     ads,
-    user: userRes.user,
     searchCategories
   }
 })
@@ -578,17 +574,21 @@ interface SearchCategory {
   engines: SearchEngine[]
 }
 
-const user = computed(() => initialData.value?.user || null)
+// 使用全局用户状态
+const { user: userMe } = useUserMe()
+const user = computed(() => userMe.value)
 
 // 常用导航
-const { data: commonLinksData } = useFetch<{ links: NavLink[] }>('/api/stats/common-links', { 
+const { data: commonLinksData } = useFetch<{ links: NavLink[] }>('/api/stats/common-links', {
   server: true,
+  headers: import.meta.server ? useRequestHeaders(['cookie']) : undefined,
   watch: [user]
 })
 const commonLinks = computed(() => commonLinksData.value?.links || [])
 
-const { data: commonEnginesData } = useFetch<{ engines: SearchEngine[] }>('/api/stats/common-engines', { 
+const { data: commonEnginesData } = useFetch<{ engines: SearchEngine[] }>('/api/stats/common-engines', {
   server: true,
+  headers: import.meta.server ? useRequestHeaders(['cookie']) : undefined,
   watch: [user]
 })
 

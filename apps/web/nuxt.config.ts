@@ -78,8 +78,7 @@ export default defineNuxtConfig({
     '/api/ads': { cache: { maxAge: 60, staleMaxAge: 60 * 10, swr: true } },
     '/api/search-categories': { cache: { maxAge: 60 * 5, staleMaxAge: 60 * 60, swr: true } },
     '/api/links/recommended': { cache: { maxAge: 60 * 5, staleMaxAge: 60 * 60, swr: true } },
-    '/api/stats/common-links': { cache: { maxAge: 60 * 5, staleMaxAge: 60 * 60, swr: true } },
-    '/api/stats/common-engines': { cache: { maxAge: 60 * 5, staleMaxAge: 60 * 60, swr: true } },
+    // 用户特定数据不缓存
     '/guestbook': { cache: { maxAge: 10, staleMaxAge: 30, swr: true } }
   },
   typescript: {

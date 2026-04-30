@@ -176,17 +176,24 @@ function toggleSimulate() {
 }
 
 async function loadStats() {
-  const data = await $fetch<StatsResponse>('/api/admin/stats', {
-    params: { range: timeRange.value }
-  })
-  statsData.value = data
+  try {
+    const data = await $fetch<StatsResponse>('/api/admin/stats', {
+      params: { range: timeRange.value }
+    })
+    statsData.value = data
+  } catch (error) {
+    console.error('Failed to load stats:', error)
+  }
 }
 
 function handleTimeRangeChange() {
   loadStats()
 }
 
-await loadStats()
+// 只在客户端加载数据，避免 SSR 时的问题
+onMounted(() => {
+  loadStats()
+})
 
 const totalSearchCount = computed(() => {
   return statsData.value?.topEngines.reduce((sum, item) => sum + Number(item.total_count), 0) || 0

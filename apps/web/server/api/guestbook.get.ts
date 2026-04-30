@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   const total = Number((countRows as Array<Record<string, unknown>>)[0]?.total || 0)
 
   const [rows] = await pool.execute(
-    `SELECT m.id, m.nickname, m.content, m.created_at, u.username as current_username
+    `SELECT m.id, m.nickname, m.content, m.created_at, u.user_alias as current_user_alias
      FROM guestbook_messages m
      LEFT JOIN users u ON u.id = m.user_id
      WHERE m.is_visible = 1
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
 
   const list = (rows as Array<Record<string, unknown>>).map((r) => ({
     id: Number(r.id),
-    nickname: String(r.current_username || r.nickname || '匿名'),
+    nickname: String(r.current_user_alias || r.nickname || '匿名'),
     content: String(r.content || ''),
     createdAt: new Date(String(r.created_at)).toISOString()
   }))

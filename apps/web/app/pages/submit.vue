@@ -38,14 +38,14 @@
 </template>
 
 <script setup lang="ts">
-type MeResponse = { user: null | { id: number; username: string; role: 'admin' | 'user' } }
 
 useHead(() => ({ title: '申请收录 - 非乐鱼导航' }))
 
-const { data: meData } = await useFetch<MeResponse>('/api/auth/me', {
-  headers: import.meta.server ? useRequestHeaders(['cookie']) : undefined
-})
-const me = computed(() => meData.value)
+
+// 使用全局用户状态（plugin 已在 app 初始化时获取用户数据）
+const { userMe } = useUserMe()
+const me = computed(() => userMe.value)
+
 
 const form = reactive({
   title: '',

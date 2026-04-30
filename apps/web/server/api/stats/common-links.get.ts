@@ -11,16 +11,20 @@ export default defineEventHandler(async (event) => {
   // 1. 获取当前用户 ID
   let userId: number | null = null
   const token = getCookie(event, USER_SESSION_COOKIE)
+  console.log('[common-links] token:', token)
   if (token) {
     const [rows] = await pool.execute(
       'SELECT user_id FROM user_sessions WHERE token = ? AND expires_at > NOW() LIMIT 1',
       [token]
     )
     const row = (rows as any[])[0]
+    console.log('[common-links] session row:', row)
     if (row) {
       userId = Number(row.user_id)
     }
   }
+
+  console.log('[common-links] userId:', userId)
 
   // 如果未登录，返回空列表
   if (!userId) {
@@ -30,13 +34,13 @@ export default defineEventHandler(async (event) => {
   try {
     // 2. 获取该用户最常用的前 8 个导航链接
     const [rows] = await pool.execute(`
-      SELECT 
-        l.id, 
-        l.category_id as categoryId, 
-        l.title, 
-        l.url, 
+      SELECT
+        l.id,
+        l.category_id as categoryId,
+        l.title,
+        l.url,
         l.description,
-        l.icon_url as iconUrl, 
+        l.icon_url as iconUrl,
         SUM(ls.count) as total_count
       FROM link_stats ls
       JOIN links l ON l.id = ls.link_id
@@ -45,6 +49,7 @@ export default defineEventHandler(async (event) => {
       ORDER BY total_count DESC
       LIMIT 8
     `, [userId])
+    console.log('[common-links] query rows:', rows)
 
     return {
       links: (rows as any[]).map(r => ({

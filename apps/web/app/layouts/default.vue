@@ -39,9 +39,9 @@
           <el-dropdown v-else @command="onUserCommand">
             <el-button link class="userProfile">
               <el-avatar :size="28" class="userAvatar">{{
-                me.user.username[0]
+                me.user.userAlias[0]
               }}</el-avatar>
-              <span class="username">{{ me.user.username }}</span>
+              <span class="username">{{ me.user.userAlias }}</span>
               <el-icon class="el-icon--right"><ArrowDown /></el-icon>
             </el-button>
             <template #dropdown>
@@ -181,11 +181,11 @@
       append-to-body
       style="max-width: 550px; width: 90vw"
     >
-      <el-form label-width="72px" @submit.prevent>
-        <el-form-item label="用户名">
-          <el-input v-model="loginForm.username" autocomplete="username" />
+      <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules" label-width="72px" @submit.prevent>
+        <el-form-item label="账号" prop="username">
+          <el-input v-model="loginForm.username" placeholder="手机号/邮箱" autocomplete="username" />
         </el-form-item>
-        <el-form-item label="密码">
+        <el-form-item label="密码" prop="password">
           <el-input
             v-model="loginForm.password"
             type="password"
@@ -217,13 +217,21 @@
         ref="registerFormRef"
         :model="registerForm"
         :rules="registerRules"
-        label-width="100px"
+        label-width="82px"
         @submit.prevent
       >
-        <el-form-item label="用户名" prop="username">
+        <el-form-item label="账号" prop="username">
           <el-input
             v-model.trim="registerForm.username"
+            placeholder="手机号/邮箱"
             autocomplete="username"
+          />
+        </el-form-item>
+        <el-form-item label="昵称" prop="userAlias">
+          <el-input
+            v-model.trim="registerForm.userAlias"
+            placeholder="2-40个字符"
+            autocomplete="nickname"
           />
         </el-form-item>
         <el-form-item label="密码" prop="password">
@@ -253,9 +261,6 @@
             <el-button class="captchaText" text @click="refreshRegisterCaptcha">
               {{ registerCaptchaText }}
             </el-button>
-            <!-- <el-button class="captchaRefresh" text @click="refreshRegisterCaptcha">
-              刷新
-            </el-button> -->
           </div>
         </el-form-item>
       </el-form>
@@ -585,14 +590,14 @@ const nowDateText = computed(() => {
 });
 
 // 使用全局用户状态
-const { userMe, refreshUserMe, clearUserMe } = useUserMe()
+const { userMe, refreshUserMe, setUserMe, clearUserMe } = useUserMe()
 
 // SSR 时获取用户信息（客户端由 plugin 处理）
 if (import.meta.server) {
   await refreshUserMe()
 }
 
-const me = computed(() => userMe.value)
+const me = userMe
 
 const mobileMenuOpen = ref(false);
 const route = useRoute();
@@ -602,10 +607,37 @@ const mobileActive = computed(() => `route:${route.path}`);
 const loginOpen = useState('loginOpen', () => false);
 const registerOpen = ref(false);
 
+// 账号格式校验
+const phoneRegex = /^1[3-9]\d{9}$/;
+const emailRegex = /^[\w.-]+@[\w.-]+\.\w+$/;
+function isValidAccount(account: string): boolean {
+  return phoneRegex.test(account) || emailRegex.test(account);
+}
+
+const loginFormRef = ref<FormInstance>();
 const loginForm = reactive({ username: "", password: "" });
+const loginRules: FormRules = {
+  username: [
+    { required: true, message: "请输入账号", trigger: "blur" },
+    {
+      validator: (_rule, value: unknown, callback: (error?: Error) => void) => {
+        const input = String(value || "").trim();
+        if (!input) callback(new Error("请输入账号"));
+        else if (!isValidAccount(input)) callback(new Error("账号必须是手机号或邮箱格式"));
+        else callback();
+      },
+      trigger: "blur",
+    },
+  ],
+  password: [
+    { required: true, message: "请输入密码", trigger: "blur" },
+  ],
+};
+
 const registerFormRef = ref<FormInstance>();
 const registerForm = reactive({
   username: "",
+  userAlias: "",
   password: "",
   passwordConfirm: "",
   captcha: "",
@@ -635,8 +667,20 @@ watch(registerOpen, (open) => {
 
 const registerRules: FormRules = {
   username: [
-    { required: true, message: "请输入用户名", trigger: "blur" },
-    { min: 3, max: 20, message: "用户名长度需为 3-20", trigger: "blur" },
+    { required: true, message: "请输入账号", trigger: "blur" },
+    {
+      validator: (_rule, value: unknown, callback: (error?: Error) => void) => {
+        const input = String(value || "").trim();
+        if (!input) callback(new Error("请输入账号"));
+        else if (!isValidAccount(input)) callback(new Error("账号必须是手机号或邮箱格式"));
+        else callback();
+      },
+      trigger: "blur",
+    },
+  ],
+  userAlias: [
+    { required: true, message: "请输入昵称", trigger: "blur" },
+    { min: 2, max: 40, message: "昵称长度需为 2-40 个字符", trigger: "blur" },
   ],
   password: [
     { required: true, message: "请输入密码", trigger: "blur" },
@@ -719,11 +763,19 @@ async function submitLogin() {
   const { $api } = useNuxtApp();
   loginSubmitting.value = true;
   try {
-    await $api("/api/auth/login", { method: "POST", body: loginForm });
+    const res = await $api<{ ok: boolean; id: number; username: string; userAlias: string }>("/api/auth/login", { method: "POST", body: loginForm });
     loginOpen.value = false;
     loginForm.password = "";
 
-    await refreshUserMe();
+    // 直接设置用户数据，避免额外请求
+    setUserMe({
+      user: {
+        id: res.id,
+        username: res.username,
+        userAlias: res.userAlias,
+        role: 'user'
+      }
+    });
   } catch {
     // const msg = typeof (e as { msg?: unknown } | null)?.msg === 'string' ? String((e as { msg?: unknown }).msg) : undefined
     // ElMessage.error("登录失败，请重试")
@@ -743,21 +795,32 @@ async function submitRegister() {
       method: "POST",
       body: {
         username: registerForm.username,
+        userAlias: registerForm.userAlias,
         password: registerForm.password,
       },
     });
     registerOpen.value = false;
+    loginForm.username = registerForm.username;
+    loginForm.password = registerForm.password;
+    registerForm.userAlias = "";
     registerForm.password = "";
     registerForm.passwordConfirm = "";
     registerForm.captcha = "";
-    loginForm.username = registerForm.username;
-    loginForm.password = "";
-    loginOpen.value = true;
+    
     ElMessage({
       message: "注册成功，请登录",
       type: "success",
       plain: true,
     });
+    setTimeout(() => {
+      loginOpen.value = true;
+      setTimeout(() => {
+        // 登录表单验证
+        loginFormRef.value?.validate()
+        
+      }, 50);
+      
+    }, 1000);
   } catch {
     refreshRegisterCaptcha();
     // const msg = typeof (e as { msg?: unknown } | null)?.msg === 'string' ? String((e as { msg?: unknown }).msg) : undefined

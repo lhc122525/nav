@@ -9,6 +9,7 @@ export type UserRole = 'admin' | 'user'
 export type User = {
   id: number
   username: string
+  userAlias: string
   role: UserRole
 }
 

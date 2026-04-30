@@ -20,9 +20,9 @@
 
         <div v-else class="post-form">
           <div class="user-info">
-            <el-avatar :size="40" class="user-avatar">{{ me.user.username[0] }}</el-avatar>
+            <el-avatar :size="40" class="user-avatar">{{ me.user.userAlias[0] }}</el-avatar>
             <div class="user-meta">
-              <span class="user-name">{{ me.user.username }}</span>
+              <span class="user-name">{{ me.user.userAlias }}</span>
               <span class="user-role">{{ me.user.role === 'admin' ? '管理员' : '用户' }}</span>
             </div>
           </div>

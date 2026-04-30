@@ -1,10 +1,11 @@
-import type { ComputedRef } from 'vue'
+import type { ComputedRef, Ref } from 'vue'
 
 export type UserRole = 'admin' | 'user'
 export type MeResponse = {
   user: null | {
     id: number
     username: string
+    userAlias: string
     role: UserRole
   }
 }
@@ -61,6 +62,14 @@ export function useUserMe() {
   }
 
   /**
+   * 设置用户数据
+   * 用于登录成功后直接设置用户数据，避免额外请求
+   */
+  const setUserMe = (data: MeResponse) => {
+    userMe.value = data
+  }
+
+  /**
    * 清除用户状态
    * 用于退出登录时清除全局状态
    */
@@ -69,12 +78,13 @@ export function useUserMe() {
   }
 
   return {
-    userMe: userMe as ComputedRef<MeResponse>,
-    user,
+    userMe: userMe as Ref<MeResponse>,
+    user: user as ComputedRef<MeResponse['user']>,
     isLoggedIn,
     fetching,
     refreshUserMe,
     initUserMe,
+    setUserMe,
     clearUserMe
   }
 }
