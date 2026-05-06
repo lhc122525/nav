@@ -33,8 +33,8 @@ pnpm dev
 
 默认访问：
 
-- 站点：http://localhost:3000
-- OpenAPI：http://localhost:3000/openapi
+- 站点：http://localhost:8989
+- OpenAPI：http://localhost:8989/openapi
 - Adminer（可选）：http://localhost:8080
 
 ## 常用命令

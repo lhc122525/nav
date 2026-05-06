@@ -1,70 +1,111 @@
 @echo off
 chcp 65001 >nul
-setlocal EnableDelayedExpansion
+setlocal enabledelayedexpansion
 
-echo ========================================
-echo    Navigation Site 部署脚本
-echo ========================================
-echo.
+:: ============================================
+:: Windows Server Docker 部署脚本
+:: 用法: deploy.bat [action]
+::   action: deploy (默认) | build | start | stop | restart | logs | status
+:: ============================================
 
-:: 检查 Node.js
-where node >nul 2>nul
-if %errorlevel% neq 0 (
-    echo [错误] 未找到 Node.js，请先安装 Node.js
-    pause
+set COMPOSE_FILE=docker-compose.prod.yml
+set ACTION=%1
+
+if "%ACTION%"=="" set ACTION=deploy
+
+:: 检查 Docker
+docker info >nul 2>&1
+if errorlevel 1 (
+    echo [错误] Docker 未运行，请先启动 Docker Desktop
     exit /b 1
 )
 
-:: 检查 pnpm
-where pnpm >nul 2>nul
-if %errorlevel% neq 0 (
-    echo [错误] 未找到 pnpm，请先安装 pnpm
-    echo 运行: npm install -g pnpm
-    pause
+:: 执行操作
+if "%ACTION%"=="deploy" goto :deploy
+if "%ACTION%"=="build" goto :build
+if "%ACTION%"=="start" goto :start
+if "%ACTION%"=="stop" goto :stop
+if "%ACTION%"=="restart" goto :restart
+if "%ACTION%"=="logs" goto :logs
+if "%ACTION%"=="status" goto :status
+
+echo [错误] 未知操作: %ACTION%
+echo 用法: deploy.bat [deploy^|build^|start^|stop^|restart^|logs^|status]
+exit /b 1
+
+:deploy
+echo =====================================
+echo      开始完整部署流程
+echo =====================================
+echo.
+
+echo [1/3] 拉取最新代码...
+git pull
+if errorlevel 1 (
+    echo [错误] Git pull 失败
     exit /b 1
 )
 
-:: 检查 PM2
-where pm2 >nul 2>nul
-if %errorlevel% neq 0 (
-    echo [错误] 未找到 PM2，请先安装 PM2
-    echo 运行: npm install -g pm2
-    pause
+echo.
+echo [2/3] 构建 Docker 镜像...
+docker compose -f %COMPOSE_FILE% build --no-cache
+if errorlevel 1 (
+    echo [错误] 构建失败
     exit /b 1
 )
 
-echo [1/5] 安装依赖...
-call pnpm install
+echo.
+echo [3/3] 启动服务...
+docker compose -f %COMPOSE_FILE% up -d
+if errorlevel 1 (
+    echo [错误] 启动失败
+    exit /b 1
+)
 
 echo.
-echo [2/5] 构建生产版本...
-call pnpm build:prod
+echo =====================================
+echo      部署完成！
+echo =====================================
+echo.
+echo 访问地址:
+echo   应用: http://localhost:8991
+echo   MySQL: localhost:8999
+echo.
+goto :end
 
-echo.
-echo [3/5] 创建日志目录...
-if not exist "logs" mkdir logs
+:build
+echo 构建 Docker 镜像...
+docker compose -f %COMPOSE_FILE% build --no-cache
+goto :end
 
-echo.
-echo [4/5] 停止旧进程（如果存在）...
-call pm2 delete navigation-site 2>nul
+:start
+echo 启动服务...
+docker compose -f %COMPOSE_FILE% up -d
+docker compose -f %COMPOSE_FILE% ps
+goto :end
 
-echo.
-echo [5/5] 启动服务...
-call pm2 start ecosystem.config.json
+:stop
+echo 停止服务...
+docker compose -f %COMPOSE_FILE% down
+goto :end
 
-echo.
-echo ========================================
-echo    部署完成！
-echo ========================================
-echo.
-echo 常用命令:
-echo   pm2 list              - 查看进程列表
-echo   pm2 logs              - 查看日志
-echo   pm2 restart navigation-site - 重启服务
-echo   pm2 stop navigation-site     - 停止服务
-echo   pm2 delete navigation-site   - 删除服务
-echo.
-echo 请在宝塔中配置反向代理，将请求转发到 http://127.0.0.1:8991
-echo.
+:restart
+echo 重启服务...
+docker compose -f %COMPOSE_FILE% restart
+docker compose -f %COMPOSE_FILE% ps
+goto :end
 
-pause
+:logs
+docker compose -f %COMPOSE_FILE% logs -f --tail 100
+goto :end
+
+:status
+echo === 服务状态 ===
+docker compose -f %COMPOSE_FILE% ps
+echo.
+echo === 容器资源使用 ===
+docker stats --no-stream navigation_app navigation_mysql 2>nul
+goto :end
+
+:end
+endlocal

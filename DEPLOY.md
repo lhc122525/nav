@@ -53,14 +53,14 @@ pm2 monit                     # 监控面板
 
 1. 在宝塔中创建网站（纯静态即可）
 2. 设置反向代理：
-   - 目标URL: `http://127.0.0.1:3000`
+   - 目标URL: `http://127.0.0.1:8991`
    - 发送域名: `$host`
 
 ### Nginx 配置示例
 
 ```nginx
 location / {
-    proxy_pass http://127.0.0.1:3000;
+    proxy_pass http://127.0.0.1:8991;
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection 'upgrade';
@@ -78,7 +78,7 @@ location / {
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
-| PORT | 服务端口 | 3000 |
+| PORT | 服务端口 | 8991 |
 | NUXT_MYSQL_HOST | MySQL 主机 | 127.0.0.1 |
 | NUXT_MYSQL_PORT | MySQL 端口 | 3306 |
 | NUXT_MYSQL_USER | MySQL 用户 | feileyu |
@@ -111,5 +111,5 @@ pm2 logs navigation-site --out
 
 ### 检查端口占用
 ```bash
-netstat -ano | findstr :3000
+netstat -ano | findstr :8991
 ```

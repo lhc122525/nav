@@ -1,0 +1,106 @@
+# 生产环境 Docker Compose 配置
+# 使用方式: docker compose -f docker-compose.prod.yml up -d
+
+services:
+  # ============================================
+  # Nuxt 应用服务
+  # ============================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: navigation_app
+    restart: unless-stopped
+    ports:
+      - "8991:8991"
+    environment:
+      # 数据库配置 - 使用服务名作为主机名
+      - NUXT_MYSQL_HOST=mysql
+      - NUXT_MYSQL_PORT=3306
+      - NUXT_MYSQL_USER=${MYSQL_USER:-nszm}
+      - NUXT_MYSQL_PASSWORD=${MYSQL_PASSWORD:-nszm123..}
+      - NUXT_MYSQL_DATABASE=${MYSQL_DATABASE:-nav}
+      # 站点配置
+      - NUXT_PUBLIC_SITE_NAME=${SITE_NAME:-非乐鱼导航}
+      - NUXT_PUBLIC_SITE_URL=${SITE_URL:-http://feileyu.cn}
+      - NUXT_PUBLIC_ICP=${ICP:-闽ICP备2026014482号}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - navigation_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8991/api/links"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ============================================
+  # MySQL 数据库服务
+  # ============================================
+  mysql:
+    image: mysql:8.4
+    container_name: navigation_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-nav}
+      MYSQL_USER: ${MYSQL_USER:-nszm}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-nszm123..}
+      TZ: Asia/Shanghai
+    ports:
+      - "${MYSQL_PORT:-8999}:3306"
+    volumes:
+      # 数据持久化
+      - mysql_data:/var/lib/mysql
+      # 初始化脚本（首次启动时执行）
+      - ./dev/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      # 备份目录
+      - ./backup:/backup
+    networks:
+      - navigation_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root_password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    # MySQL 性能优化配置
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+      - --max_connections=200
+      - --innodb-buffer-pool-size=256M
+
+  # ============================================
+  # 数据库管理工具（可选）
+  # ============================================
+  adminer:
+    image: adminer:4
+    container_name: navigation_adminer
+    restart: unless-stopped
+    ports:
+      - "${ADMINER_PORT:-8080}:8080"
+    networks:
+      - navigation_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    profiles:
+      - admin
+
+# ============================================
+# 网络配置
+# ============================================
+networks:
+  navigation_network:
+    driver: bridge
+
+# ============================================
+# 数据卷
+# ============================================
+volumes:
+  mysql_data:
+    driver: local
