@@ -442,3 +442,8 @@
   sqlMessage: "Unknown column 'enabled' in 'field list'"
 }
 2026-04-29 22:46:38 +08:00: [h3] Please prefer using `message` for longer error messages instead of `statusMessage`. In the future, `statusMessage` will be sanitized by default.
+2026-04-30 16:46:34 +08:00: [h3] Please prefer using `message` for longer error messages instead of `statusMessage`. In the future, `statusMessage` will be sanitized by default.
+2026-04-30 16:46:36 +08:00: [h3] Please prefer using `message` for longer error messages instead of `statusMessage`. In the future, `statusMessage` will be sanitized by default.
+2026-04-30 16:46:37 +08:00: [h3] Please prefer using `message` for longer error messages instead of `statusMessage`. In the future, `statusMessage` will be sanitized by default.
+2026-04-30 16:46:43 +08:00: [h3] Please prefer using `message` for longer error messages instead of `statusMessage`. In the future, `statusMessage` will be sanitized by default.
+2026-04-30 16:46:46 +08:00: [h3] Please prefer using `message` for longer error messages instead of `statusMessage`. In the future, `statusMessage` will be sanitized by default.

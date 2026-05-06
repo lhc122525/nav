@@ -64,7 +64,7 @@ echo   pm2 restart navigation-site - 重启服务
 echo   pm2 stop navigation-site     - 停止服务
 echo   pm2 delete navigation-site   - 删除服务
 echo.
-echo 请在宝塔中配置反向代理，将请求转发到 http://127.0.0.1:3000
+echo 请在宝塔中配置反向代理，将请求转发到 http://127.0.0.1:8991
 echo.
 
 pause
