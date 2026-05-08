@@ -78,8 +78,11 @@
                 新增链接
               </el-button>
               <el-button type="warning" :loading="checkingConnectivity" @click="checkConnectivity">
-                检测连通性
+                {{ checkingConnectivity ? '检测中...' : '检测连通性' }}
               </el-button>
+              <!-- <span v-if="checkingConnectivity" style="color: #E6A23C; font-size: 12px;">
+                正在检测 {{ recommendedMode ? '推荐站点' : (categoryId ? '当前分类' : '全部站点') }}...
+              </span> -->
             </el-form-item>
           </el-form>
         </el-card>
@@ -106,7 +109,11 @@
                 </template>
               </el-table-column>
               <el-table-column prop="title" label="标题" min-width="180" />
-              <el-table-column prop="url" label="URL" min-width="220" />
+              <el-table-column prop="url" label="URL" min-width="220">
+                <template #default="{ row }">
+                  <a :href="row.url" target="_blank" rel="noopener noreferrer">{{ row.url }}</a>
+                </template>
+              </el-table-column>
               <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
               <el-table-column prop="categoryId" label="分类" width="140">
                 <template #default="{ row }">
@@ -498,6 +505,7 @@ const pageSize = ref(20)
 const dialogOpen = ref(false)
 const crawling = ref(false)
 const checkingConnectivity = ref(false)
+const checkProgress = ref({ current: 0, total: 0 })
 const updatingRows = reactive(new Set<number>())
 const editing = ref<AdminLink | null>(null)
 const form = reactive<LinkForm>({
@@ -656,22 +664,52 @@ async function crawlUrl() {
 }
 
 async function checkConnectivity() {
+  // 确定检测范围
+  let targetName = '全部站点'
+  let requestBody: { categoryId?: number | null; recommended?: boolean } = {}
+
+  if (recommendedMode.value) {
+    targetName = '推荐站点'
+    requestBody = { recommended: true }
+  } else if (categoryId.value !== undefined) {
+    const cat = categories.value.find(c => c.id === categoryId.value)
+    targetName = cat ? `「${cat.name}」分类` : '当前分类'
+    requestBody = { categoryId: categoryId.value }
+  }
+
   try {
-    await ElMessageBox.confirm('确定要检测所有已启用的站点吗？不可访问的站点将被自动禁用。', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
+    await ElMessageBox.confirm(
+      `确定要检测 ${targetName} 吗？\n\n- 可访问的站点将更新图标并启用\n- 不可访问的站点将被禁用`,
+      '检测连通性',
+      {
+        confirmButtonText: '开始检测',
+        cancelButtonText: '取消',
+        type: 'info'
+      }
+    )
   } catch {
     return
   }
 
   checkingConnectivity.value = true
+  checkProgress.value = { current: 0, total: 0 }
+
   try {
-    const data = await $api<{ total: number; failed: number }>('/api/admin/links/check-connectivity', {
-      method: 'POST'
+    const data = await $api<{
+      total: number
+      reachable: number
+      failed: number
+      iconsUpdated: number
+      disabled: number
+      reEnabled: number
+    }>('/api/admin/links/check-connectivity', {
+      method: 'POST',
+      body: requestBody
     })
-    ElMessageBox.alert(`检测完成！共检测 ${data.total} 个站点，其中 ${data.failed} 个站点不可访问并已自动禁用。`, '检测结果')
+    ElMessageBox.alert(
+      `检测完成！\n\n共检测 ${data.total} 个站点\n- 可访问：${data.reachable} 个\n- 不可访问：${data.failed} 个\n- 图标已更新：${data.iconsUpdated} 个\n- 新禁用：${data.disabled} 个\n- 重新启用：${data.reEnabled} 个`,
+      '检测结果'
+    )
     await reloadLinks()
   } catch (e: unknown) {
     const error = e as { statusMessage?: string }

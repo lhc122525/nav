@@ -1,5 +1,32 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 
+/**
+ * 从 HTML 属性中提取值
+ */
+function extractAttr(html: string, attr: string): string | null {
+  // 匹配 attr="value" 或 attr='value'
+  const regex = new RegExp(`${attr}=["']([^"']*)["']`, 'i')
+  const match = html.match(regex)
+  return match?.[1] ?? null
+}
+
+/**
+ * 解析图标 URL，处理相对路径
+ */
+function resolveIconUrl(href: string, baseUrl: string): string {
+  if (href.startsWith('http')) {
+    return href
+  }
+  if (href.startsWith('//')) {
+    return 'https:' + href
+  }
+  const urlObj = new URL(baseUrl)
+  if (href.startsWith('/')) {
+    return `${urlObj.protocol}//${urlObj.host}${href}`
+  }
+  return `${urlObj.protocol}//${urlObj.host}/${href}`
+}
+
 export default defineEventHandler(async (event) => {
   const { url } = await readBody(event)
 
@@ -23,35 +50,48 @@ export default defineEventHandler(async (event) => {
 
     // 1. 获取标题
     const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)
-    const title = titleMatch?.[1]?.trim() ?? ''
+    const title = titleMatch?.[1]?.replace(/<[^>]+>/g, '').trim() ?? ''
 
     // 2. 获取描述
-    const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([\s\S]*?)["'][^>]*>/i) ||
-                     html.match(/<meta[^>]*content=["']([\s\S]*?)["'][^>]*name=["']description["'][^>]*>/i)
-    const description = descMatch?.[1]?.trim() ?? ''
+    const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*>/i)
+    const description = descMatch ? (extractAttr(descMatch[0], 'content') ?? '') : ''
 
-    // 3. 获取 Logo (Favicon)
+    // 3. 获取 Logo (Favicon) - 优先级从高到低
     let iconUrl = ''
-    const iconMatch = html.match(/<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["']([\s\S]*?)["'][^>]*>/i) ||
-                     html.match(/<link[^>]*href=["']([\s\S]*?)["'][^>]*rel=["'](?:shortcut )?icon["'][^>]*>/i)
-    
-    const href = iconMatch?.[1]
-    if (href) {
-      if (href.startsWith('http')) {
-        iconUrl = href
-      } else if (href.startsWith('//')) {
-        iconUrl = 'https:' + href
-      } else if (href.startsWith('/')) {
-        const urlObj = new URL(url)
-        iconUrl = `${urlObj.protocol}//${urlObj.host}${href}`
-      } else {
-        const urlObj = new URL(url)
-        iconUrl = `${urlObj.protocol}//${urlObj.host}/${href}`
+
+    // 查找所有可能的 icon link 标签
+    const linkTags = html.match(/<link[^>]*>/gi) || []
+
+    // 优先级顺序：apple-touch-icon > icon > shortcut icon
+    const iconPriorities = [
+      /rel=["']apple-touch-icon["']/i,
+      /rel=["']icon["']/i,
+      /rel=["']shortcut icon["']/i
+    ]
+
+    for (const priorityRegex of iconPriorities) {
+      for (const tag of linkTags) {
+        if (priorityRegex.test(tag)) {
+          const href = extractAttr(tag, 'href')
+          if (href) {
+            iconUrl = resolveIconUrl(href, url)
+            break
+          }
+        }
       }
-    } else {
-      // 兜底策略：尝试根目录下的 favicon.ico
+      if (iconUrl) break
+    }
+
+    // 兜底策略：尝试根目录下的 favicon.ico
+    if (!iconUrl) {
       const urlObj = new URL(url)
       iconUrl = `${urlObj.protocol}//${urlObj.host}/favicon.ico`
+    }
+
+    // 检查 URL 长度限制 (数据库字段 varchar(500))
+    const maxIconUrlLength = 500
+    if (iconUrl.length > maxIconUrlLength) {
+      iconUrl = ''
     }
 
     return {
