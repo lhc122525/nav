@@ -1,0 +1,1 @@
+ALTER TABLE `ad_configs` ADD `enabled` boolean DEFAULT true NOT NULL;

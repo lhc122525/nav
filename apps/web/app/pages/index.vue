@@ -420,7 +420,7 @@ function selectSubcategory(subId: number, parentCatId: number) {
 }
 
 const ads = computed(() => initialData.value?.ads?.ads || [])
-const adsEnabled = computed(() => initialData.value?.ads?.enabled !== false)
+const adsEnabled = computed(() => !!initialData.value?.ads?.enabled)
 
 function scrollToAnchor(anchorId: string) {
   const element = document.getElementById(anchorId)

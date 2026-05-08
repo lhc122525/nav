@@ -258,6 +258,7 @@ export const adConfigs = mysqlTable(
   'ad_configs',
   {
     id: bigint('id', { mode: 'number', unsigned: true }).autoincrement().notNull().primaryKey(),
+    enabled: boolean('enabled').notNull().default(true),
     displayCount: int('display_count').notNull().default(2),
     isRandom: boolean('is_random').notNull().default(false),
     updatedAt: timestamp('updated_at').notNull().defaultNow().onUpdateNow()
