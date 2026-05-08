@@ -120,7 +120,8 @@
                   {{ categoryName(row.categoryId) }}
                 </template>
               </el-table-column>
-              <el-table-column prop="isRecommended" label="推荐" width="80">
+              <el-table-column prop="sort" label="排序" width="90" />
+              <el-table-column prop="isRecommended" label="推荐" width="80" fixed="right">
                 <template #default="{ row }">
                   <el-switch
                     v-model="row.isRecommended"
@@ -130,7 +131,7 @@
                   />
                 </template>
               </el-table-column>
-              <el-table-column prop="isActive" label="启用" width="80">
+              <el-table-column prop="isActive" label="启用" width="80" fixed="right">
                 <template #default="{ row }">
                   <el-switch
                     v-model="row.isActive"
@@ -140,7 +141,6 @@
                   />
                 </template>
               </el-table-column>
-              <el-table-column prop="sort" label="排序" width="90" />
               <el-table-column label="操作" width="110" fixed="right">
                 <template #default="{ row }">
                   <el-button link type="primary" @click="openEdit(row)">
@@ -173,7 +173,7 @@
     <el-dialog v-model="dialogOpen" :title="editing?.id ? '编辑链接' : '新增链接'" width="100%" style="max-width: 600px;">
       <el-form label-width="90px">
         <el-form-item label="标题">
-          <el-input v-model="form.title" />
+          <el-input v-model="form.title" maxlength="100" show-word-limit />
         </el-form-item>
         <el-form-item label="URL">
           <div style="display: flex; gap: 8px; width: 100%">
@@ -182,16 +182,16 @@
           </div>
         </el-form-item>
         <el-form-item label="描述">
-          <el-input v-model="form.description" type="textarea" :rows="3" />
+          <el-input v-model="form.description" type="textarea" :rows="3" maxlength="765" show-word-limit />
         </el-form-item>
         <el-form-item label="分类">
           <el-select v-model="form.categoryId" placeholder="请选择二级分类" style="width: 100%">
             <el-option-group v-for="pc in topLevelCategories" :key="pc.id" :label="pc.name">
-              <el-option 
-                v-for="c in categories.filter(cat => cat.parentId === pc.id)" 
-                :key="c.id" 
-                :label="c.name" 
-                :value="c.id" 
+              <el-option
+                v-for="c in categories.filter(cat => cat.parentId === pc.id)"
+                :key="c.id"
+                :label="c.name"
+                :value="c.id"
               />
             </el-option-group>
           </el-select>
@@ -201,7 +201,7 @@
         </el-form-item>
         <el-form-item label="图标">
           <div style="display: flex; gap: 8px; width: 100%; align-items: center">
-            <el-input v-model="form.iconUrl" placeholder="https://..." />
+            <el-input v-model="form.iconUrl" placeholder="https://..." maxlength="500" show-word-limit />
             <el-image
               v-if="form.iconUrl"
               :src="form.iconUrl"

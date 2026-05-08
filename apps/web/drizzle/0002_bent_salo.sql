@@ -1,0 +1,1 @@
+ALTER TABLE `links` MODIFY COLUMN `description` varchar(765) NOT NULL DEFAULT '';

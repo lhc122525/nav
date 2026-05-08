@@ -159,7 +159,7 @@
                     <div class="linkCard modernCard" shadow="hover">
                       <div class="linkContent" :class="{ 'simple-content': displayMode === 'simple' }">
                         <div class="linkIcon" :class="{ 'simple-icon': displayMode === 'simple' }">
-                          <img :src="item.iconUrl || defaultIcon" :alt="item.title">
+                          <img :src="item.iconUrl || defaultIcon" :alt="item.title" @error="onIconError">
                         </div>
                         <div v-show="displayMode !== 'simple'" class="linkInfo">
                           <div class="title">{{ item.title }}</div>
@@ -192,7 +192,7 @@
                     <div class="linkCard modernCard" shadow="hover">
                       <div class="linkContent" :class="{ 'simple-content': displayMode === 'simple' }">
                         <div class="linkIcon" :class="{ 'simple-icon': displayMode === 'simple' }">
-                          <img :src="item.iconUrl || defaultIcon" :alt="item.title">
+                          <img :src="item.iconUrl || defaultIcon" :alt="item.title" @error="onIconError">
                         </div>
                         <div v-show="displayMode !== 'simple'" class="linkInfo">
                           <div class="title">{{ item.title }}</div>
@@ -237,7 +237,7 @@
                         <div class="linkCard modernCard" shadow="hover">
                           <div class="linkContent" :class="{ 'simple-content': displayMode === 'simple' }">
                             <div class="linkIcon" :class="{ 'simple-icon': displayMode === 'simple' }">
-                              <img :src="item.iconUrl || defaultIcon" :alt="item.title">
+                              <img :src="item.iconUrl || defaultIcon" :alt="item.title" @error="onIconError">
                             </div>
                             <div v-show="displayMode !== 'simple'" class="linkInfo">
                               <div class="title">{{ item.title }}</div>
@@ -428,6 +428,14 @@ function scrollToAnchor(anchorId: string) {
   if (element && layoutElement) {
     const offset = layoutElement.getBoundingClientRect().top + window.scrollY - 55
     window.scrollTo({ top: element.offsetTop + offset, behavior: 'smooth' })
+  }
+}
+
+// 图片加载失败时显示默认图标
+function onIconError(event: Event) {
+  const img = event.target as HTMLImageElement
+  if (img && img.src !== defaultIcon) {
+    img.src = defaultIcon
   }
 }
 

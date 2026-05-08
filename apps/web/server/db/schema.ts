@@ -40,7 +40,7 @@ export const links = mysqlTable(
       .references(() => categories.id, { onDelete: 'set null', onUpdate: 'cascade' }),
     title: varchar('title', { length: 100 }).notNull(),
     url: varchar('url', { length: 500 }).notNull(),
-    description: varchar('description', { length: 255 }).notNull().default(''),
+    description: varchar('description', { length: 765 }).notNull().default(''),
     iconUrl: varchar('icon_url', { length: 500 }).notNull().default(''),
     isActive: boolean('is_active').notNull().default(true),
     isRecommended: boolean('is_recommended').notNull().default(false),

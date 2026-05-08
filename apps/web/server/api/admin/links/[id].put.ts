@@ -1,5 +1,10 @@
 import { getMySqlPool } from '../../../utils/mysql'
 
+// 字段长度限制
+const MAX_TITLE_LENGTH = 100
+const MAX_DESCRIPTION_LENGTH = 765
+const MAX_ICON_URL_LENGTH = 500
+
 type UpdateLinkBody = {
   categoryId?: number | null
   title?: string
@@ -24,10 +29,10 @@ export default defineEventHandler(async (event) => {
 
   const body = (await readBody(event)) as UpdateLinkBody
 
-  const title = body?.title != null ? String(body.title).trim() : undefined
+  const title = body?.title != null ? String(body.title).trim().slice(0, MAX_TITLE_LENGTH) : undefined
   const url = body?.url != null ? String(body.url).trim() : undefined
-  const description = body?.description != null ? String(body.description).trim() : undefined
-  const iconUrl = body?.iconUrl != null ? String(body.iconUrl).trim() : undefined
+  const description = body?.description != null ? String(body.description).trim().slice(0, MAX_DESCRIPTION_LENGTH) : undefined
+  const iconUrl = body?.iconUrl != null ? String(body.iconUrl).trim().slice(0, MAX_ICON_URL_LENGTH) : undefined
   const isActive = body?.isActive != null ? Boolean(body.isActive) : undefined
   const isRecommended = body?.isRecommended != null ? Boolean(body.isRecommended) : undefined
   const sort = body?.sort != null ? Number(body.sort) : undefined

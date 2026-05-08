@@ -1,5 +1,10 @@
 import { getMySqlPool } from '../../utils/mysql'
 
+// 字段长度限制
+const MAX_TITLE_LENGTH = 100
+const MAX_DESCRIPTION_LENGTH = 765
+const MAX_ICON_URL_LENGTH = 500
+
 type CreateLinkBody = {
   categoryId?: number | null
   title?: string
@@ -18,10 +23,10 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = (await readBody(event)) as CreateLinkBody
-  const title = String(body?.title || '').trim()
+  const title = String(body?.title || '').trim().slice(0, MAX_TITLE_LENGTH)
   const url = String(body?.url || '').trim()
-  const description = String(body?.description || '').trim()
-  const iconUrl = String(body?.iconUrl || '').trim()
+  const description = String(body?.description || '').trim().slice(0, MAX_DESCRIPTION_LENGTH)
+  const iconUrl = String(body?.iconUrl || '').trim().slice(0, MAX_ICON_URL_LENGTH)
   const isActive = body?.isActive == null ? true : Boolean(body.isActive)
   const isRecommended = body?.isRecommended == null ? false : Boolean(body.isRecommended)
   const sort = Number(body?.sort || 0)
