@@ -57,4 +57,5 @@ ENV NODE_ENV=production
 ENV NUXT_HOST=0.0.0.0
 ENV NUXT_PORT=8991
 
+# 启动应用（正确读取 NUXT_PORT 环境变量）
 CMD ["sh", "-c", "PORT=$NUXT_PORT node nav/server/index.mjs"]

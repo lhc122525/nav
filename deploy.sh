@@ -4,10 +4,11 @@ set -e
 # ============================================
 # Ubuntu Server Docker 部署脚本
 # 用法: bash deploy.sh [action]
-#   action: deploy (默认) | build | start | stop | restart | logs | status
+#   action: deploy (默认) | build | start | stop | restart | logs | status | db-backup | db-restore
 # ============================================
 
 COMPOSE_FILE="docker-compose.prod.yml"
+BACKUP_DIR="./backup"
 ACTION="${1:-deploy}"
 
 cd "$(dirname "$0")"
@@ -17,6 +18,18 @@ if ! docker info > /dev/null 2>&1; then
     echo "[错误] Docker 未运行，请确保 Docker 已安装并启动"
     exit 1
 fi
+
+# 初始化备份目录
+init_backup_dir() {
+    mkdir -p "$BACKUP_DIR"
+}
+
+# 数据库配置
+DB_HOST="mysql"
+DB_PORT="3306"
+DB_USER="nszm"
+DB_PASS="nszm123.."
+DB_NAME="nav"
 
 # 执行操作
 case "$ACTION" in
@@ -79,9 +92,36 @@ case "$ACTION" in
         echo "=== 容器资源使用 ==="
         docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}" 2>/dev/null || true
         ;;
+    db-backup)
+        init_backup_dir
+        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+        BACKUP_FILE="$BACKUP_DIR/nav_${TIMESTAMP}.sql"
+        echo "正在备份数据库到: $BACKUP_FILE"
+        docker compose -f "$COMPOSE_FILE" exec -T mysql mysqldump \
+            -u"$DB_USER" -p"$DB_PASS" \
+            --hex-blob --single-transaction nav > "$BACKUP_FILE"
+        echo "[完成] 数据库已备份: $BACKUP_FILE"
+        echo "文件大小: $(du -h "$BACKUP_FILE" | cut -f1)"
+        ;;
+    db-restore)
+        if [ -z "$2" ]; then
+            echo "[错误] 请指定备份文件路径"
+            echo "用法: bash deploy.sh db-restore backup/nav_20240101_120000.sql"
+            exit 1
+        fi
+        BACKUP_FILE="$2"
+        if [ ! -f "$BACKUP_FILE" ]; then
+            echo "[错误] 文件不存在: $BACKUP_FILE"
+            exit 1
+        fi
+        echo "正在恢复数据库 from: $BACKUP_FILE"
+        docker compose -f "$COMPOSE_FILE" exec -T mysql mysql \
+            -u"$DB_USER" -p"$DB_PASS" --binary-mode=1 -f nav < "$BACKUP_FILE"
+        echo "[完成] 数据库已恢复"
+        ;;
     *)
         echo "[错误] 未知操作: $ACTION"
-        echo "用法: bash deploy.sh [deploy|build|start|stop|restart|logs|status]"
+        echo "用法: bash deploy.sh [deploy|build|start|stop|restart|logs|status|db-backup|db-restore]"
         exit 1
         ;;
 esac
