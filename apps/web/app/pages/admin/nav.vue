@@ -611,14 +611,22 @@ function selectRecommended() {
 
 function openCreate() {
   editing.value = null
-  form.categoryId = null
+  form.categoryId = categoryId.value ?? null
   form.title = ''
   form.url = ''
   form.description = ''
   form.iconUrl = ''
   form.isActive = true
   form.isRecommended = false
-  form.sort = 0
+
+  // 计算默认排序值：当前分类下导航总数 + 1
+  if (categoryId.value !== undefined) {
+    const count = rows.value.filter(r => r.categoryId === categoryId.value).length
+    form.sort = count + 1
+  } else {
+    form.sort = 1
+  }
+
   dialogOpen.value = true
 }
 

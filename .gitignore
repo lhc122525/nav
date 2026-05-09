@@ -39,3 +39,4 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+release.config.local.ps1

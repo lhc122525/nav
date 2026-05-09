@@ -1,194 +1,211 @@
-# Docker 部署指南
+# Docker Deployment Guide
 
-## 快速开始
+## Overview
 
-### 一键部署（推荐）
+Production deployment now supports two entry modes:
 
-在服务器项目目录下运行：
+- local trigger: run `deploy.ps1` / `rollback.ps1` on your own machine, then execute on the server by SSH
+- server direct trigger: log in to the server and run `scripts/deploy-remote.sh` / `scripts/rollback-remote.sh`
+
+Both entry modes share the same release logic and produce the same release manifest, backups, and rollback behavior.
+
+The deployment flow is versioned and includes:
+
+- release version generation
+- database backup before deployment
+- release manifest persistence
+- health checks after deployment
+- rollback to `previous` or a named release
+
+## Local Config Template
+
+Recommended setup:
+
+1. Copy `release.config.example.ps1`
+2. Save it as `release.config.local.ps1`
+3. Fill in your own server and SSH values
+
+`release.config.local.ps1` is ignored by Git and will be auto-loaded by both `deploy.ps1` and `rollback.ps1`.
+
+Example:
 
 ```powershell
-# PowerShell
+$ReleaseLocalSettings = @{
+    ServerHost        = "119.91.40.143"
+    ServerUser        = "ubuntu"
+    SshKeyPath        = "C:\Users\69464\.ssh\server_key"
+    RemoteProjectPath = "/home/ubuntu/navigationSite"
+    ComposeProjectName = "navigationsite"
+    HealthEndpoint    = "http://127.0.0.1:8991/api/links"
+    DatabaseName      = "nav"
+    MysqlRootPassword = "root_password"
+    KeepReleases      = 5
+    KeepBackups       = 10
+}
+```
+
+You can still override any value by passing explicit parameters on the command line.
+
+## Deploy
+
+### Run A Release
+
+```powershell
 .\deploy.ps1
-
-# 或 CMD
-deploy.bat
 ```
 
-### 其他操作
+This command will:
+
+- connect to the server by SSH
+- optionally run `git pull --ff-only`
+- create a new release version such as `20260508-173500`
+- back up MySQL before switching
+- snapshot the code into a release directory
+- build and start containers from that release
+- verify container health and HTTP health endpoint
+- write `.deploy/manifest.json`
+
+### Run A Release Directly On The Server
+
+```bash
+cd /home/ubuntu/navigationSite
+bash scripts/deploy-remote.sh
+```
+
+Optional flags:
+
+```bash
+bash scripts/deploy-remote.sh --skip-git-pull
+bash scripts/deploy-remote.sh --version 20260509-120000
+```
+
+### Skip Git Pull
 
 ```powershell
-# 查看服务状态
+.\deploy.ps1 -SkipGitPull
+```
+
+### View Status
+
+```powershell
 .\deploy.ps1 -Action status
+```
 
-# 查看日志
+### View Logs
+
+```powershell
 .\deploy.ps1 -Action logs
-
-# 重启服务
-.\deploy.ps1 -Action restart
-
-# 停止服务
-.\deploy.ps1 -Action stop
-
-# 仅构建镜像
-.\deploy.ps1 -Action build
 ```
 
----
-
-## 手动操作
-
-### 1. 构建并启动服务
+### View Status Directly On The Server
 
 ```bash
-# 使用默认配置启动
-docker compose -f docker-compose.prod.yml up -d
-
-# 或者使用自定义环境变量
-cp .env.docker .env
-# 编辑 .env 文件修改配置
-docker compose -f docker-compose.prod.yml --env-file .env up -d
+cd /home/ubuntu/navigationSite
+bash -lc 'source scripts/release-remote-common.sh && print_release_status .deploy/manifest.json'
 ```
 
-### 2. 查看服务状态
+## Rollback
 
-```bash
-docker compose -f docker-compose.prod.yml ps
-```
-
-### 3. 查看日志
-
-```bash
-# 查看所有服务日志
-docker compose -f docker-compose.prod.yml logs -f
-
-# 仅查看应用日志
-docker compose -f docker-compose.prod.yml logs -f app
-```
-
-### 4. 停止服务
-
-```bash
-docker compose -f docker-compose.prod.yml down
-```
-
----
-
-## 服务说明
-
-| 服务 | 端口 | 说明 |
-|------|------|------|
-| app | 8991 | Nuxt 应用 |
-| mysql | 8999 | MySQL 数据库 |
-| adminer | 8080 | 数据库管理工具（可选） |
-
----
-
-## 数据库管理
-
-### 启用 Adminer 管理工具
-
-```bash
-docker compose -f docker-compose.prod.yml --profile admin up -d
-```
-
-访问 `http://服务器IP:8080` 进行数据库管理。
-
----
-
-## 数据备份与恢复
-
-### Windows (PowerShell)
-
-#### 备份数据库
+### Roll Back To Previous Release
 
 ```powershell
-# 使用默认文件名
+.\rollback.ps1
+```
+
+### Roll Back Directly On The Server
+
+```bash
+cd /home/ubuntu/navigationSite
+bash scripts/rollback-remote.sh
+```
+
+### Roll Back To A Named Release
+
+```powershell
+.\rollback.ps1 -Version "20260508-173500"
+```
+
+Server-side:
+
+```bash
+bash scripts/rollback-remote.sh --version 20260508-173500
+```
+
+### Roll Back And Restore Database
+
+By default, database restore uses the backup recorded for the currently active release being rolled back from.
+
+```powershell
+.\rollback.ps1 -RestoreDatabase
+```
+
+Server-side:
+
+```bash
+bash scripts/rollback-remote.sh --restore-database
+```
+
+### Roll Back With A Specific Backup File
+
+```powershell
+.\rollback.ps1 `
+  -Version "20260508-173500" `
+  -RestoreDatabase `
+  -DatabaseBackupFile "/home/ubuntu/navigationSite/.deploy/backups/db/nav_before_20260508-173500.sql"
+```
+
+Server-side:
+
+```bash
+bash scripts/rollback-remote.sh \
+  --version 20260508-173500 \
+  --restore-database \
+  --database-backup-file /home/ubuntu/navigationSite/.deploy/backups/db/nav_before_20260508-173500.sql
+```
+
+## Server Layout
+
+After the first successful release, the server creates these paths under the remote project directory:
+
+```text
+.deploy/
+├── manifest.json
+├── backups/
+│   └── db/
+│       └── nav_before_<version>.sql
+└── releases/
+    └── <version>/
+```
+
+`manifest.json` stores:
+
+- `current`: current active release version
+- `previous`: previous active release version
+- `releases`: release history, commit, backup file, release dir, status
+
+## Manual Docker Operations
+
+If you need to inspect containers directly on the server:
+
+```bash
+docker ps
+docker logs -f navigation_app
+docker exec -it navigation_mysql mysql -uroot -p
+```
+
+## Local Database Utilities
+
+These scripts are still available for direct database maintenance when you are already operating against a local or directly connected Docker environment:
+
+```powershell
 .\scripts\backup.ps1
-
-# 指定备份名称
-.\scripts\backup.ps1 -BackupName "my_backup"
-```
-
-#### 恢复数据库
-
-```powershell
-# 恢复指定备份
 .\scripts\restore.ps1 -BackupFile "nav_backup_20260506_120000.sql.gz"
-```
-
-#### 从其他服务器迁移
-
-```powershell
-# 导入 SQL 文件
 .\scripts\migrate.ps1 -SqlFile ".\old_database.sql"
 ```
 
-### Linux/macOS (Bash)
+## Notes
 
-#### 备份数据库
-
-```bash
-# 使用默认文件名
-./scripts/backup.sh
-
-# 指定备份名称
-./scripts/backup.sh my_backup
-```
-
-#### 恢复数据库
-
-```bash
-./scripts/restore.sh nav_backup_20260506_120000.sql.gz
-```
-
----
-
-## 常见问题
-
-### Q: 如何修改端口？
-
-编辑 `.env.docker` 文件或直接修改 `docker-compose.prod.yml` 中的端口映射。
-
-### Q: 数据存储在哪里？
-
-MySQL 数据存储在 Docker Volume `mysql_data` 中，可通过以下命令查看：
-
-```bash
-docker volume inspect navigation_mysql_data
-```
-
-### Q: 如何查看容器资源使用？
-
-```bash
-docker stats navigation_app navigation_mysql
-```
-
-### Q: 如何进入 MySQL 容器执行 SQL？
-
-```bash
-docker exec -it navigation_mysql mysql -u root -p
-```
-
-### Q: 备份文件存储在哪里？
-
-备份文件存储在项目根目录的 `./backup/` 文件夹中，默认保留最近 7 个备份。
-
----
-
-## 目录结构
-
-```text
-.
-├── Dockerfile                 # 应用镜像构建文件
-├── docker-compose.prod.yml    # 生产环境编排文件
-├── .dockerignore              # Docker 构建忽略文件
-├── .env.docker                # 环境变量模板
-├── deploy.ps1                 # 部署脚本 (PowerShell)
-├── deploy.bat                 # 部署脚本 (CMD)
-├── backup/                    # 数据库备份目录
-│   └── nav_backup_*.sql.gz
-└── scripts/                   # 运维脚本
-    ├── backup.ps1             # 备份脚本 (Windows)
-    ├── restore.ps1            # 恢复脚本 (Windows)
-    └── migrate.ps1            # 迁移脚本 (Windows)
-```
+- `deploy.ps1 -Action status` will show `No release manifest yet` before the first versioned deployment.
+- `deploy-remote.sh` and `rollback-remote.sh` are the server-native entrypoints. They use the same manifest and release directories as the PowerShell wrappers.
+- Rollback without `-RestoreDatabase` only switches the application version and keeps current database contents.
+- Rollback with `-RestoreDatabase` is the safer choice when a failed deployment also changed data or schema.

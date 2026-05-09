@@ -1,163 +1,123 @@
 # ============================================
-# Windows Server 部署脚本
-# 用法: .\deploy.ps1 [-Action <操作>]
-#   -Action: deploy (默认) | build | start | stop | restart | logs | status
+# Versioned deployment script
+# Usage: .\deploy.ps1 [-Action deploy|status|logs] [other parameters]
 # ============================================
 
 param(
-    [ValidateSet("deploy", "build", "start", "stop", "restart", "logs", "status")]
-    [string]$Action = "deploy"
+    [ValidateSet("deploy", "status", "logs")]
+    [string]$Action = "deploy",
+    [string]$ServerHost = "",
+    [string]$ServerUser = "",
+    [string]$SshKeyPath = "",
+    [string]$RemoteProjectPath = "",
+    [string]$ComposeProjectName = "",
+    [string]$HealthEndpoint = "",
+    [string]$DatabaseName = "",
+    [string]$MysqlRootPassword = "",
+    [int]$KeepReleases = 0,
+    [int]$KeepBackups = 0,
+    [switch]$SkipGitPull
 )
 
-# 颜色函数
-function Write-ColorOutput {
-    param([string]$Message, [string]$Color = "White")
-    Write-Host $Message -ForegroundColor $Color
-}
+. (Join-Path $PSScriptRoot "scripts\release-common.ps1")
 
-# 配置
-$ComposeFile = "docker-compose.prod.yml"
-$ProjectName = "navigation"
+$LocalSettings = Import-ReleaseLocalSettings -ProjectRoot $PSScriptRoot
 
-# 检查 Docker 是否运行
-function Test-Docker {
-    try {
-        docker info | Out-Null
-        return $true
-    } catch {
-        return $false
-    }
-}
+$ServerHost = Resolve-ReleaseSetting -ExplicitValue $ServerHost -LocalValue $LocalSettings.ServerHost -EnvValue $env:NAV_SERVER_HOST -FallbackValue ""
+$ServerUser = Resolve-ReleaseSetting -ExplicitValue $ServerUser -LocalValue $LocalSettings.ServerUser -EnvValue $env:NAV_SERVER_USER -FallbackValue "ubuntu"
+$SshKeyPath = Resolve-ReleaseSetting -ExplicitValue $SshKeyPath -LocalValue $LocalSettings.SshKeyPath -EnvValue $env:NAV_SSH_KEY_PATH -FallbackValue ""
+$RemoteProjectPath = Resolve-ReleaseSetting -ExplicitValue $RemoteProjectPath -LocalValue $LocalSettings.RemoteProjectPath -EnvValue $env:NAV_REMOTE_PROJECT_PATH -FallbackValue ""
+$ComposeProjectName = Resolve-ReleaseSetting -ExplicitValue $ComposeProjectName -LocalValue $LocalSettings.ComposeProjectName -EnvValue $env:NAV_COMPOSE_PROJECT_NAME -FallbackValue "navigationsite"
+$HealthEndpoint = Resolve-ReleaseSetting -ExplicitValue $HealthEndpoint -LocalValue $LocalSettings.HealthEndpoint -EnvValue $env:NAV_HEALTH_ENDPOINT -FallbackValue "http://127.0.0.1:8991/api/links"
+$DatabaseName = Resolve-ReleaseSetting -ExplicitValue $DatabaseName -LocalValue $LocalSettings.DatabaseName -EnvValue $env:MYSQL_DATABASE -FallbackValue "nav"
+$MysqlRootPassword = Resolve-ReleaseSetting -ExplicitValue $MysqlRootPassword -LocalValue $LocalSettings.MysqlRootPassword -EnvValue $env:MYSQL_ROOT_PASSWORD -FallbackValue "root_password"
+if ($KeepReleases -le 0) { $KeepReleases = [int](Resolve-ReleaseSetting -ExplicitValue "" -LocalValue $LocalSettings.KeepReleases -EnvValue "" -FallbackValue 5) }
+if ($KeepBackups -le 0) { $KeepBackups = [int](Resolve-ReleaseSetting -ExplicitValue "" -LocalValue $LocalSettings.KeepBackups -EnvValue "" -FallbackValue 10) }
 
-# 拉取最新代码
-function Update-Code {
-    Write-ColorOutput "=== 拉取最新代码 ===" "Yellow"
+$Config = New-ReleaseConfig `
+    -ServerHost $ServerHost `
+    -ServerUser $ServerUser `
+    -SshKeyPath $SshKeyPath `
+    -RemoteProjectPath $RemoteProjectPath `
+    -ComposeProjectName $ComposeProjectName `
+    -HealthEndpoint $HealthEndpoint `
+    -DatabaseName $DatabaseName `
+    -MysqlRootPassword $MysqlRootPassword `
+    -KeepReleases $KeepReleases `
+    -KeepBackups $KeepBackups
 
-    # 检查是否有未提交的更改
-    $status = git status --porcelain
-    if ($status) {
-        Write-ColorOutput "警告: 存在未提交的更改" "Red"
-        git status --short
-        $confirm = Read-Host "是否继续？(y/N)"
-        if ($confirm -ne "y" -and $confirm -ne "Y") {
-            Write-ColorOutput "操作已取消" "Red"
-            exit 1
-        }
-    }
+function Invoke-Deploy {
+    $version = New-ReleaseVersion
 
-    git pull
-    if ($LASTEXITCODE -ne 0) {
-        Write-ColorOutput "错误: Git pull 失败" "Red"
-        exit 1
-    }
-
-    Write-ColorOutput "代码更新完成" "Green"
-}
-
-# 构建镜像
-function Build-Image {
-    Write-ColorOutput "=== 构建 Docker 镜像 ===" "Yellow"
-
-    docker compose -f $ComposeFile build --no-cache
-    if ($LASTEXITCODE -ne 0) {
-        Write-ColorOutput "错误: 构建失败" "Red"
-        exit 1
-    }
-
-    Write-ColorOutput "镜像构建完成" "Green"
-}
-
-# 启动服务
-function Start-Services {
-    Write-ColorOutput "=== 启动服务 ===" "Yellow"
-
-    docker compose -f $ComposeFile up -d
-    if ($LASTEXITCODE -ne 0) {
-        Write-ColorOutput "错误: 启动失败" "Red"
-        exit 1
-    }
-
-    Write-ColorOutput "服务启动完成" "Green"
-    Show-Status
-}
-
-# 停止服务
-function Stop-Services {
-    Write-ColorOutput "=== 停止服务 ===" "Yellow"
-
-    docker compose -f $ComposeFile down
-    Write-ColorOutput "服务已停止" "Green"
-}
-
-# 重启服务
-function Restart-Services {
-    Write-ColorOutput "=== 重启服务 ===" "Yellow"
-
-    docker compose -f $ComposeFile restart
-    Write-ColorOutput "服务已重启" "Green"
-    Show-Status
-}
-
-# 查看日志
-function Show-Logs {
-    docker compose -f $ComposeFile logs -f --tail 100
-}
-
-# 查看状态
-function Show-Status {
-    Write-ColorOutput "`n=== 服务状态 ===" "Yellow"
-    docker compose -f $ComposeFile ps
-
-    Write-ColorOutput "`n=== 容器资源使用 ===" "Yellow"
-    docker stats --no-stream navigation_app navigation_mysql 2>$null
-}
-
-# 完整部署流程
-function Deploy-Full {
     Write-ColorOutput "=====================================" "Cyan"
-    Write-ColorOutput "     开始完整部署流程" "Cyan"
-    Write-ColorOutput "=====================================`n" "Cyan"
+    Write-ColorOutput "  Start release deployment: $version" "Cyan"
+    Write-ColorOutput "=====================================" "Cyan"
+    Write-ColorOutput "Server: $($Config.ServerUser)@$($Config.ServerHost)" "White"
+    Write-ColorOutput "Project path: $($Config.RemoteProjectPath)" "White"
+    Write-ColorOutput "Health endpoint: $($Config.HealthEndpoint)`n" "White"
 
-    # 检查 Docker
-    if (-not (Test-Docker)) {
-        Write-ColorOutput "错误: Docker 未运行，请先启动 Docker Desktop" "Red"
-        exit 1
+    $remoteScriptPath = "/tmp/navigation_deploy_remote.sh"
+    $target = "$($Config.ServerUser)@$($Config.ServerHost)"
+    $localScriptPath = Join-Path $PSScriptRoot "scripts\deploy-remote.sh"
+
+    & scp -i $Config.SshKeyPath $localScriptPath "${target}:$remoteScriptPath"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Remote script upload failed"
     }
 
-    # 1. 拉取代码
-    Update-Code
+    try {
+        $command = @(
+            "bash",
+            (Escape-BashArgument -Value $remoteScriptPath),
+            "--project-path",
+            (Escape-BashArgument -Value $Config.RemoteProjectPath),
+            "--version",
+            (Escape-BashArgument -Value $version),
+            "--database-name",
+            (Escape-BashArgument -Value $Config.DatabaseName),
+            "--mysql-root-password",
+            (Escape-BashArgument -Value $Config.MysqlRootPassword),
+            "--compose-project-name",
+            (Escape-BashArgument -Value $Config.ComposeProjectName),
+            "--health-endpoint",
+            (Escape-BashArgument -Value $Config.HealthEndpoint),
+            "--keep-releases",
+            (Escape-BashArgument -Value ([string]$Config.KeepReleases)),
+            "--keep-backups",
+            (Escape-BashArgument -Value ([string]$Config.KeepBackups))
+        )
 
-    # 2. 构建镜像
-    Build-Image
+        if ($SkipGitPull.IsPresent) {
+            $command += "--skip-git-pull"
+        }
 
-    # 3. 启动服务
-    Start-Services
-
-    Write-ColorOutput "`n=====================================" "Green"
-    Write-ColorOutput "     部署完成！" "Green"
-    Write-ColorOutput "=====================================" "Green"
-    Write-ColorOutput "`n访问地址:" "Cyan"
-    Write-ColorOutput "  应用: http://localhost:8991" "White"
-    Write-ColorOutput "  MySQL: localhost:8999" "White"
-    Write-ColorOutput "  Adminer: http://localhost:8080 (需启用 admin profile)`n" "White"
+        Invoke-RemoteCommand -Config $Config -Command ($command -join " ")
+    }
+    finally {
+        Invoke-RemoteCommand -Config $Config -Command ("rm -f " + (Escape-BashArgument -Value $remoteScriptPath))
+    }
 }
 
-# 主逻辑
+function Show-Status {
+    $remoteScript = @'
+#!/usr/bin/env bash
+set -euo pipefail
+source "$1/scripts/release-remote-common.sh"
+print_release_status "$1/.deploy/manifest.json"
+'@
+
+    Invoke-RemoteBashScript -Config $Config -ScriptContent $remoteScript -Arguments @(
+        $Config.RemoteProjectPath
+    )
+}
+
+function Show-Logs {
+    Write-ColorOutput "Following remote app logs. Press Ctrl+C to stop." "Yellow"
+    Invoke-RemoteCommand -Config $Config -Command "docker logs -f --tail 100 navigation_app"
+}
+
 switch ($Action) {
-    "deploy" { Deploy-Full }
-    "build" {
-        if (-not (Test-Docker)) { Write-ColorOutput "错误: Docker 未运行" "Red"; exit 1 }
-        Build-Image
-    }
-    "start" {
-        if (-not (Test-Docker)) { Write-ColorOutput "错误: Docker 未运行" "Red"; exit 1 }
-        Start-Services
-    }
-    "stop" { Stop-Services }
-    "restart" {
-        if (-not (Test-Docker)) { Write-ColorOutput "错误: Docker 未运行" "Red"; exit 1 }
-        Restart-Services
-    }
-    "logs" { Show-Logs }
+    "deploy" { Invoke-Deploy }
     "status" { Show-Status }
+    "logs" { Show-Logs }
 }

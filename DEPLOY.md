@@ -1,62 +1,168 @@
 # 部署指南
 
+## 当前方案
+
+当前项目已切换为 `Docker Compose + 版本化发布 + 快速回滚`，不再使用 PM2。
+
+现在有两种发布方式：
+
+- 本地触发：在自己电脑上运行 `deploy.ps1` / `rollback.ps1`，通过 SSH 到服务器执行
+- 服务器直发版：登录服务器后直接运行 `scripts/deploy-remote.sh` / `scripts/rollback-remote.sh`
+
+两种方式共用同一套发布逻辑，都会写入：
+
+- `.deploy/manifest.json`
+- `.deploy/releases/<version>/`
+- `.deploy/backups/db/nav_before_<version>.sql`
+
 ## 环境要求
 
-- Node.js >= 18
-- pnpm
-- PM2
-- MySQL 数据库
+### 本地触发模式
 
-## 快速部署
+- Windows PowerShell
+- `ssh`
+- `scp`
+- 可访问服务器的 SSH 私钥
 
-### 1. 首次部署
+### 服务器直发版模式
 
-双击运行 `deploy.bat` 或在项目根目录执行：
+- Ubuntu / Linux
+- Docker 与 Docker Compose
+- Git
+- Python 3
+- curl
 
-```bash
-# 安装依赖
-pnpm install
+## 本地触发发布
 
-# 构建生产版本
-pnpm build:prod
+### 1. 准备本地配置
 
-# 启动服务
-pm2 start ecosystem.config.json
+复制 `release.config.example.ps1` 为 `release.config.local.ps1`，填写服务器参数。
+
+示例：
+
+```powershell
+$ReleaseLocalSettings = @{
+    ServerHost         = "119.91.40.143"
+    ServerUser         = "ubuntu"
+    SshKeyPath         = "C:\Users\69464\.ssh\server_key"
+    RemoteProjectPath  = "/home/ubuntu/navigationSite"
+    ComposeProjectName = "navigationsite"
+    HealthEndpoint     = "http://127.0.0.1:8991/api/links"
+    DatabaseName       = "nav"
+    MysqlRootPassword  = "root_password"
+    KeepReleases       = 5
+    KeepBackups        = 10
+}
 ```
 
-### 2. 更新部署
+### 2. 发版
 
-```bash
-# 拉取最新代码
-git pull
-
-# 重新构建
-pnpm build:prod
-
-# 重启服务
-pm2 restart navigation-site
+```powershell
+.\deploy.ps1
 ```
 
-## PM2 常用命令
+### 3. 查看状态
 
-```bash
-pm2 list                      # 查看进程列表
-pm2 logs                      # 查看日志
-pm2 logs navigation-site      # 查看指定服务日志
-pm2 restart navigation-site   # 重启服务
-pm2 stop navigation-site      # 停止服务
-pm2 delete navigation-site    # 删除服务
-pm2 monit                     # 监控面板
+```powershell
+.\deploy.ps1 -Action status
 ```
 
-## 宝塔反向代理配置
+### 4. 查看日志
 
-1. 在宝塔中创建网站（纯静态即可）
-2. 设置反向代理：
-   - 目标URL: `http://127.0.0.1:8991`
-   - 发送域名: `$host`
+```powershell
+.\deploy.ps1 -Action logs
+```
 
-### Nginx 配置示例
+### 5. 回滚
+
+默认回滚到 `previous`：
+
+```powershell
+.\rollback.ps1
+```
+
+指定版本回滚：
+
+```powershell
+.\rollback.ps1 -Version "20260509-103922"
+```
+
+带数据库恢复回滚：
+
+```powershell
+.\rollback.ps1 -RestoreDatabase
+```
+
+## 服务器直发版
+
+### 1. 登录服务器
+
+```bash
+ssh -i ~/.ssh/server_key ubuntu@119.91.40.143
+cd /home/ubuntu/navigationSite
+```
+
+### 2. 发版
+
+```bash
+bash scripts/deploy-remote.sh
+```
+
+跳过拉代码：
+
+```bash
+bash scripts/deploy-remote.sh --skip-git-pull
+```
+
+指定版本号：
+
+```bash
+bash scripts/deploy-remote.sh --version 20260509-120000
+```
+
+### 3. 回滚
+
+默认回滚：
+
+```bash
+bash scripts/rollback-remote.sh
+```
+
+指定版本回滚：
+
+```bash
+bash scripts/rollback-remote.sh --version 20260509-103922
+```
+
+带数据库恢复回滚：
+
+```bash
+bash scripts/rollback-remote.sh --restore-database
+```
+
+指定数据库备份文件：
+
+```bash
+bash scripts/rollback-remote.sh \
+  --version 20260509-103922 \
+  --restore-database \
+  --database-backup-file /home/ubuntu/navigationSite/.deploy/backups/db/nav_before_20260509-103922.sql
+```
+
+### 4. 服务器本地查看状态
+
+```bash
+cd /home/ubuntu/navigationSite
+bash -lc 'source scripts/release-remote-common.sh && print_release_status .deploy/manifest.json'
+```
+
+## 反向代理
+
+如果你使用宝塔或 Nginx，继续反代到应用容器暴露的端口即可：
+
+- 目标地址：`http://127.0.0.1:8991`
+
+示例：
 
 ```nginx
 location / {
@@ -72,44 +178,52 @@ location / {
 }
 ```
 
-## 环境变量配置
+## 目录说明
 
-编辑 `ecosystem.config.json` 中的 `env` 部分：
-
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| PORT | 服务端口 | 8991 |
-| NUXT_MYSQL_HOST | MySQL 主机 | 127.0.0.1 |
-| NUXT_MYSQL_PORT | MySQL 端口 | 3306 |
-| NUXT_MYSQL_USER | MySQL 用户 | feileyu |
-| NUXT_MYSQL_PASSWORD | MySQL 密码 | - |
-| NUXT_MYSQL_DATABASE | 数据库名 | feileyu |
-| NUXT_PUBLIC_SITE_NAME | 站点名称 | 非乐鱼 |
-| NUXT_PUBLIC_SITE_URL | 站点 URL | http://feileyu.cn |
-
-## 开机自启动
-
-```bash
-# 保存当前 PM2 进程列表
-pm2 save
-
-# 生成开机启动脚本
-pm2-startup
+```text
+.deploy/
+├── manifest.json
+├── backups/
+│   └── db/
+│       └── nav_before_<version>.sql
+└── releases/
+    └── <version>/
 ```
+
+`manifest.json` 关键字段：
+
+- `current`: 当前线上版本
+- `previous`: 上一个版本
+- `releases`: 发布历史、备份文件、状态、时间
 
 ## 故障排查
 
-### 查看错误日志
+### 查看容器状态
+
 ```bash
-pm2 logs navigation-site --err
+docker ps
 ```
 
-### 查看输出日志
+### 查看应用日志
+
 ```bash
-pm2 logs navigation-site --out
+docker logs -f navigation_app
 ```
 
-### 检查端口占用
+### 进入 MySQL 容器
+
 ```bash
-netstat -ano | findstr :8991
+docker exec -it navigation_mysql mysql -uroot -p
+```
+
+### 查看当前发布状态
+
+```powershell
+.\deploy.ps1 -Action status
+```
+
+或在服务器：
+
+```bash
+bash -lc 'source scripts/release-remote-common.sh && print_release_status .deploy/manifest.json'
 ```
