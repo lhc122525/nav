@@ -12,7 +12,8 @@ export default defineConfig({
   },
   base: '/tools-sub/ip/',
   build: {
-    outDir: '../../web/public/tools-sub/ip',
+    // 输出到 apps/web/public，Nitro 构建时会随 Nuxt 一并打进生产包（nav/public）
+    outDir: '../web/public/tools-sub/ip',
     emptyOutDir: true
   }
 })

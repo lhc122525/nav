@@ -10,6 +10,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY turbo.json ./
 COPY apps/web/package.json ./apps/web/
+COPY apps/tool-ip/package.json ./apps/tool-ip/
 
 RUN pnpm install --frozen-lockfile
 
@@ -28,10 +29,14 @@ COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY turbo.json ./
 COPY apps/web ./apps/web
+COPY apps/tool-ip ./apps/tool-ip
 
 WORKDIR /app/apps/web
 
 COPY apps/web/.env.prod .env.prod
+
+# 先构建微应用（产物输出到 apps/web/public/tools-sub，随 Nuxt 一并打包）
+RUN pnpm --filter tool-ip build
 
 RUN pnpm build:prod
 

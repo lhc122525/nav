@@ -99,20 +99,35 @@ async function fetchIpInfo() {
   error.value = ''
 
   try {
-    // 使用免费的 IP 查询 API
-    const response = await fetch('https://ipapi.co/json/')
-    if (!response.ok) {
+    // 优先使用宿主（Nuxt）服务端接口：同源请求，不受第三方 API 拦截/跨域影响
+    let res = await fetch('/api/tools/ip')
+    if (res.ok) {
+      const data = await res.json()
+      ipInfo.value = {
+        ip: data.ip || '',
+        country: data.country || '',
+        region: data.region || '',
+        city: data.city || '',
+        isp: data.isp || '',
+        timezone: data.timezone || ''
+      }
+      return
+    }
+
+    // 独立运行（未挂载到宿主）时回退到公共 API
+    // 注意：ipapi.co 已启用 Cloudflare 人机验证，浏览器直连会被拦截，故改用 ipwho.is
+    res = await fetch('https://ipwho.is/')
+    if (!res.ok) {
       throw new Error('获取IP信息失败')
     }
-    const data = await response.json()
-
+    const data = await res.json()
     ipInfo.value = {
       ip: data.ip || '',
-      country: data.country_name || '',
+      country: data.country || '',
       region: data.region || '',
       city: data.city || '',
-      isp: data.org || '',
-      timezone: data.timezone || ''
+      isp: data.connection?.isp || data.connection?.org || '',
+      timezone: data.timezone?.id || ''
     }
   } catch (e) {
     error.value = '获取IP信息失败，请稍后重试'

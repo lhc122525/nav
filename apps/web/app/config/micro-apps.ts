@@ -13,7 +13,7 @@ const devApps: MicroAppConfig[] = [
     name: 'tool-ip',
     title: '获取当前IP',
     icon: 'Location',
-    entry: '//localhost:8989',
+    entry: '//localhost:8979',
     activeRule: '/tools/ip',
     description: '查看您的公网IP地址和地理位置信息'
   }
