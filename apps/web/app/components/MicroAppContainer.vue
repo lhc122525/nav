@@ -1,9 +1,13 @@
 <template>
-  <div id="micro-app-container" class="micro-app-container">
+  <div class="micro-app-wrap">
     <div v-if="loading" class="loading-container">
       <el-icon class="loading-icon" :size="40"><Loading /></el-icon>
       <p>加载中...</p>
     </div>
+    <!-- qiankun 容器：必须保持为空。
+         qiankun 挂载时会清空容器内所有子节点，若宿主把 Vue 管理的节点（如 v-if loading）
+         放在里面，会被 qiankun 移除出 DOM，导致宿主 Vue 后续补丁时 parentNode 为 null 报错 -->
+    <div id="micro-app-container" class="micro-app-container" :class="{ 'is-loading': loading }"></div>
   </div>
 </template>
 
@@ -68,6 +72,10 @@ onBeforeUnmount(() => {
 <style scoped>
 .micro-app-container {
   min-height: calc(100vh - 180px);
+}
+
+.micro-app-container.is-loading {
+  min-height: 0;
 }
 
 .loading-container {
