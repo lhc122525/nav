@@ -1,13 +1,43 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
+<!DOCTYPE html><html lang="zh-CN"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>获取当前IP</title>
-  <script type="module" crossorigin src="/tools-sub/ip/assets/index-Dlva6JmS.js"></script>
-  <link rel="stylesheet" crossorigin href="/tools-sub/ip/assets/index-BE3gN-oi.css">
+  <script crossorigin="">import('/tools-sub/ip/assets/index-U1ahteeu.js').finally(() => {
+            
+    const qiankunLifeCycle = window.moudleQiankunAppLifeCycles && window.moudleQiankunAppLifeCycles['tool-ip'];
+    if (qiankunLifeCycle) {
+      window.proxy.vitemount((props) => qiankunLifeCycle.mount(props));
+      window.proxy.viteunmount((props) => qiankunLifeCycle.unmount(props));
+      window.proxy.vitebootstrap(() => qiankunLifeCycle.bootstrap());
+      window.proxy.viteupdate((props) => qiankunLifeCycle.update(props));
+    }
+  
+          })</script>
+  <link rel="stylesheet" crossorigin="" href="/tools-sub/ip/assets/index-BE3gN-oi.css">
 </head>
 <body>
-  <div id="app"></div>
-</body>
-</html>
+  <div id="app"></div>
+
+
+<script>
+  const createDeffer = (hookName) => {
+    const d = new Promise((resolve, reject) => {
+      window.proxy && (window.proxy[`vite${hookName}`] = resolve)
+    })
+    return props => d.then(fn => fn(props));
+  }
+  const bootstrap = createDeffer('bootstrap');
+  const mount = createDeffer('mount');
+  const unmount = createDeffer('unmount');
+  const update = createDeffer('update');
+
+  ;(global => {
+    global.qiankunName = 'tool-ip';
+    global['tool-ip'] = {
+      bootstrap,
+      mount,
+      unmount,
+      update
+    };
+  })(window);
+</script></body></html>

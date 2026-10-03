@@ -33,6 +33,9 @@ onMounted(() => {
         basePath: '/tools/' + props.name.replace('tool-', '')
       }
     },
+    {},
+    // 生命周期钩子必须作为第 3 个参数传入（qiankun 的 loadMicroApp 签名），
+    // 传到第 2 个参数里会被忽略，导致 loading 永远不结束
     {
       beforeLoad: () => {
         loading.value = true
