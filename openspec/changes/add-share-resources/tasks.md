@@ -30,3 +30,8 @@
 - [x] 5.2 提交并推送代码（5d7315f），运行 `deploy.ps1` 版本化发布成功（版本 20261006-010228，含发布前数据库备份与健康检查）。注：首次运行发现本地触发发布在 Windows 下两个缺陷——上传脚本带 CRLF 导致远端 `set: pipefail` 报错、未上传 `release-remote-common.sh` 公共脚本，已修复 `deploy.ps1`（LF 规范化 + 一并上传）
 - [x] 5.3 发布成功后对生产库应用 0004 迁移（`share_resources` 建表 + created/type 索引齐全，结构与开发库一致）
 - [x] 5.4 生产验证通过：/api/links 200、首页 200、/admin/share 302 登录守卫、/api/admin/share-resources 401 鉴权、donate 静态图 200（卷初始化正常）、容器内 NUXT_UPLOAD_DIR=/app/nav/public/uploads、`navigationsite_app_uploads` 卷挂载正确
+
+## 6. 生产问题修复（2026-10-06）
+
+- [x] 6.1 修复上传 413：`feileyu.cn` Nginx vhost 缺少 `client_max_body_size`（默认 1m），已加 `client_max_body_size 200m` 并 reload（备份 feileyu.cn.bak.20261006upload）；DEPLOY.md 反代示例同步补充
+- [x] 6.2 修复上传文件 404：生产 Nitro 仅按构建期清单服务 public 静态资源，运行期写入 `/uploads/share/**` 的文件不被服务（dev 实时读盘未暴露）。新增 `server/routes/uploads/[...path].get.ts` 显式路由按磁盘实时读取（含 Range/206 支持、常见 MIME、`..` 穿越防护），本地验证 5/5 通过（完整 200、Range 206、donate 兼容、404、穿越拒绝）
