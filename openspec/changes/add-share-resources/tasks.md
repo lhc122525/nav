@@ -34,4 +34,4 @@
 ## 6. 生产问题修复（2026-10-06）
 
 - [x] 6.1 修复上传 413：`feileyu.cn` Nginx vhost 缺少 `client_max_body_size`（默认 1m），已加 `client_max_body_size 200m` 并 reload（备份 feileyu.cn.bak.20261006upload）；DEPLOY.md 反代示例同步补充
-- [x] 6.2 修复上传文件 404：生产 Nitro 仅按构建期清单服务 public 静态资源，运行期写入 `/uploads/share/**` 的文件不被服务（dev 实时读盘未暴露）。新增 `server/routes/uploads/[...path].get.ts` 显式路由按磁盘实时读取（含 Range/206 支持、常见 MIME、`..` 穿越防护），本地验证 5/5 通过（完整 200、Range 206、donate 兼容、404、穿越拒绝）
+- [x] 6.2 修复上传文件 404：生产 Nitro 仅按构建期清单服务 public 静态资源，运行期写入 `/uploads/share/**` 的文件不被服务（dev 实时读盘未暴露）。新增 `server/routes/uploads/[...path].ts` 显式路由按磁盘实时读取（支持 GET/HEAD、Range/206、常见 MIME、`..` 穿越防护），本地验证通过（完整 200、Range 206、HEAD 200/206、donate 兼容、404、穿越拒绝）

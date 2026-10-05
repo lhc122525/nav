@@ -36,7 +36,6 @@ const MIME_TYPES: Record<string, string> = {
 
 export default defineEventHandler(async (event) => {
   const rel = decodeURIComponent(String(getRouterParam(event, 'path') || ''))
-  // 防目录穿越：仅允许 uploads 目录内的常规相对路径
   if (!rel || rel.includes('..') || rel.includes('\\')) {
     throw createError({ statusCode: 400, statusMessage: '非法路径' })
   }
@@ -51,7 +50,6 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'Content-Type', contentType)
   setHeader(event, 'Accept-Ranges', 'bytes')
 
-  // 支持 Range 请求（视频拖动播放、断点续传）
   const rangeHeader = getRequestHeader(event, 'range')
   const rangeMatch = rangeHeader ? /^bytes=(\d*)-(\d*)$/.exec(rangeHeader.trim()) : null
 
@@ -59,23 +57,34 @@ export default defineEventHandler(async (event) => {
     const [, rawStart, rawEnd] = rangeMatch
     let start = rawStart ? Number(rawStart) : 0
     let end = rawEnd ? Number(rawEnd) : stats.size - 1
-    // 后缀区间：bytes=-N 表示最后 N 个字节
+
     if (!rawStart && rawEnd) {
       start = Math.max(0, stats.size - Number(rawEnd))
       end = stats.size - 1
     }
+
     if (Number.isNaN(start) || Number.isNaN(end) || start > end || start >= stats.size) {
       setHeader(event, 'Content-Range', `bytes */${stats.size}`)
       throw createError({ statusCode: 416, statusMessage: 'Range Not Satisfiable' })
     }
-    end = Math.min(end, stats.size - 1)
 
+    end = Math.min(end, stats.size - 1)
     setHeader(event, 'Content-Range', `bytes ${start}-${end}/${stats.size}`)
     setHeader(event, 'Content-Length', end - start + 1)
+
+    if (getMethod(event) === 'HEAD') {
+      setResponseStatus(event, 206)
+      return ''
+    }
+
     setResponseStatus(event, 206)
     return sendStream(event, createReadStream(filePath, { start, end }))
   }
 
   setHeader(event, 'Content-Length', stats.size)
+  if (getMethod(event) === 'HEAD') {
+    return ''
+  }
+
   return sendStream(event, createReadStream(filePath))
 })
