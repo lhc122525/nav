@@ -26,7 +26,7 @@
 
 ## 5. 生产部署（2026-10-05）
 
-- [ ] 5.1 `docker-compose.prod.yml`：app 服务设置 `NUXT_UPLOAD_DIR=/app/nav/public/uploads`（修复容器内上传写入路径不可访问）并挂载 `app_uploads` 命名卷持久化上传文件（发版后保留；首次挂载自动从镜像内容初始化）
-- [ ] 5.2 提交并推送代码，运行 `deploy.ps1` 版本化发布（含发布前数据库备份与健康检查）
-- [ ] 5.3 发布成功后对生产库应用 0004 迁移（`share_resources` 建表 + 索引；生产库 drizzle journal 为空，按项目惯例直接执行 SQL）
-- [ ] 5.4 生产验证：健康检查通过、`share_resources` 表存在、`/admin/share` 页面与接口鉴权正常、上传文件外部可访问且持久
+- [x] 5.1 `docker-compose.prod.yml`：app 服务设置 `NUXT_UPLOAD_DIR=/app/nav/public/uploads`（修复容器内上传写入路径不可访问）并挂载 `app_uploads` 命名卷持久化上传文件（发版后保留；首次挂载自动从镜像内容初始化）
+- [x] 5.2 提交并推送代码（5d7315f），运行 `deploy.ps1` 版本化发布成功（版本 20261006-010228，含发布前数据库备份与健康检查）。注：首次运行发现本地触发发布在 Windows 下两个缺陷——上传脚本带 CRLF 导致远端 `set: pipefail` 报错、未上传 `release-remote-common.sh` 公共脚本，已修复 `deploy.ps1`（LF 规范化 + 一并上传）
+- [x] 5.3 发布成功后对生产库应用 0004 迁移（`share_resources` 建表 + created/type 索引齐全，结构与开发库一致）
+- [x] 5.4 生产验证通过：/api/links 200、首页 200、/admin/share 302 登录守卫、/api/admin/share-resources 401 鉴权、donate 静态图 200（卷初始化正常）、容器内 NUXT_UPLOAD_DIR=/app/nav/public/uploads、`navigationsite_app_uploads` 卷挂载正确

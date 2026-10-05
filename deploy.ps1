@@ -57,10 +57,24 @@ function Invoke-Deploy {
     Write-ColorOutput "Health endpoint: $($Config.HealthEndpoint)`n" "White"
 
     $remoteScriptPath = "/tmp/navigation_deploy_remote.sh"
+    $remoteCommonPath = "/tmp/release-remote-common.sh"
     $target = "$($Config.ServerUser)@$($Config.ServerHost)"
-    $localScriptPath = Join-Path $PSScriptRoot "scripts\deploy-remote.sh"
 
-    & scp -i $Config.SshKeyPath $localScriptPath "${target}:$remoteScriptPath"
+    # Windows 检出为 CRLF，直接上传会导致远端 bash 报 "set: pipefail: invalid option name"
+    # 转为 LF 后上传；deploy-remote.sh 会 source 同目录的 release-remote-common.sh，需一并上传
+    $localScriptPath = Join-Path $PSScriptRoot "scripts\deploy-remote.sh"
+    $localCommonPath = Join-Path $PSScriptRoot "scripts\release-remote-common.sh"
+    $tempScriptPath = Join-Path $env:TEMP "navigation_deploy_remote.sh"
+    $tempCommonPath = Join-Path $env:TEMP "release-remote-common.sh"
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($tempScriptPath, ((Get-Content $localScriptPath -Raw) -replace "`r`n", "`n"), $utf8NoBom)
+    [System.IO.File]::WriteAllText($tempCommonPath, ((Get-Content $localCommonPath -Raw) -replace "`r`n", "`n"), $utf8NoBom)
+
+    & scp -i $Config.SshKeyPath $tempScriptPath "${target}:$remoteScriptPath"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Remote script upload failed"
+    }
+    & scp -i $Config.SshKeyPath $tempCommonPath "${target}:$remoteCommonPath"
     if ($LASTEXITCODE -ne 0) {
         throw "Remote script upload failed"
     }
@@ -94,7 +108,9 @@ function Invoke-Deploy {
         Invoke-RemoteCommand -Config $Config -Command ($command -join " ")
     }
     finally {
-        Invoke-RemoteCommand -Config $Config -Command ("rm -f " + (Escape-BashArgument -Value $remoteScriptPath))
+        Invoke-RemoteCommand -Config $Config -Command ("rm -f " + (Escape-BashArgument -Value $remoteScriptPath) + " " + (Escape-BashArgument -Value $remoteCommonPath))
+        Remove-Item -LiteralPath $tempScriptPath -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath $tempCommonPath -Force -ErrorAction SilentlyContinue
     }
 }
 
