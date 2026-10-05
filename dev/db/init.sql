@@ -132,7 +132,7 @@ ON DUPLICATE KEY UPDATE
   sort = VALUES(sort);
 
 INSERT INTO admin_users (username, password_salt, password_hash, role, is_active)
-VALUES ('nszm', 'b21aa07811c53b24cdf5fb7c2cb8fea4', '9b0b2642cb2a16434b4601437cdfcb5115adda5359f605cb1a46fe59b0f46fe2c98ab112bea1eb44a2792c5a9161082f4ee3aac58d7e6a5462e688ec133dcf63', 'super', 1)
+VALUES ('admin@server.com', 'b21aa07811c53b24cdf5fb7c2cb8fea4', '9b0b2642cb2a16434b4601437cdfcb5115adda5359f605cb1a46fe59b0f46fe2c98ab112bea1eb44a2792c5a9161082f4ee3aac58d7e6a5462e688ec133dcf63', 'super', 1)
 ON DUPLICATE KEY UPDATE
   role = VALUES(role),
   is_active = VALUES(is_active);
