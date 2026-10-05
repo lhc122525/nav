@@ -1,34 +1,8 @@
-import { existsSync } from 'node:fs'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { extname, join } from 'node:path'
 import { randomBytes } from 'node:crypto'
 import { readMultipartFormData } from 'h3'
-
-// 获取 public/uploads 目录的绝对路径
-// 开发环境: apps/web/public/uploads
-// 生产环境: nav/public/uploads (与 server 目录同级)
-const getUploadBaseDir = (): string => {
-  // 优先使用环境变量
-  if (process.env.NUXT_UPLOAD_DIR) {
-    return process.env.NUXT_UPLOAD_DIR
-  }
-
-  // 尝试相对于当前工作目录
-  const cwdUploads = join(process.cwd(), 'public', 'uploads')
-  if (existsSync(join(process.cwd(), 'public'))) {
-    return cwdUploads
-  }
-
-  // 生产环境: server 和 public 是同级目录
-  // 从 server 目录向上一级，然后进入 public/uploads
-  const siblingUploads = join(process.cwd(), '..', 'public', 'uploads')
-  if (existsSync(join(process.cwd(), '..', 'public'))) {
-    return siblingUploads
-  }
-
-  // 兜底: 创建相对于 cwd 的路径
-  return cwdUploads
-}
+import { getUploadBaseDir } from '../../utils/uploads'
 
 export default defineEventHandler(async (event) => {
   const form = await readMultipartFormData(event)

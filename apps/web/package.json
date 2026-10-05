@@ -24,6 +24,7 @@
     "mysql2": "^3.15.1",
     "nuxt": "^4.4.2",
     "qiankun": "^2.10.16",
+    "qrcode": "^1.5.4",
     "swagger-ui-dist": "^5.28.1",
     "vue": "^3.5.30",
     "vue-router": "^5.0.3"
@@ -31,6 +32,7 @@
   "devDependencies": {
     "@nuxt/eslint": "^0.7.6",
     "@types/jsdom": "^28.0.1",
+    "@types/qrcode": "^1.5.6",
     "@vue/language-core": "^3.0.6",
     "axios": "^1.14.0",
     "dotenv": "^17.4.2",

@@ -24,6 +24,11 @@ services:
       - NUXT_PUBLIC_SITE_NAME=${SITE_NAME:-非乐鱼导航}
       - NUXT_PUBLIC_SITE_URL=${SITE_URL:-http://feileyu.cn}
       - NUXT_PUBLIC_ICP=${ICP:-闽ICP备2026014482号}
+      # 上传文件写入 Nitro 静态服务目录（容器内 cwd 为 /app，否则会落到不可访问的 /app/public）
+      - NUXT_UPLOAD_DIR=/app/nav/public/uploads
+    volumes:
+      # 上传文件持久化（容器重建/发版后保留；首次挂载时自动从镜像内容初始化）
+      - app_uploads:/app/nav/public/uploads
     depends_on:
       mysql:
         condition: service_healthy
@@ -102,4 +107,6 @@ networks:
 # ============================================
 volumes:
   mysql_data:
+    driver: local
+  app_uploads:
     driver: local

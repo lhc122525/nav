@@ -43,6 +43,10 @@
             <el-icon><Picture /></el-icon>
             <template #title>广告管理</template>
           </el-menu-item>
+          <el-menu-item index="/admin/share">
+            <el-icon><Share /></el-icon>
+            <template #title>分享资源</template>
+          </el-menu-item>
         </el-menu>
       </el-scrollbar>
     </el-aside>
@@ -69,18 +73,17 @@
 </template>
 
 <script setup lang="ts">
-import { Menu, Document, Expand, Fold, Search, PieChart, Picture } from '@element-plus/icons-vue'
+import { Menu, Document, Expand, Fold, Search, PieChart, Picture, Share } from '@element-plus/icons-vue'
 const collapsed = ref(false)
 const route = useRoute()
 const router = useRouter()
-const { public: publicConfig } = useRuntimeConfig()
-const siteName = computed(() => publicConfig.siteName || '非乐鱼导航')
 
 const active = computed(() => {
   if (route.path.startsWith('/admin/include')) return '/admin/include'
   if (route.path.startsWith('/admin/search')) return '/admin/search'
   if (route.path.startsWith('/admin/stats')) return '/admin/stats'
   if (route.path.startsWith('/admin/ads')) return '/admin/ads'
+  if (route.path.startsWith('/admin/share')) return '/admin/share'
   return '/admin/nav'
 })
 

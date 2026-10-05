@@ -71,6 +71,7 @@ export default defineNuxtConfig({
     '/admin/login': { headers: { 'x-robots-tag': 'noindex, nofollow' } },
     '/admin/nav': { headers: { 'x-robots-tag': 'noindex, nofollow' } },
     '/admin/include': { headers: { 'x-robots-tag': 'noindex, nofollow' } },
+    '/admin/share': { headers: { 'x-robots-tag': 'noindex, nofollow' } },
     '/login': { headers: { 'x-robots-tag': 'noindex, nofollow' } },
     '/openapi': { headers: { 'x-robots-tag': 'noindex, nofollow' } },
     '/api/links': { cache: { maxAge: 60 * 5, staleMaxAge: 60 * 60, swr: true } },

@@ -29,6 +29,13 @@
       "when": 1778227083025,
       "tag": "0003_breezy_micromax",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1791192825916,
+      "tag": "0004_curly_firebird",
+      "breakpoints": true
     }
   ]
 }

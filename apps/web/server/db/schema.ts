@@ -254,6 +254,25 @@ export const ads = mysqlTable(
   })
 )
 
+export const shareResources = mysqlTable(
+  'share_resources',
+  {
+    id: bigint('id', { mode: 'number', unsigned: true }).autoincrement().notNull().primaryKey(),
+    title: varchar('title', { length: 100 }).notNull(),
+    type: varchar('type', { length: 20 }).notNull().default('url'),
+    url: varchar('url', { length: 500 }).notNull(),
+    fileName: varchar('file_name', { length: 255 }).notNull().default(''),
+    fileSize: bigint('file_size', { mode: 'number', unsigned: true }).notNull().default(0),
+    description: varchar('description', { length: 500 }).notNull().default(''),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow().onUpdateNow()
+  },
+  (table) => ({
+    idxShareResourcesCreated: index('idx_share_resources_created').on(table.createdAt),
+    idxShareResourcesType: index('idx_share_resources_type').on(table.type)
+  })
+)
+
 export const adConfigs = mysqlTable(
   'ad_configs',
   {
