@@ -165,6 +165,9 @@ bash -lc 'source scripts/release-remote-common.sh && print_release_status .deplo
 示例：
 
 ```nginx
+# 上传文件（分享资源等）需要放宽请求体上限，Nginx 默认 1m 会导致 /api/admin/upload 返回 413
+client_max_body_size 200m;
+
 location / {
     proxy_pass http://127.0.0.1:8991;
     proxy_http_version 1.1;
